@@ -1,0 +1,594 @@
+/* ============================================================
+   系统里程碑 // MILESTONES & ONBOARDING TOUR
+   ============================================================ */
+
+/* ---------- Header milestone chip ---------- */
+
+.achievement-chip {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem 0.7rem;
+  border: 1px solid rgba(251, 191, 36, 0.42);
+  background:
+    linear-gradient(150deg, rgba(24, 17, 4, 0.92), rgba(7, 12, 21, 0.88)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(251, 191, 36, 0.035) 3px 4px
+    );
+  color: #fbbf24;
+  text-align: left;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 9px) 0,
+    100% 9px,
+    100% 100%,
+    9px 100%,
+    0 calc(100% - 9px)
+  );
+  box-shadow:
+    inset 0 0 16px rgba(251, 191, 36, 0.08),
+    0 8px 22px rgba(0, 0, 0, 0.4);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.achievement-chip:hover {
+  border-color: rgba(253, 230, 138, 0.9);
+  box-shadow:
+    inset 0 0 18px rgba(251, 191, 36, 0.14),
+    0 0 24px rgba(251, 191, 36, 0.24),
+    0 10px 28px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.achievement-chip--unread {
+  animation: achievement-chip-glow 2.4s ease-in-out infinite;
+}
+
+.achievement-chip__glyph {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 1px solid rgba(251, 191, 36, 0.38);
+  background: rgba(251, 191, 36, 0.06);
+  color: #fde68a;
+  box-shadow: inset 0 0 10px rgba(251, 191, 36, 0.12);
+}
+
+.achievement-chip__glyph svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.achievement-chip__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.achievement-chip__label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(253, 230, 138, 0.8);
+  white-space: nowrap;
+}
+
+.achievement-chip__count {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.55);
+}
+
+.achievement-chip__ping {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.9);
+  animation: achievement-ping 1.8s ease-out infinite;
+}
+
+/* ---------- Hidden protocol chip ---------- */
+
+.achievement-chip--secret {
+  border-color: rgba(255, 45, 141, 0.65);
+  background:
+    linear-gradient(150deg, rgba(42, 5, 25, 0.94), rgba(8, 4, 14, 0.9)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(255, 45, 141, 0.05) 3px 4px
+    );
+  color: #ff6bb5;
+  box-shadow:
+    inset 0 0 16px rgba(255, 45, 141, 0.1),
+    0 0 20px rgba(255, 45, 141, 0.2),
+    0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+.achievement-chip--secret:hover {
+  border-color: rgba(255, 137, 188, 0.98);
+  box-shadow:
+    inset 0 0 20px rgba(255, 45, 141, 0.18),
+    0 0 30px rgba(255, 45, 141, 0.4),
+    0 10px 28px rgba(0, 0, 0, 0.5);
+}
+
+.achievement-chip--secret .achievement-chip__glyph {
+  border-color: rgba(255, 45, 141, 0.55);
+  background: rgba(255, 45, 141, 0.08);
+  color: #ffd0e6;
+  box-shadow: inset 0 0 12px rgba(255, 45, 141, 0.18);
+}
+
+.achievement-chip--secret .achievement-chip__label {
+  color: rgba(255, 173, 209, 0.85);
+}
+
+.achievement-chip--secret .achievement-chip__count {
+  color: #ff5eaa;
+  text-shadow: 0 0 12px rgba(255, 45, 141, 0.85);
+}
+
+.achievement-chip--secret .achievement-chip__ping {
+  background: #ff2d8d;
+  box-shadow: 0 0 12px rgba(255, 45, 141, 0.95);
+}
+
+.achievement-chip--secret.achievement-chip--unread {
+  animation: achievement-chip-glow-secret 1.7s ease-in-out infinite;
+}
+
+/* ---------- Onboarding tour ---------- */
+
+.tour-guide {
+  position: fixed;
+  left: 50%;
+  bottom: 6.5rem;
+  z-index: 400;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tour-guide__panel {
+  position: relative;
+  width: min(31rem, calc(100vw - 2rem));
+  padding: 1rem 1.25rem 0.95rem;
+  overflow: hidden;
+  border: 1px solid rgba(34, 211, 238, 0.5);
+  background:
+    linear-gradient(180deg, rgba(5, 28, 38, 0.88), rgba(3, 13, 22, 0.84)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(34, 211, 238, 0.03) 3px 4px
+    );
+  backdrop-filter: blur(9px);
+  clip-path: polygon(
+    0 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% 100%,
+    14px 100%,
+    0 calc(100% - 14px)
+  );
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(34, 211, 238, 0.18),
+    inset 0 0 30px rgba(34, 211, 238, 0.06);
+  animation: tour-float 3.8s ease-in-out infinite;
+}
+
+.tour-guide__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(34, 211, 238, 0.022) 2px 3px
+  );
+  mix-blend-mode: screen;
+}
+
+.tour-guide__corner {
+  position: absolute;
+  z-index: 3;
+  width: 9px;
+  height: 9px;
+  border-color: rgba(103, 232, 249, 0.9);
+  border-style: solid;
+  pointer-events: none;
+}
+
+.tour-guide__corner--tl {
+  top: 4px;
+  left: 4px;
+  border-width: 1px 0 0 1px;
+}
+
+.tour-guide__corner--tr {
+  top: 4px;
+  right: 4px;
+  border-width: 1px 1px 0 0;
+}
+
+.tour-guide__corner--bl {
+  bottom: 4px;
+  left: 4px;
+  border-width: 0 0 1px 1px;
+}
+
+.tour-guide__corner--br {
+  right: 4px;
+  bottom: 4px;
+  border-width: 0 1px 1px 0;
+}
+
+.tour-guide__body {
+  position: relative;
+  z-index: 3;
+}
+
+.tour-guide__tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: #67e8f9;
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+}
+
+.tour-guide__text {
+  margin-top: 0.36rem;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+  color: #e0f2fe;
+}
+
+.tour-guide__hint {
+  margin-top: 0.4rem;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  color: rgba(103, 232, 249, 0.55);
+}
+
+.tour-guide__steps {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.62rem;
+}
+
+.tour-guide__step {
+  height: 2px;
+  flex: 1;
+  background: rgba(34, 211, 238, 0.16);
+  transition: background 0.25s ease;
+}
+
+.tour-guide__step.is-done {
+  background: rgba(34, 211, 238, 0.5);
+}
+
+.tour-guide__step.is-active {
+  background: #67e8f9;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+  animation: tour-step-pulse 1.8s ease-in-out infinite;
+}
+
+.tour-guide__arrow {
+  position: absolute;
+  right: calc(100% + 0.4rem);
+  top: 50%;
+  width: 5.6rem;
+  height: 1.8rem;
+  transform: translateY(-50%);
+}
+
+.tour-guide__arrow-line {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0.8rem;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(34, 211, 238, 0.08),
+    rgba(34, 211, 238, 0.95)
+  );
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.75);
+  animation: tour-arrow-flow 1.7s ease-in-out infinite;
+}
+
+.tour-guide__arrow-head {
+  position: absolute;
+  top: 50%;
+  left: 0.8rem;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-right: 13px solid #67e8f9;
+  border-bottom: 8px solid transparent;
+  transform: translateY(-50%);
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.9));
+  animation: tour-arrow-flow 1.7s ease-in-out infinite;
+}
+
+.tour-guide__arrow-ring {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(103, 232, 249, 0.8);
+  border-radius: 50%;
+  transform: translate(-6px, -50%);
+  animation: tour-arrow-ring 1.7s ease-out infinite;
+}
+
+.tour-guide--buy .tour-guide__panel {
+  border-color: rgba(251, 191, 36, 0.5);
+  background:
+    linear-gradient(180deg, rgba(32, 22, 4, 0.88), rgba(10, 10, 12, 0.84)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(251, 191, 36, 0.03) 3px 4px
+    );
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(251, 191, 36, 0.16),
+    inset 0 0 30px rgba(251, 191, 36, 0.06);
+}
+
+.tour-guide--buy .tour-guide__tag,
+.tour-guide--buy .tour-guide__hint {
+  color: rgba(253, 230, 138, 0.7);
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.tour-guide--buy .tour-guide__corner {
+  border-color: rgba(253, 230, 138, 0.9);
+}
+
+.tour-guide--buy .tour-guide__step.is-active {
+  background: #fde68a;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.8);
+}
+
+.tour-guide--crisis .tour-guide__panel {
+  border-color: rgba(248, 113, 113, 0.62);
+  background:
+    linear-gradient(180deg, rgba(38, 6, 8, 0.9), rgba(18, 3, 6, 0.86)),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(248, 113, 113, 0.035) 3px 4px
+    );
+  box-shadow:
+    0 22px 60px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(248, 113, 113, 0.22),
+    inset 0 0 30px rgba(248, 113, 113, 0.08);
+  animation:
+    tour-float 3.8s ease-in-out infinite,
+    tour-crisis-pulse 2.2s ease-in-out infinite;
+}
+
+.tour-guide--crisis .tour-guide__tag {
+  color: #fca5a5;
+  text-shadow: 0 0 12px rgba(248, 113, 113, 0.7);
+}
+
+.tour-guide--crisis .tour-guide__text {
+  color: #fee2e2;
+}
+
+.tour-guide--crisis .tour-guide__hint {
+  color: rgba(252, 165, 165, 0.6);
+}
+
+.tour-guide--crisis .tour-guide__corner {
+  border-color: rgba(252, 165, 165, 0.9);
+}
+
+.tour-guide--crisis .tour-guide__step.is-done {
+  background: rgba(248, 113, 113, 0.5);
+}
+
+.tour-guide--crisis .tour-guide__step.is-active {
+  background: #f87171;
+  box-shadow: 0 0 10px rgba(248, 113, 113, 0.8);
+}
+
+.tour-guide--crisis .tour-guide__scan {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(248, 113, 113, 0.03) 2px 3px
+  );
+}
+
+/* ---------- Transitions ---------- */
+
+.tour-hint-enter-active,
+.tour-hint-leave-active {
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease;
+}
+
+.tour-hint-enter-from,
+.tour-hint-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 14px);
+}
+
+/* ---------- Keyframes ---------- */
+
+@keyframes achievement-chip-glow {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 16px rgba(251, 191, 36, 0.08),
+      0 0 12px rgba(251, 191, 36, 0.12),
+      0 8px 22px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 20px rgba(251, 191, 36, 0.18),
+      0 0 26px rgba(251, 191, 36, 0.34),
+      0 8px 22px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes achievement-chip-glow-secret {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 16px rgba(255, 45, 141, 0.12),
+      0 0 16px rgba(255, 45, 141, 0.24),
+      0 8px 22px rgba(0, 0, 0, 0.4);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 22px rgba(255, 45, 141, 0.26),
+      0 0 34px rgba(255, 45, 141, 0.52),
+      0 0 60px rgba(255, 45, 141, 0.16),
+      0 8px 22px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes achievement-ping {
+  0% {
+    transform: scale(0.7);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes tour-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes tour-step-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tour-arrow-flow {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes tour-arrow-ring {
+  0% {
+    transform: translate(-6px, -50%) scale(0.55);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(-6px, -50%) scale(1.7);
+    opacity: 0;
+  }
+}
+
+@keyframes tour-crisis-pulse {
+  0%,
+  100% {
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow:
+      0 22px 60px rgba(0, 0, 0, 0.55),
+      0 0 24px rgba(248, 113, 113, 0.16),
+      inset 0 0 30px rgba(248, 113, 113, 0.06);
+  }
+  50% {
+    border-color: rgba(252, 165, 165, 0.85);
+    box-shadow:
+      0 22px 60px rgba(0, 0, 0, 0.55),
+      0 0 44px rgba(248, 113, 113, 0.32),
+      inset 0 0 34px rgba(248, 113, 113, 0.12);
+  }
+}
+
+/* ---------- Responsive & reduced motion ---------- */
+
+@media (max-width: 640px) {
+  .achievement-chip {
+    padding: 0.36rem 0.52rem;
+  }
+
+  .achievement-chip__label {
+    display: none;
+  }
+
+  .tour-guide {
+    bottom: 1.15rem;
+    width: calc(100vw - 1.5rem);
+  }
+
+  .tour-guide__panel {
+    width: 100%;
+  }
+
+  .tour-guide__arrow {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .achievement-chip--unread,
+  .achievement-chip--secret.achievement-chip--unread,
+  .achievement-chip__ping,
+  .tour-guide__panel,
+  .tour-guide__step.is-active,
+  .tour-guide__arrow-line,
+  .tour-guide__arrow-head,
+  .tour-guide__arrow-ring {
+    animation: none;
+  }
+
+  .tour-hint-enter-active,
+  .tour-hint-leave-active {
+    transition: none;
+  }
+}

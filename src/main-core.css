@@ -1,0 +1,805 @@
+/* ============================================================
+   中央 AI 芯片 // SILICON CORE
+   ============================================================ */
+
+.main-core {
+  position: relative;
+  display: grid;
+  width: clamp(204px, 17vw + 20px, 282px);
+  aspect-ratio: 1;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: crosshair;
+  isolation: isolate;
+  perspective: 920px;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.main-core::before {
+  content: '';
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(45, 212, 191, 0.16),
+    rgba(13, 148, 136, 0.05) 44%,
+    transparent 70%
+  );
+  animation: main-core-aura 5.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.main-core::after {
+  content: '';
+  position: absolute;
+  right: 16%;
+  bottom: 1%;
+  left: 16%;
+  height: 12%;
+  z-index: -1;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.66), transparent 72%);
+  filter: blur(9px);
+  pointer-events: none;
+}
+
+.main-core__float {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  transform-style: preserve-3d;
+  animation: main-core-float 6.8s ease-in-out infinite;
+}
+
+/* ---------- 四边引脚 | 连接底层电路 ---------- */
+.main-core__pins {
+  position: absolute;
+  z-index: 1;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 4px rgba(45, 212, 191, 0.35));
+  pointer-events: none;
+}
+
+.main-core__pins--top {
+  top: 4.6%;
+  right: 17%;
+  left: 17%;
+  height: 4.4%;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 4px,
+    rgba(203, 213, 225, 0.64) 4px 9px,
+    rgba(13, 148, 136, 0.38) 9px 10px,
+    transparent 10px 18px
+  );
+}
+
+.main-core__pins--bottom {
+  right: 17%;
+  bottom: 4.6%;
+  left: 17%;
+  height: 4.4%;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 4px,
+    rgba(203, 213, 225, 0.64) 4px 9px,
+    rgba(13, 148, 136, 0.38) 9px 10px,
+    transparent 10px 18px
+  );
+}
+
+.main-core__pins--left {
+  top: 17%;
+  bottom: 17%;
+  left: 4.6%;
+  width: 4.4%;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0 4px,
+    rgba(203, 213, 225, 0.64) 4px 9px,
+    rgba(13, 148, 136, 0.38) 9px 10px,
+    transparent 10px 18px
+  );
+}
+
+.main-core__pins--right {
+  top: 17%;
+  right: 4.6%;
+  bottom: 17%;
+  width: 4.4%;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0 4px,
+    rgba(203, 213, 225, 0.64) 4px 9px,
+    rgba(13, 148, 136, 0.38) 9px 10px,
+    transparent 10px 18px
+  );
+}
+
+/* ---------- 电路接入光束 ---------- */
+.main-core__beam {
+  position: absolute;
+  z-index: 0;
+  background: linear-gradient(90deg, transparent, rgba(45, 212, 191, 0.42), transparent);
+  box-shadow: 0 0 6px rgba(45, 212, 191, 0.22);
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.main-core__beam--top {
+  top: 0;
+  left: 25%;
+  width: 50%;
+  height: 1px;
+}
+
+.main-core__beam--bottom {
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  height: 1px;
+}
+
+.main-core__beam--left {
+  top: 25%;
+  left: 0;
+  width: 1px;
+  height: 50%;
+  background: linear-gradient(180deg, transparent, rgba(45, 212, 191, 0.42), transparent);
+}
+
+.main-core__beam--right {
+  top: 25%;
+  right: 0;
+  width: 1px;
+  height: 50%;
+  background: linear-gradient(180deg, transparent, rgba(45, 212, 191, 0.42), transparent);
+}
+
+.main-core__socket {
+  position: absolute;
+  z-index: 0;
+  width: 86%;
+  height: 86%;
+  border-radius: 26%;
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(16, 185, 129, 0.2),
+    rgba(13, 148, 136, 0.06) 55%,
+    transparent 76%
+  );
+  filter: blur(10px);
+  transform: translateY(9%);
+  pointer-events: none;
+}
+
+/* ---------- 芯片本体 | 金属硅基质感 ---------- */
+.main-core__body {
+  position: relative;
+  z-index: 2;
+  width: 82%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid rgba(110, 231, 183, 0.52);
+  border-radius: 15px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.022) 0 1px,
+      transparent 1px 3px
+    ),
+    linear-gradient(148deg, rgba(203, 213, 225, 0.18), transparent 30%),
+    radial-gradient(120% 90% at 20% 0%, rgba(94, 234, 212, 0.16), transparent 48%),
+    linear-gradient(160deg, #15433b 0%, #0a2a25 44%, #041210 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(236, 254, 255, 0.45),
+    inset 0 0 0 1px rgba(13, 148, 136, 0.3),
+    inset 0 0 44px rgba(20, 184, 166, 0.15),
+    0 0 30px rgba(45, 212, 191, 0.2),
+    0 26px 52px rgba(0, 0, 0, 0.66);
+  transform: rotateX(10deg) rotateY(-9deg);
+  transform-style: preserve-3d;
+  transition:
+    transform 0.22s ease,
+    border-color 0.2s ease,
+    box-shadow 0.25s ease,
+    filter 0.2s ease;
+}
+
+.main-core__body::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  z-index: 2;
+  border: 1px solid rgba(94, 234, 212, 0.18);
+  border-radius: 9px;
+  box-shadow: inset 0 0 18px rgba(45, 212, 191, 0.08);
+  pointer-events: none;
+}
+
+.main-core__body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.14),
+    transparent 38% 72%,
+    rgba(94, 234, 212, 0.08)
+  );
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 晶体管阵列网格 */
+.main-core__grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(94, 234, 212, 0.075) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(90deg, rgba(94, 234, 212, 0.075) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(0deg, rgba(94, 234, 212, 0.035) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(94, 234, 212, 0.035) 0 1px, transparent 1px 44px);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 78%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 18%, transparent 78%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.main-core__trace {
+  position: absolute;
+  z-index: 1;
+  opacity: 0.62;
+  pointer-events: none;
+}
+
+.main-core__trace--x {
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(94, 234, 212, 0.45) 18%,
+    rgba(94, 234, 212, 0.12) 50%,
+    rgba(94, 234, 212, 0.45) 82%,
+    transparent
+  );
+}
+
+.main-core__trace--y {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(94, 234, 212, 0.45) 18%,
+    rgba(94, 234, 212, 0.12) 50%,
+    rgba(94, 234, 212, 0.45) 82%,
+    transparent
+  );
+}
+
+.main-core__die {
+  position: absolute;
+  inset: 11%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(94, 234, 212, 0.28);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(13, 148, 136, 0.22), transparent 62%),
+    radial-gradient(rgba(94, 234, 212, 0.18) 1px, transparent 1.2px) 0 0 / 16px 16px,
+    linear-gradient(150deg, rgba(4, 20, 17, 0.68), rgba(2, 10, 9, 0.82));
+  box-shadow:
+    inset 0 0 28px rgba(45, 212, 191, 0.1),
+    0 0 18px rgba(0, 0, 0, 0.35);
+}
+
+.main-core__die::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border: 1px dashed rgba(94, 234, 212, 0.14);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.main-core__content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  text-align: center;
+}
+
+.main-core__eyebrow {
+  color: rgba(110, 231, 183, 0.62);
+  font-size: 7.5px;
+  letter-spacing: 0.3em;
+  white-space: nowrap;
+}
+
+.main-core__title {
+  margin-top: 4px;
+  color: #d1fae5;
+  font-size: clamp(0.95rem, 1.5vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 12px rgba(45, 212, 191, 0.55);
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.main-core__gain {
+  margin-top: 2px;
+  color: #a7f3d0;
+  font-size: clamp(1.7rem, 2.7vw, 2.3rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-shadow:
+    0 0 16px rgba(52, 211, 153, 0.8),
+    0 0 36px rgba(16, 185, 129, 0.4);
+  transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+
+.main-core__sub {
+  margin-top: 3px;
+  color: rgba(94, 234, 212, 0.5);
+  font-size: 7.5px;
+  letter-spacing: 0.26em;
+  white-space: nowrap;
+}
+
+.main-core__flash {
+  position: absolute;
+  inset: -40% -20%;
+  z-index: 4;
+  background: linear-gradient(
+    112deg,
+    transparent 28%,
+    rgba(240, 253, 255, 0.16) 40%,
+    rgba(240, 253, 255, 0.95) 49%,
+    rgba(110, 231, 183, 0.55) 55%,
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: translateX(-130%) skewX(-6deg);
+  pointer-events: none;
+}
+
+.main-core__scan {
+  position: absolute;
+  top: -25%;
+  right: -10%;
+  left: -10%;
+  z-index: 3;
+  height: 18%;
+  background: linear-gradient(180deg, transparent, rgba(167, 243, 208, 0.18), transparent);
+  opacity: 0.7;
+  animation: main-core-scan 4.2s linear infinite;
+  pointer-events: none;
+}
+
+.main-core__glitch {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(248, 113, 113, 0.16) 0 2%,
+      transparent 2% 46%,
+      rgba(94, 234, 212, 0.14) 46% 48%,
+      transparent 48%
+    ),
+    repeating-linear-gradient(0deg, rgba(248, 113, 113, 0.16) 0 1px, transparent 1px 6px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------- 交互反馈 ---------- */
+.main-core:hover:not(.main-core--crisis):not(.main-core--locked) .main-core__body {
+  border-color: rgba(167, 243, 208, 0.9);
+  filter: brightness(1.1);
+  transform: rotateX(7deg) rotateY(-6deg) scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(236, 254, 255, 0.55),
+    inset 0 0 0 1px rgba(13, 148, 136, 0.4),
+    inset 0 0 52px rgba(20, 184, 166, 0.2),
+    0 0 42px rgba(45, 212, 191, 0.32),
+    0 30px 58px rgba(0, 0, 0, 0.68);
+}
+
+.main-core:focus-visible {
+  outline: none;
+}
+
+.main-core:focus-visible .main-core__body {
+  outline: 1px solid rgba(167, 243, 208, 0.95);
+  outline-offset: 7px;
+}
+
+.main-core--tap .main-core__body {
+  animation: main-core-tap 0.36s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.main-core--tap .main-core__flash {
+  animation: main-core-flash 0.34s ease-out;
+}
+
+.main-core--auto:not(.main-core--crisis) .main-core__body {
+  animation: main-core-auto 0.36s ease-out;
+}
+
+/* ---------- 锁定 ---------- */
+.main-core--locked {
+  cursor: not-allowed;
+}
+
+.main-core--locked::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(248, 113, 113, 0.1),
+    transparent 68%
+  );
+  animation: none;
+}
+
+.main-core--locked .main-core__body {
+  border-color: rgba(251, 113, 133, 0.42);
+  filter: grayscale(0.5) brightness(0.78);
+  box-shadow:
+    inset 0 0 0 1px rgba(127, 29, 29, 0.32),
+    inset 0 0 30px rgba(248, 113, 113, 0.06),
+    0 22px 46px rgba(0, 0, 0, 0.6);
+  transform: rotateX(10deg) rotateY(-9deg);
+}
+
+.main-core--locked:hover .main-core__body {
+  border-color: rgba(251, 113, 133, 0.42);
+  filter: grayscale(0.5) brightness(0.78);
+  transform: rotateX(10deg) rotateY(-9deg);
+  box-shadow:
+    inset 0 0 0 1px rgba(127, 29, 29, 0.32),
+    inset 0 0 30px rgba(248, 113, 113, 0.06),
+    0 22px 46px rgba(0, 0, 0, 0.6);
+}
+
+.main-core--locked .main-core__pins {
+  opacity: 0.42;
+}
+
+.main-core--locked .main-core__title,
+.main-core--locked .main-core__gain {
+  color: #fda4af;
+  text-shadow: 0 0 12px rgba(244, 63, 94, 0.4);
+}
+
+/* ---------- 危机 | 红色警报 + 震动 + Glitch ---------- */
+.main-core--crisis::before {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(239, 68, 68, 0.3),
+    rgba(153, 27, 27, 0.1) 44%,
+    transparent 70%
+  );
+  animation-duration: 1.5s;
+}
+
+.main-core--crisis .main-core__body {
+  border-color: rgba(254, 202, 202, 0.92);
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.02) 0 1px,
+      transparent 1px 3px
+    ),
+    linear-gradient(148deg, rgba(252, 165, 165, 0.2), transparent 30%),
+    radial-gradient(120% 90% at 20% 0%, rgba(248, 113, 113, 0.22), transparent 48%),
+    linear-gradient(160deg, #4a1414 0%, #2a0a0c 44%, #120405 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(254, 226, 226, 0.5),
+    inset 0 0 0 1px rgba(185, 28, 28, 0.4),
+    inset 0 0 44px rgba(239, 68, 68, 0.22),
+    0 0 34px rgba(239, 68, 68, 0.38),
+    0 0 90px rgba(239, 68, 68, 0.22),
+    0 26px 52px rgba(0, 0, 0, 0.7);
+  animation: main-core-crisis 0.34s steps(2, end) infinite;
+}
+
+.main-core--crisis .main-core__grid {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(252, 165, 165, 0.1) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(90deg, rgba(252, 165, 165, 0.1) 0 1px, transparent 1px 11px),
+    repeating-linear-gradient(0deg, rgba(252, 165, 165, 0.05) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(90deg, rgba(252, 165, 165, 0.05) 0 1px, transparent 1px 44px);
+}
+
+.main-core--crisis .main-core__trace {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(252, 165, 165, 0.5) 18%,
+    rgba(252, 165, 165, 0.12) 50%,
+    rgba(252, 165, 165, 0.5) 82%,
+    transparent
+  );
+}
+
+.main-core--crisis .main-core__trace--y {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(252, 165, 165, 0.5) 18%,
+    rgba(252, 165, 165, 0.12) 50%,
+    rgba(252, 165, 165, 0.5) 82%,
+    transparent
+  );
+}
+
+.main-core--crisis .main-core__die {
+  border-color: rgba(252, 165, 165, 0.48);
+  background:
+    radial-gradient(circle at 50% 44%, rgba(239, 68, 68, 0.24), transparent 62%),
+    radial-gradient(rgba(252, 165, 165, 0.2) 1px, transparent 1.2px) 0 0 / 16px 16px,
+    linear-gradient(150deg, rgba(40, 6, 8, 0.72), rgba(16, 3, 5, 0.85));
+}
+
+.main-core--crisis .main-core__die::before {
+  border-color: rgba(252, 165, 165, 0.2);
+}
+
+.main-core--crisis .main-core__title,
+.main-core--crisis .main-core__gain {
+  color: #fecaca;
+  text-shadow:
+    2px 0 rgba(248, 113, 113, 0.85),
+    -2px 0 rgba(45, 212, 191, 0.4),
+    0 0 18px rgba(239, 68, 68, 0.75);
+}
+
+.main-core--crisis .main-core__eyebrow,
+.main-core--crisis .main-core__sub {
+  color: rgba(252, 165, 165, 0.7);
+}
+
+.main-core--crisis .main-core__pins {
+  filter: drop-shadow(0 0 5px rgba(248, 113, 113, 0.55));
+  opacity: 0.92;
+}
+
+.main-core--crisis .main-core__socket {
+  background: radial-gradient(
+    ellipse at 50% 60%,
+    rgba(239, 68, 68, 0.24),
+    rgba(153, 27, 27, 0.07) 55%,
+    transparent 76%
+  );
+}
+
+.main-core--crisis .main-core__beam {
+  background: linear-gradient(90deg, transparent, rgba(248, 113, 113, 0.48), transparent);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.26);
+}
+
+.main-core--crisis .main-core__beam--left,
+.main-core--crisis .main-core__beam--right {
+  background: linear-gradient(180deg, transparent, rgba(248, 113, 113, 0.48), transparent);
+}
+
+.main-core--crisis .main-core__scan {
+  background: linear-gradient(180deg, transparent, rgba(252, 165, 165, 0.16), transparent);
+}
+
+.main-core--crisis .main-core__glitch {
+  opacity: 1;
+  animation: main-core-glitch 0.46s steps(2, end) infinite;
+}
+
+/* ---------- 动效 ---------- */
+@keyframes main-core-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes main-core-aura {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes main-core-tap {
+  0% {
+    transform: rotateX(10deg) rotateY(-9deg) scale(1);
+  }
+  32% {
+    transform: rotateX(10deg) rotateY(-9deg) scale(0.93);
+  }
+  62% {
+    transform: rotateX(10deg) rotateY(-9deg) scale(1.035);
+  }
+  100% {
+    transform: rotateX(10deg) rotateY(-9deg) scale(1);
+  }
+}
+
+@keyframes main-core-auto {
+  0% {
+    filter: brightness(1);
+    transform: rotateX(10deg) rotateY(-9deg) scale(1);
+  }
+  35% {
+    filter: brightness(1.16);
+    transform: rotateX(10deg) rotateY(-9deg) scale(1.015);
+  }
+  100% {
+    filter: brightness(1);
+    transform: rotateX(10deg) rotateY(-9deg) scale(1);
+  }
+}
+
+@keyframes main-core-flash {
+  0% {
+    opacity: 0;
+    transform: translateX(-130%) skewX(-6deg);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(130%) skewX(-6deg);
+  }
+}
+
+@keyframes main-core-scan {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(680%);
+  }
+}
+
+@keyframes main-core-crisis {
+  0% {
+    transform: rotateX(10deg) rotateY(-9deg) translate(0, 0);
+  }
+  25% {
+    transform: rotateX(10deg) rotateY(-9deg) translate(-4px, 2px) rotate(-0.8deg);
+  }
+  50% {
+    transform: rotateX(10deg) rotateY(-9deg) translate(3px, -3px) rotate(0.8deg);
+  }
+  75% {
+    transform: rotateX(10deg) rotateY(-9deg) translate(-2px, -1px) rotate(-0.4deg);
+  }
+  100% {
+    transform: rotateX(10deg) rotateY(-9deg) translate(0, 0);
+  }
+}
+
+@keyframes main-core-glitch {
+  0% {
+    transform: translate(0);
+    clip-path: inset(0 0 0 0);
+  }
+  20% {
+    transform: translate(-4px, 1px);
+    clip-path: inset(8% 0 66% 0);
+  }
+  40% {
+    transform: translate(3px, -2px);
+    clip-path: inset(52% 0 24% 0);
+  }
+  60% {
+    transform: translate(-2px, 2px);
+    clip-path: inset(28% 0 46% 0);
+  }
+  80% {
+    transform: translate(3px, 0);
+    clip-path: inset(70% 0 10% 0);
+  }
+  100% {
+    transform: translate(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ---------- 响应式 ---------- */
+@media (min-width: 1025px) and (max-height: 780px) {
+  .main-core {
+    width: clamp(186px, 16vw, 244px);
+  }
+}
+
+@media (max-width: 768px) {
+  .main-core {
+    width: clamp(174px, 50vw, 218px);
+    margin-inline: auto;
+  }
+
+  .main-core__eyebrow,
+  .main-core__sub {
+    font-size: 7px;
+    letter-spacing: 0.2em;
+  }
+
+  .main-core__title {
+    font-size: 0.92rem;
+  }
+
+  .main-core__gain {
+    font-size: 1.65rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .main-core {
+    width: 168px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-core::before,
+  .main-core__float,
+  .main-core__scan,
+  .main-core__glitch,
+  .main-core--tap .main-core__body,
+  .main-core--tap .main-core__flash,
+  .main-core--auto .main-core__body,
+  .main-core--crisis .main-core__body {
+    animation: none !important;
+  }
+
+  .main-core__flash {
+    display: none;
+  }
+}
+
+html.reduce-motion .main-core::before,
+html.reduce-motion .main-core__float,
+html.reduce-motion .main-core__scan,
+html.reduce-motion .main-core__glitch,
+html.reduce-motion .main-core--tap .main-core__body,
+html.reduce-motion .main-core--tap .main-core__flash,
+html.reduce-motion .main-core--auto .main-core__body,
+html.reduce-motion .main-core--crisis .main-core__body {
+  animation: none !important;
+}
+
+html.reduce-motion .main-core__flash {
+  display: none;
+}

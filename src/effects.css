@@ -1,0 +1,234 @@
+/* ===== Immersive feedback: audio toggle, click rings, crisis flash, auto-buy pulse ===== */
+
+.audio-toggle {
+  position: relative;
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  background:
+    linear-gradient(180deg, rgba(34, 211, 238, 0.08), transparent 65%),
+    rgba(8, 17, 32, 0.72);
+  color: #67e8f9;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.audio-toggle:hover {
+  border-color: rgba(103, 232, 249, 0.85);
+  color: #cffafe;
+  box-shadow:
+    0 0 14px rgba(34, 211, 238, 0.3),
+    inset 0 0 12px rgba(34, 211, 238, 0.14);
+}
+
+.audio-toggle:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(8, 17, 32, 0.9),
+    0 0 0 4px rgba(34, 211, 238, 0.55);
+}
+
+.audio-toggle svg {
+  width: 17px;
+  height: 17px;
+  filter: drop-shadow(0 0 5px rgba(34, 211, 238, 0.45));
+}
+
+.audio-toggle--muted {
+  border-color: rgba(100, 116, 139, 0.45);
+  background: rgba(8, 13, 22, 0.72);
+  color: #64748b;
+}
+
+.audio-toggle--muted svg {
+  filter: none;
+}
+
+.audio-toggle--muted:hover {
+  border-color: rgba(148, 163, 184, 0.55);
+  color: #94a3b8;
+  box-shadow: none;
+}
+
+.audio-toggle--matrix {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(1, 12, 6, 0.72);
+  color: #86efac;
+}
+
+.audio-toggle--matrix svg {
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.6));
+}
+
+.audio-toggle--matrix:hover {
+  border-color: rgba(134, 239, 172, 0.85);
+  color: #dcfce7;
+  box-shadow:
+    0 0 16px rgba(34, 197, 94, 0.35),
+    inset 0 0 12px rgba(34, 197, 94, 0.18);
+}
+
+.audio-toggle--matrix.audio-toggle--muted {
+  border-color: rgba(51, 65, 85, 0.6);
+  background: rgba(2, 8, 4, 0.72);
+  color: #475569;
+}
+
+/* Click ring at the pointer position on the alignment core */
+.core-ring {
+  position: absolute;
+  z-index: 25;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border: 1.5px solid rgba(167, 243, 208, 0.95);
+  border-radius: 3px;
+  box-shadow:
+    0 0 18px rgba(16, 185, 129, 0.8),
+    inset 0 0 12px rgba(16, 185, 129, 0.4);
+  pointer-events: none;
+  animation: core-ring-expand 0.62s cubic-bezier(0.16, 0.84, 0.36, 1) forwards;
+}
+
+.core-ring--crisis {
+  border-color: rgba(254, 202, 202, 0.95);
+  box-shadow:
+    0 0 20px rgba(239, 68, 68, 0.9),
+    inset 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes core-ring-expand {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.35);
+  }
+  65% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(3.8);
+  }
+}
+
+/* CPS number scales briefly when a purchase lands */
+.cps-value--pulse {
+  animation: cps-pulse 0.44s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transform-origin: left center;
+}
+
+@keyframes cps-pulse {
+  0% {
+    transform: scale(1);
+  }
+  38% {
+    transform: scale(1.07);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Full-panel red strobe while the alignment crisis is active */
+.crisis-flash-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 50% 42%,
+      rgba(248, 113, 113, 0.3),
+      rgba(153, 27, 27, 0.34) 58%,
+      rgba(69, 10, 10, 0.46) 100%
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(248, 113, 113, 0.1) 0 2px,
+      transparent 2px 6px
+    );
+  mix-blend-mode: screen;
+  animation: crisis-red-flicker 0.72s steps(1, end) infinite;
+}
+
+@keyframes crisis-red-flicker {
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+  10% {
+    opacity: 0.42;
+  }
+  22% {
+    opacity: 0.12;
+  }
+  34% {
+    opacity: 0.36;
+  }
+  46% {
+    opacity: 0.05;
+  }
+  58% {
+    opacity: 0.32;
+  }
+  70% {
+    opacity: 0.1;
+  }
+  82% {
+    opacity: 0.38;
+  }
+  92% {
+    opacity: 0.14;
+  }
+}
+
+/* Purchase buttons breathe while the auto-buy protocol is churning */
+.building-buy--auto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 1px solid rgba(103, 232, 249, 0.9);
+  box-shadow:
+    0 0 14px rgba(34, 211, 238, 0.65),
+    inset 0 0 12px rgba(34, 211, 238, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  animation: auto-buy-breathe 0.62s ease-in-out infinite;
+}
+
+@keyframes auto-buy-breathe {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .core-ring {
+    display: none;
+  }
+
+  .cps-value--pulse {
+    animation: none;
+  }
+
+  .crisis-flash-layer {
+    animation: none;
+    opacity: 0.16;
+  }
+
+  .building-buy--auto::after {
+    animation: none;
+    opacity: 0.6;
+  }
+}

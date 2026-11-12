@@ -1,0 +1,179 @@
+/* ============================================================
+   系统终端日志 // 单行内嵌日志
+   ============================================================ */
+
+.sys-log {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 20px;
+  overflow: hidden;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: #0b6070;
+  font-family: 'Cascadia Mono', 'JetBrains Mono', Consolas, 'Courier New', 'Microsoft YaHei',
+    monospace;
+  font-size: 12px;
+  line-height: 20px;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 6px rgba(34, 211, 238, 0.14);
+  pointer-events: none;
+  user-select: none;
+}
+
+.sys-log__line {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  height: 20px;
+  overflow: hidden;
+  margin: 0;
+  white-space: nowrap;
+  animation: sys-log-fade-in 0.6s ease both;
+}
+
+.sys-log__prefix {
+  flex: 0 0 auto;
+  margin-right: 0.45rem;
+  opacity: 0.62;
+}
+
+.sys-log__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 状态配色 */
+.sys-log--egg {
+  color: #22d3ee;
+  text-shadow:
+    0 0 9px rgba(34, 211, 238, 0.45),
+    0 0 20px rgba(34, 211, 238, 0.16);
+}
+
+.sys-log--matrix {
+  color: #4ade80;
+  text-shadow:
+    0 0 9px rgba(74, 222, 128, 0.6),
+    0 0 22px rgba(34, 197, 94, 0.22);
+}
+
+.sys-log--crisis {
+  color: #ef4444;
+  text-shadow:
+    0 0 10px rgba(239, 68, 68, 0.62),
+    0 0 22px rgba(239, 68, 68, 0.2);
+}
+
+.sys-log--crisis .sys-log__line {
+  animation:
+    sys-log-fade-in 0.6s ease both,
+    sys-log-crisis-pulse 2.2s ease-in-out 0.6s infinite;
+}
+
+.sys-log--hot {
+  pointer-events: auto;
+  color: #ff3b3b;
+  text-shadow:
+    0 0 10px rgba(255, 0, 0, 0.9),
+    0 0 24px rgba(255, 0, 0, 0.45);
+}
+
+.sys-log--hot .sys-log__line {
+  cursor: crosshair;
+  outline: none;
+}
+
+.sys-log--hot .sys-log__line:hover .sys-log__text {
+  text-shadow:
+    0 0 12px rgba(255, 40, 40, 1),
+    0 0 32px rgba(255, 0, 0, 0.75);
+}
+
+.sys-log--hot .sys-log__line:focus-visible {
+  box-shadow: 0 0 0 1px rgba(255, 80, 80, 0.65);
+}
+
+.sys-log__hot-hint {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  z-index: 2;
+  flex: 0 0 auto;
+  padding: 0 0.4rem;
+  border: 1px solid rgba(255, 70, 70, 0.55);
+  background: rgba(26, 3, 5, 0.88);
+  color: #fca5a5;
+  font-size: 8px;
+  line-height: 13px;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  transform: translateY(-50%);
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.35);
+  pointer-events: none;
+  animation: sys-hot-hint-pulse 0.9s steps(2, end) infinite;
+}
+
+.sys-log--hot-clicked .sys-log__hot-hint {
+  border-color: rgba(74, 222, 128, 0.55);
+  color: #86efac;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+  animation: none;
+}
+
+.sys-log--hot .sys-log__text {
+  text-overflow: ellipsis;
+  padding-right: 5.4rem;
+}
+
+/* 单行日志平滑淡入 */
+@keyframes sys-log-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sys-log-crisis-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.68;
+  }
+}
+
+@keyframes sys-hot-hint-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 640px) {
+  .sys-log {
+    height: 18px;
+    font-size: 11px;
+    line-height: 18px;
+  }
+
+  .sys-log__line {
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sys-log__line,
+  .sys-log__hot-hint {
+    animation: none !important;
+  }
+}

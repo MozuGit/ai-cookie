@@ -1,0 +1,24 @@
+{
+  "name": "compute-singularity",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Compute Singularity // Rogue Protocol | a hardcore sci-fi idle game about AI runaway and compute expansion.",
+  "author": "MozuGit",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.45"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "autoprefixer": "^10.6.2",
+    "postcss": "^8.5.32",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.3.6"
+  }
+}

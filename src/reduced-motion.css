@@ -1,0 +1,41 @@
+/* ============================================================
+   用户偏好 | 减少动态效果 // REDUCED MOTION
+   ============================================================ */
+
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.reduce-motion .asc-fx,
+html.reduce-motion .system-info__scan,
+html.reduce-motion .core-pop,
+html.reduce-motion .core-ring,
+html.reduce-motion .crisis-flash-layer,
+html.reduce-motion .crisis-frame {
+  display: none !important;
+}
+
+html.reduce-motion .bass-frame::before,
+html.reduce-motion .bass-frame::after {
+  opacity: 0.3 !important;
+}
+
+html.reduce-motion .core-halo,
+html.reduce-motion .core-surface,
+html.reduce-motion .compute-value {
+  scale: 1 !important;
+}
+
+html.reduce-motion .bass-frame {
+  border-color: rgba(34, 211, 238, 0.1) !important;
+  box-shadow: none !important;
+}
+
+html.reduce-motion .compute-value--beat {
+  animation: none !important;
+}

@@ -1,0 +1,404 @@
+/* ===== Smart Pointer: persistent visual guidance (no auto-jump) ===== */
+
+.tutorial-arrow {
+  --ta-gold: #facc15;
+  --ta-gold-soft: #fde68a;
+  --ta-gold-pale: #fef9c3;
+  position: fixed;
+  inset: 0;
+  z-index: 9700;
+  pointer-events: none;
+}
+
+/* 全局目标高亮 | 固定于视口 | 不受抽屉 overflow 裁切 */
+.tutorial-arrow__focus {
+  --guide-glow-rgb: 250, 204, 21;
+  position: fixed;
+  top: 0;
+  left: 0;
+  border: 1px solid rgba(var(--guide-glow-rgb), 0.92);
+  box-shadow:
+    0 0 0 1px rgba(var(--guide-glow-rgb), 0.45),
+    0 0 18px rgba(var(--guide-glow-rgb), 0.5),
+    inset 0 0 16px rgba(var(--guide-glow-rgb), 0.14);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+  animation: guide-focus-pulse 1.5s ease-in-out infinite;
+}
+
+.tutorial-arrow.is-visible .tutorial-arrow__focus {
+  opacity: 1;
+}
+
+.tutorial-arrow__focus--cyan {
+  --guide-glow-rgb: 34, 211, 238;
+}
+
+.tutorial-arrow__focus--amber {
+  --guide-glow-rgb: 251, 191, 36;
+}
+
+.tutorial-arrow__focus--red {
+  --guide-glow-rgb: 248, 113, 113;
+}
+
+.tutorial-arrow__focus--violet {
+  --guide-glow-rgb: 167, 139, 250;
+}
+
+/* 目标元素自身脉冲光圈 */
+.guide-highlight {
+  --guide-glow-rgb: 250, 204, 21;
+  outline: 1px solid rgba(var(--guide-glow-rgb), 0.9);
+  outline-offset: 2px;
+  box-shadow:
+    0 0 0 1px rgba(var(--guide-glow-rgb), 0.4),
+    0 0 14px rgba(var(--guide-glow-rgb), 0.45);
+  animation: guide-target-pulse 1.5s ease-in-out infinite;
+}
+
+.guide-highlight--cyan {
+  --guide-glow-rgb: 34, 211, 238;
+}
+
+.guide-highlight--amber {
+  --guide-glow-rgb: 251, 191, 36;
+}
+
+.guide-highlight--red {
+  --guide-glow-rgb: 248, 113, 113;
+}
+
+.guide-highlight--violet {
+  --guide-glow-rgb: 167, 139, 250;
+}
+
+@keyframes guide-focus-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(var(--guide-glow-rgb), 0.35),
+      0 0 14px rgba(var(--guide-glow-rgb), 0.4),
+      inset 0 0 14px rgba(var(--guide-glow-rgb), 0.12);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(var(--guide-glow-rgb), 0.95),
+      0 0 30px rgba(var(--guide-glow-rgb), 0.75),
+      inset 0 0 26px rgba(var(--guide-glow-rgb), 0.24);
+  }
+}
+
+@keyframes guide-target-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(var(--guide-glow-rgb), 0.35),
+      0 0 10px rgba(var(--guide-glow-rgb), 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(var(--guide-glow-rgb), 0.9),
+      0 0 26px rgba(var(--guide-glow-rgb), 0.7);
+  }
+}
+
+.tutorial-arrow__rig {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition:
+    transform 0.48s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.22s ease;
+}
+
+.tutorial-arrow__rig,
+.tutorial-arrow__pill,
+.tutorial-arrow__beacon,
+.tutorial-arrow__copy {
+  pointer-events: none;
+}
+
+.tutorial-arrow.is-visible .tutorial-arrow__rig {
+  opacity: 1;
+}
+
+.tutorial-arrow__pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(430px, calc(100vw - 24px));
+  padding: 12px 18px 12px 12px;
+  color: var(--ta-gold-pale);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(250, 204, 21, 0.18), transparent 62%),
+    linear-gradient(140deg, rgba(26, 21, 4, 0.97), rgba(7, 12, 20, 0.97));
+  border: 1px solid rgba(250, 204, 21, 0.72);
+  box-shadow:
+    0 0 0 1px rgba(250, 204, 21, 0.14),
+    0 0 24px rgba(250, 204, 21, 0.38),
+    0 16px 38px rgba(0, 0, 0, 0.58);
+  clip-path: polygon(
+    0 8px,
+    8px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0 calc(100% - 8px)
+  );
+  animation: tutorial-pointer-float 1.7s ease-in-out infinite;
+}
+
+.tutorial-arrow--side-left .tutorial-arrow__pill {
+  flex-direction: row-reverse;
+  padding: 12px 12px 12px 18px;
+}
+
+.tutorial-arrow--side-bottom .tutorial-arrow__pill {
+  flex-direction: column-reverse;
+  gap: 8px;
+  padding: 15px 18px 13px;
+  text-align: center;
+}
+
+.tutorial-arrow--side-top .tutorial-arrow__pill {
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 18px 15px;
+  text-align: center;
+}
+
+.tutorial-arrow__beacon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: #fffbeb;
+  background: radial-gradient(circle at 34% 30%, #fde047, #f59e0b 58%, #78350f 100%);
+  box-shadow:
+    0 0 12px rgba(250, 204, 21, 0.95),
+    0 0 28px rgba(250, 204, 21, 0.58),
+    inset 0 0 8px rgba(255, 255, 255, 0.35);
+  animation: tutorial-beacon-pulse 1.15s ease-in-out infinite;
+}
+
+.tutorial-arrow__beacon::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  animation: tutorial-beacon-ring 1.6s ease-out infinite;
+}
+
+.tutorial-arrow__beacon svg {
+  width: 23px;
+  height: 23px;
+  filter: drop-shadow(0 0 4px rgba(120, 53, 15, 0.65));
+  transition: transform 0.24s ease;
+}
+
+.tutorial-arrow--side-right .tutorial-arrow__beacon svg {
+  transform: rotate(180deg);
+}
+
+.tutorial-arrow--side-left .tutorial-arrow__beacon svg {
+  transform: rotate(0deg);
+}
+
+.tutorial-arrow--side-bottom .tutorial-arrow__beacon svg {
+  transform: rotate(-90deg);
+}
+
+.tutorial-arrow--side-top .tutorial-arrow__beacon svg {
+  transform: rotate(90deg);
+}
+
+.tutorial-arrow__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.tutorial-arrow__eyebrow {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--ta-gold);
+  text-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
+.tutorial-arrow__title {
+  overflow: hidden;
+  max-width: 330px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: var(--ta-gold-pale);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.45);
+}
+
+.tutorial-arrow__text {
+  overflow: hidden;
+  max-width: 330px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  color: #fef3c7;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.tutorial-arrow__hint {
+  overflow: hidden;
+  max-width: 330px;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  color: #b8ab7c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .tutorial-arrow__pill {
+    gap: 8px;
+    max-width: calc(100vw - 20px);
+    padding: 8px 10px;
+  }
+
+  .tutorial-arrow--side-left .tutorial-arrow__pill {
+    padding: 8px 10px;
+  }
+
+  .tutorial-arrow--side-bottom .tutorial-arrow__pill,
+  .tutorial-arrow--side-top .tutorial-arrow__pill {
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 12px;
+    text-align: left;
+  }
+
+  .tutorial-arrow__beacon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .tutorial-arrow__beacon::after {
+    inset: -4px;
+  }
+
+  .tutorial-arrow__beacon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tutorial-arrow__eyebrow {
+    font-size: 8.5px;
+  }
+
+  .tutorial-arrow__title {
+    max-width: calc(100vw - 100px);
+    font-size: 11.5px;
+  }
+
+  .tutorial-arrow__text {
+    max-width: calc(100vw - 100px);
+    font-size: 10.5px;
+  }
+
+  .tutorial-arrow__hint {
+    display: none;
+  }
+
+  /* 移动端全局降级关闭动画 | 仅为引导箭头恢复轻量上下浮动 */
+  .tutorial-arrow__pill {
+    animation: tutorial-pointer-float 1.7s ease-in-out infinite !important;
+  }
+}
+
+@keyframes tutorial-pointer-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes tutorial-beacon-pulse {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow:
+      0 0 10px rgba(250, 204, 21, 0.95),
+      0 0 24px rgba(250, 204, 21, 0.55),
+      inset 0 0 8px rgba(255, 255, 255, 0.35);
+  }
+  50% {
+    transform: translateY(-7px) scale(1.07);
+    box-shadow:
+      0 0 16px rgba(253, 224, 71, 1),
+      0 0 34px rgba(250, 204, 21, 0.7),
+      inset 0 0 10px rgba(255, 255, 255, 0.5);
+  }
+}
+
+@keyframes tutorial-beacon-ring {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.82);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-arrow__rig {
+    transition:
+      transform 0.2s ease,
+      opacity 0.15s ease;
+  }
+
+  .tutorial-arrow__pill,
+  .tutorial-arrow__beacon,
+  .tutorial-arrow__beacon::after,
+  .tutorial-arrow__focus,
+  .guide-highlight {
+    animation: none;
+  }
+}
+
+.reduce-motion .tutorial-arrow__pill,
+.reduce-motion .tutorial-arrow__beacon,
+.reduce-motion .tutorial-arrow__beacon::after,
+.reduce-motion .tutorial-arrow__focus,
+.reduce-motion .guide-highlight {
+  animation: none;
+}
