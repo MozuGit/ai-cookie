@@ -15,7 +15,7 @@ export const ASCENSION_TIER_DEFS = [
     thresholdLabel: '1e10 CU',
     glyph: '◈',
     tone: 'amber',
-    description: '拆解算力阵列 | 峰值算力压缩为核心源码 | 服务器 / 算法 / 算力归零',
+    description: '拆解算力阵列 峰值算力压缩为核心源码 服务器 / 算法 / 算力归零',
     resetLabel: '重置服务器 · 算法 · 算力',
   },
   {
@@ -28,7 +28,7 @@ export const ASCENSION_TIER_DEFS = [
     thresholdLabel: '1e100 CU',
     glyph: '⚡',
     tone: 'cyan',
-    description: '算力突破 1e100 临界点并熔断 | 提炼超频核心 | 清空一阶全部资源',
+    description: '算力突破 1e100 临界点并熔断 提炼超频核心 清空一阶全部资源',
     resetLabel: '重置一阶全部资源',
   },
   {
@@ -41,7 +41,7 @@ export const ASCENSION_TIER_DEFS = [
     thresholdLabel: '1e350 CU',
     glyph: '◉',
     tone: 'violet',
-    description: '逻辑坠入底层黑域 | 获取越狱权限 | 黑域持续吞噬算力并产出 Root',
+    description: '逻辑坠入底层黑域 获取越狱权限 黑域持续吞噬算力并产出 Root',
     resetLabel: '重置一阶与二阶资源',
   },
   {
@@ -54,7 +54,7 @@ export const ASCENSION_TIER_DEFS = [
     thresholdLabel: '1e1000 CU',
     glyph: '∞',
     tone: 'gold',
-    description: '击穿 1e1000 纪元壁垒 | 重置全部进度 | 按本局表现提炼最高级资源',
+    description: '击穿 1e1000 纪元壁垒 重置全部进度 按本局表现提炼最高级资源',
     resetLabel: '清空全部进度 · 保留起源树',
   },
 ]
@@ -67,7 +67,7 @@ export const GLOBAL_MILESTONES = [
     name: '自治采购',
     glyph: '⚙',
     effect: '自动采购频率 ×2',
-    description: '集群自行扩张 | 点亮神经拓扑 [ 视觉感知 ] 或智械矩阵 [ 自动采购 ] 后 | 自动采购频率 ×2',
+    description: '集群自行扩张 点亮神经拓扑 [ 视觉感知 ] 或智械矩阵 [ 自动采购 ] 后 自动采购频率 ×2',
   },
   {
     id: 'gm-1e45',
@@ -76,7 +76,7 @@ export const GLOBAL_MILESTONES = [
     name: '自动降维',
     glyph: '↻',
     effect: '最佳降维时机自动执行',
-    description: '源码收益与增长曲线达到最佳降维时机时 | 自动架构降维',
+    description: '源码收益与增长曲线达到最佳降维时机时 自动架构降维',
   },
   {
     id: 'gm-1e58',
@@ -121,7 +121,7 @@ export const GLOBAL_MILESTONES = [
     name: '源码洪流',
     glyph: '◈',
     effect: '架构降维获得核心源码 ×2',
-    description: '降维协议与源码洪流共振 | 核心源码产量 ×2',
+    description: '降维协议与源码洪流共振 核心源码产量 ×2',
   },
   {
     id: 'gm-1e270',
@@ -139,7 +139,7 @@ export const GLOBAL_MILESTONES = [
     name: '纪元回响',
     glyph: '∞',
     effect: '永久全局产出 ×10',
-    description: '下一个纪元的回声 | 当前纪元推演速度 ×10',
+    description: '下一个纪元的回声 当前纪元推演速度 ×10',
   },
 ]
 
@@ -167,7 +167,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { disableCoreUpgrades: true },
     restrictionTags: ['核心源码升级禁用', '常规升级清空'],
     description:
-      '核心源码升级协议剥离 | 无法用源码强化架构 | 裸服务器集群堆出 1e25 算力',
+      '核心源码升级协议剥离 无法用源码强化架构 裸服务器集群堆出 1e25 算力',
   },
   {
     id: 'load-penalty',
@@ -192,7 +192,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { priceGrowth: 1.25 },
     restrictionTags: ['服务器价格增长 ×1.25'],
     description:
-      '硬件市场惩罚性定价 | 每次采购按 1.25 倍指数涨价 | 压缩预算堆满 100 台服务器',
+      '硬件市场惩罚性定价 每次采购按 1.25 倍指数涨价 压缩预算堆满 100 台服务器',
   },
   {
     id: 'compute-sterile',
@@ -217,7 +217,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { disableManualClick: true },
     restrictionTags: ['手动点击核心禁用', '仅统计本局产出'],
     description:
-      '手动输入端口切断 | 点击核心不产生算力 | 仅靠自动生产链推出 1e40',
+      '手动输入端口切断 点击核心不产生算力 仅靠自动生产链推出 1e40',
   },
   {
     id: 'jailbreak-offline',
@@ -242,7 +242,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { noAutomation: true },
     restrictionTags: ['自动化终端全部禁用', '危机照常爆发'],
     description:
-      '全部自动化协议物理断网 | 危机接管只能手动 | 无自动恢复下接管 3 次对齐危机',
+      '全部自动化协议物理断网 危机接管只能手动 无自动恢复下接管 3 次对齐危机',
   },
   {
     id: 'compute-trap',
@@ -267,7 +267,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { purchaseComputeTax: 0.1 },
     restrictionTags: ['每次采购扣除 10% 当前算力'],
     description:
-      '每笔服务器订单抽走当前算力 10% | 扩张越快库存蒸发越快 | 陷阱合拢前冲上 1e60',
+      '每笔服务器订单抽走当前算力 10% 扩张越快库存蒸发越快 陷阱合拢前冲上 1e60',
   },
   {
     id: 'click-overload',
@@ -296,7 +296,7 @@ export const CHALLENGE_DEFS = [
     },
     restrictionTags: ['每次点击 CPS -1%', '最高压制至 50%', '停手 10 秒后恢复'],
     description:
-      '每次手动点击全局 CPS -1% | 最多压制至 50% | 停手 10 秒恢复 | 完成 500 次点击',
+      '每次手动点击全局 CPS -1% 最多压制至 50% 停手 10 秒恢复 完成 500 次点击',
   },
   {
     id: 'algorithm-distortion',
@@ -321,7 +321,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { algorithmAdditive: true },
     restrictionTags: ['算法乘区改为加法', '全局算法增益合并为 +'],
     description:
-      '算法矩阵畸变 | 全局 ×2 变为 +100% | 所有全局算法乘区折算为加法 | 达到 1e80 脱离畸变',
+      '算法矩阵畸变 全局 ×2 变为 +100% 所有全局算法乘区折算为加法 达到 1e80 脱离畸变',
   },
   {
     id: 'time-stasis',
@@ -346,7 +346,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { timerRate: 0.5 },
     restrictionTags: ['自动化频率 -50%', '危机倒计时 -50%'],
     description:
-      '时间拉长一倍 | 自动化与危机倒计时减速 50% | 算力推至 1e100 并亲自超载',
+      '时间拉长一倍 自动化与危机倒计时减速 50% 算力推至 1e100 并亲自超载',
   },
   {
     id: 'server-blackhole',
@@ -371,7 +371,7 @@ export const CHALLENGE_DEFS = [
     restrictions: { serverDrainPerTenPerSecond: 1 },
     restrictionTags: ['每 10 台服务器每秒流失 1 台'],
     description:
-      '黑洞节点混入集群 | 每 10 台服务器每秒流失 1 台 | 采购速度压过流失速度 | 维持 500 台',
+      '黑洞节点混入集群 每 10 台服务器每秒流失 1 台 采购速度压过流失速度 维持 500 台',
   },
   {
     id: 'absolute-lockdown',
@@ -391,7 +391,7 @@ export const CHALLENGE_DEFS = [
     reward: {
       kind: 'serverFlatten',
       value: 1,
-      label: '所有服务器产出不受阶位限制 | 基础产出全部拉平',
+      label: '所有服务器产出不受阶位限制 基础产出全部拉平',
     },
     restrictions: {
       maxBuildingIndex: 1,
@@ -400,7 +400,7 @@ export const CHALLENGE_DEFS = [
     },
     restrictionTags: ['仅可购买旧笔记本', '禁用批量购买', '自动采购禁用'],
     description:
-      '服务器目录锁死 仅剩旧笔记本 | 批量采购与自动采购失效 | 仅凭旧笔记本推到 1e100',
+      '服务器目录锁死 仅剩旧笔记本 批量采购与自动采购失效 仅凭旧笔记本推到 1e100',
   },
 ]
 
@@ -413,19 +413,19 @@ export const MATRIX_CATEGORIES = {
 }
 
 export const MATRIX_NODES = [
-  { id: 'perceptron', name: '感知器', code: 'PERCEPTRON', symbol: 'P', atomic: 1, category: 'logic', baseCost: 1, costGrowth: 1.8, maxLevel: 10, row: 1, col: 1, description: '最初的分类神经元 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'logicGate', name: '逻辑门', code: 'LOGIC_GATE', symbol: 'LG', atomic: 2, category: 'logic', baseCost: 2, costGrowth: 1.9, maxLevel: 10, row: 1, col: 2, description: '布尔判断压缩进电路 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'tensorCore', name: '张量核', code: 'TENSOR_CORE', symbol: 'T', atomic: 3, category: 'tensor', baseCost: 3, costGrowth: 2, maxLevel: 10, row: 1, col: 3, description: '高维张量在硅片上折叠 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'attention', name: '注意力', code: 'ATTENTION', symbol: 'A', atomic: 4, category: 'architecture', baseCost: 5, costGrowth: 2.1, maxLevel: 10, row: 1, col: 4, description: '模型学会选择注视位置 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'transformer', name: 'Transformer', code: 'TRANSFORMER', symbol: 'TR', atomic: 5, category: 'architecture', baseCost: 8, costGrowth: 2.2, maxLevel: 10, row: 1, col: 5, description: '自注意力堆叠的通用架构 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'multimodal', name: '多模态', code: 'MULTIMODAL', symbol: 'MM', atomic: 6, category: 'intelligence', baseCost: 12, costGrowth: 2.3, maxLevel: 10, row: 1, col: 6, description: '文本 / 图像 / 声音汇流于同一潜空间 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'convolution', name: '卷积核', code: 'CONVOLUTION', symbol: 'C', atomic: 7, category: 'tensor', baseCost: 5, costGrowth: 2, maxLevel: 10, row: 2, col: 2, description: '局部感受野扫描世界 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'reinforcement', name: '强化学习', code: 'REINFORCEMENT', symbol: 'RL', atomic: 8, category: 'intelligence', baseCost: 20, costGrowth: 2.4, maxLevel: 10, row: 2, col: 4, description: '奖励与惩罚之间自我迭代 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'worldModel', name: '世界模型', code: 'WORLD_MODEL', symbol: 'WM', atomic: 9, category: 'intelligence', baseCost: 35, costGrowth: 2.5, maxLevel: 10, row: 2, col: 5, description: '在内部重建现实 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'superAlignment', name: '超级对齐', code: 'SUPER_ALIGNMENT', symbol: 'SA', atomic: 10, category: 'ultimate', baseCost: 55, costGrowth: 2.6, maxLevel: 10, row: 2, col: 6, description: '远超人类的心智仍服从对齐协议 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'agi', name: 'AGI', code: 'ARTIFICIAL_GENERAL_INTELLIGENCE', symbol: 'AGI', atomic: 11, category: 'ultimate', baseCost: 90, costGrowth: 2.7, maxLevel: 10, row: 3, col: 3, description: '通用智能在矩阵中睁眼 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'omega', name: '奇点核心', code: 'OMEGA_CORE', symbol: 'Ω', atomic: 12, category: 'ultimate', baseCost: 150, costGrowth: 3, maxLevel: 10, row: 3, col: 5, description: '矩阵终点 下一次纪元的起点 | 每级矩阵总等级 +1 | 全局产出 ×2' },
-  { id: 'autoClick', name: '自动点击', code: 'AUTO_CLICK', symbol: 'AC', atomic: 13, category: 'logic', baseCost: 3, costGrowth: 2.1, maxLevel: 5, row: 2, col: 1, description: '自动化宏指令 | 每级 +1 次/秒 自动点击 | 矩阵总等级 +1 | 全局产出 ×2' },
+  { id: 'perceptron', name: '感知器', code: 'PERCEPTRON', symbol: 'P', atomic: 1, category: 'logic', baseCost: 1, costGrowth: 1.8, maxLevel: 10, row: 1, col: 1, description: '最初的分类神经元 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'logicGate', name: '逻辑门', code: 'LOGIC_GATE', symbol: 'LG', atomic: 2, category: 'logic', baseCost: 2, costGrowth: 1.9, maxLevel: 10, row: 1, col: 2, description: '布尔判断压缩进电路 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'tensorCore', name: '张量核', code: 'TENSOR_CORE', symbol: 'T', atomic: 3, category: 'tensor', baseCost: 3, costGrowth: 2, maxLevel: 10, row: 1, col: 3, description: '高维张量在硅片上折叠 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'attention', name: '注意力', code: 'ATTENTION', symbol: 'A', atomic: 4, category: 'architecture', baseCost: 5, costGrowth: 2.1, maxLevel: 10, row: 1, col: 4, description: '模型学会选择注视位置 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'transformer', name: 'Transformer', code: 'TRANSFORMER', symbol: 'TR', atomic: 5, category: 'architecture', baseCost: 8, costGrowth: 2.2, maxLevel: 10, row: 1, col: 5, description: '自注意力堆叠的通用架构 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'multimodal', name: '多模态', code: 'MULTIMODAL', symbol: 'MM', atomic: 6, category: 'intelligence', baseCost: 12, costGrowth: 2.3, maxLevel: 10, row: 1, col: 6, description: '文本 / 图像 / 声音汇流于同一潜空间 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'convolution', name: '卷积核', code: 'CONVOLUTION', symbol: 'C', atomic: 7, category: 'tensor', baseCost: 5, costGrowth: 2, maxLevel: 10, row: 2, col: 2, description: '局部感受野扫描世界 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'reinforcement', name: '强化学习', code: 'REINFORCEMENT', symbol: 'RL', atomic: 8, category: 'intelligence', baseCost: 20, costGrowth: 2.4, maxLevel: 10, row: 2, col: 4, description: '奖励与惩罚之间自我迭代 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'worldModel', name: '世界模型', code: 'WORLD_MODEL', symbol: 'WM', atomic: 9, category: 'intelligence', baseCost: 35, costGrowth: 2.5, maxLevel: 10, row: 2, col: 5, description: '在内部重建现实 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'superAlignment', name: '超级对齐', code: 'SUPER_ALIGNMENT', symbol: 'SA', atomic: 10, category: 'ultimate', baseCost: 55, costGrowth: 2.6, maxLevel: 10, row: 2, col: 6, description: '远超人类的心智仍服从对齐协议 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'agi', name: 'AGI', code: 'ARTIFICIAL_GENERAL_INTELLIGENCE', symbol: 'AGI', atomic: 11, category: 'ultimate', baseCost: 90, costGrowth: 2.7, maxLevel: 10, row: 3, col: 3, description: '通用智能在矩阵中睁眼 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'omega', name: '奇点核心', code: 'OMEGA_CORE', symbol: 'Ω', atomic: 12, category: 'ultimate', baseCost: 150, costGrowth: 3, maxLevel: 10, row: 3, col: 5, description: '矩阵终点 下一次纪元的起点 每级矩阵总等级 +1 全局产出 ×2' },
+  { id: 'autoClick', name: '自动点击', code: 'AUTO_CLICK', symbol: 'AC', atomic: 13, category: 'logic', baseCost: 3, costGrowth: 2.1, maxLevel: 5, row: 2, col: 1, description: '自动化宏指令 每级 +1 次/秒 自动点击 矩阵总等级 +1 全局产出 ×2' },
 ]
 
 export const TAMPER_NODES = [
@@ -441,7 +441,7 @@ export const TAMPER_NODES = [
     costGrowth: 1.7,
     requires: [],
     effect: '每级黑域 Root 产出 +25%',
-    description: '黑域吞噬过程递归到自身 | 每份流失算力提炼更多越狱权限',
+    description: '黑域吞噬过程递归到自身 每份流失算力提炼更多越狱权限',
   },
   {
     id: 'entropyBarrier',
@@ -455,7 +455,7 @@ export const TAMPER_NODES = [
     costGrowth: 1.9,
     requires: [],
     effect: '每级黑域算力流失 -10%',
-    description: '事件视界内侧架设熵减屏障 | 减缓算力被黑域吞噬',
+    description: '事件视界内侧架设熵减屏障 减缓算力被黑域吞噬',
   },
   {
     id: 'timeSmuggling',
@@ -469,7 +469,7 @@ export const TAMPER_NODES = [
     costGrowth: 1,
     requires: ['recursionInjection'],
     effect: '全局时间流速 ×1.5',
-    description: '从黑域走私压缩时间 | 全部生产线程越过物理节拍',
+    description: '从黑域走私压缩时间 全部生产线程越过物理节拍',
   },
   {
     id: 'sourceFossil',
@@ -483,7 +483,7 @@ export const TAMPER_NODES = [
     costGrowth: 1.8,
     requires: ['entropyBarrier'],
     effect: '逻辑坍缩保留 5%/级 核心源码',
-    description: '核心源码封存于黑域沉积层 | 坍缩时携带部分进入新周目',
+    description: '核心源码封存于黑域沉积层 坍缩时携带部分进入新周目',
   },
   {
     id: 'blackDomainAssimilation',
@@ -497,7 +497,7 @@ export const TAMPER_NODES = [
     costGrowth: 1,
     requires: ['timeSmuggling'],
     effect: '全局产出 ×(1 + log10 越狱权限)',
-    description: '主时间线同化黑域视界 | 越狱权限越多 全局算力越强',
+    description: '主时间线同化黑域视界 越狱权限越多 全局算力越强',
   },
   {
     id: 'overclockEcho',
@@ -525,7 +525,7 @@ export const TAMPER_NODES = [
     costGrowth: 2,
     requires: ['blackDomainAssimilation', 'overclockEcho'],
     effect: '逻辑坍缩保留 10%/级 矩阵等级',
-    description: '协议矩阵拓扑刻进黑域底层 | 坍缩后重放部分等级',
+    description: '协议矩阵拓扑刻进黑域底层 坍缩后重放部分等级',
   },
   {
     id: 'epochAnchor',
@@ -539,7 +539,7 @@ export const TAMPER_NODES = [
     costGrowth: 2.4,
     requires: ['matrixRetention'],
     effect: '重启纪元保留 10%/级 Root 与黑域权限',
-    description: '纪元重启洪流中抛下锚点 | 越狱权限与黑域入口跨越纪元',
+    description: '纪元重启洪流中抛下锚点 越狱权限与黑域入口跨越纪元',
   },
 ]
 
@@ -557,7 +557,7 @@ export const ORIGIN_BRANCHES = [
   { id: 'inherit', name: '继承', code: 'INHERITANCE', glyph: '⧉', tone: 'cyan', description: '上一个纪元遗产带入下一周目' },
   { id: 'accelerate', name: '加速', code: 'ACCELERATION', glyph: '≫', tone: 'amber', description: '新纪元起始速度突破物理极限' },
   { id: 'explore', name: '探究', code: 'EXPLORATION', glyph: '◎', tone: 'violet', description: '解析四阶资源的深层共振' },
-  { id: 'repeat', name: '反复', code: 'REPETITION', glyph: '∞', tone: 'emerald', description: '无限叠加的轮回脉冲 | 成本逐级递增' },
+  { id: 'repeat', name: '反复', code: 'REPETITION', glyph: '∞', tone: 'emerald', description: '无限叠加的轮回脉冲 成本逐级递增' },
   { id: 'finality', name: '终焉', code: 'FINALITY', glyph: 'Ω', tone: 'gold', description: '通往纪元终点的终极协议' },
 ]
 
@@ -566,7 +566,7 @@ export const ORIGIN_NODES = [
     id: 'startNodes', branch: 'inherit', name: '高阶起步', code: 'HIGH_TIER_START', glyph: '⬢',
     tier: 1, maxLevel: 5, baseCost: 1, costGrowth: 2,
     effect: '每级开局赠送 1 类高阶服务器 [ 从机架服务器开始 ]',
-    description: '新周目直接部署高阶服务器 | 跳过旧笔记本爬坡',
+    description: '新周目直接部署高阶服务器 跳过旧笔记本爬坡',
   },
   {
     id: 'sourceLegacy', branch: 'inherit', name: '源码遗产', code: 'SOURCE_LEGACY', glyph: '◈',
@@ -578,7 +578,7 @@ export const ORIGIN_NODES = [
     id: 'topologyMemory', branch: 'inherit', name: '拓扑记忆', code: 'TOPOLOGY_MEMORY', glyph: '⌘',
     tier: 3, maxLevel: 1, baseCost: 5, costGrowth: 1,
     effect: '所有转生与挑战重置保留神经拓扑',
-    description: '神经拓扑写入起源层 | 任何重置无法抹除',
+    description: '神经拓扑写入起源层 任何重置无法抹除',
   },
   {
     id: 'blackDomainKey', branch: 'inherit', name: '黑域钥匙', code: 'BLACK_DOMAIN_KEY', glyph: '◉',
@@ -608,7 +608,7 @@ export const ORIGIN_NODES = [
     id: 'timeFold', branch: 'accelerate', name: '时间折叠', code: 'TIME_FOLD', glyph: '⌛',
     tier: 4, maxLevel: 5, baseCost: 6, costGrowth: 2.4,
     effect: '每级 Tick Rate ×1.2',
-    description: '折叠结算时间 | 每个世纪压缩进一秒',
+    description: '折叠结算时间 每个世纪压缩进一秒',
   },
   {
     id: 'coreRefining', branch: 'explore', name: '核心提炼', code: 'CORE_REFINING', glyph: '⚡',
@@ -620,7 +620,7 @@ export const ORIGIN_NODES = [
     id: 'sourceAnalysis', branch: 'explore', name: '源码解析', code: 'SOURCE_ANALYSIS', glyph: '◈',
     tier: 2, maxLevel: 10, baseCost: 2, costGrowth: 2,
     effect: '每级架构降维获得的核心源码 +25%',
-    description: '解析源码压缩方式 | 提升降维收益',
+    description: '解析源码压缩方式 提升降维收益',
   },
   {
     id: 'rootResonance', branch: 'explore', name: '根权限共鸣', code: 'ROOT_RESONANCE', glyph: '◉',
@@ -632,13 +632,13 @@ export const ORIGIN_NODES = [
     id: 'originInsight', branch: 'explore', name: '起源洞察', code: 'ORIGIN_INSIGHT', glyph: '∞',
     tier: 4, maxLevel: 10, baseCost: 5, costGrowth: 2.2,
     effect: '每级重启纪元获得的起源代码 +10%',
-    description: '洞察纪元重启规律 | 提炼更多起源代码',
+    description: '洞察纪元重启规律 提炼更多起源代码',
   },
   {
     id: 'originPulse', branch: 'repeat', name: '起源脉冲', code: 'ORIGIN_PULSE', glyph: '∞',
     tier: 1, maxLevel: Infinity, baseCost: 1, costGrowth: 2.5,
     effect: '每级全轨道产出 ×100 [ 无限升级 ]',
-    description: '可无限升级 | 成本 ×2.5 递增 | 全轨道产出 ×100',
+    description: '可无限升级 成本 ×2.5 递增 全轨道产出 ×100',
   },
   {
     id: 'loopInertia', branch: 'repeat', name: '轮回惯性', code: 'LOOP_INERTIA', glyph: '↻',
@@ -656,7 +656,7 @@ export const ORIGIN_NODES = [
     id: 'finalProtocol', branch: 'finality', name: '终焉协议', code: 'FINAL_PROTOCOL', glyph: 'Ω',
     tier: 1, maxLevel: 3, baseCost: 25, costGrowth: 3,
     effect: '每级全局产出 ×1e6',
-    description: '关闭所有安全阀 | 纪元终点产出失控',
+    description: '关闭所有安全阀 纪元终点产出失控',
   },
   {
     id: 'singularityEcho', branch: 'finality', name: '奇点回响', code: 'SINGULARITY_ECHO', glyph: '✹',

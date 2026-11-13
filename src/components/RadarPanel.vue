@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
               </strong>
             </div>
             <p class="radar-scan-card__note">
-              扫描成功解析一个未捕获节点 | 图鉴全满后每次判定把扫描余量转化为算力
+              扫描成功解析一个未捕获节点 图鉴全满后每次判定把扫描余量转化为算力
             </p>
           </div>
         </aside>
@@ -359,7 +359,7 @@ onBeforeUnmount(() => {
             {{
               selectedNodeCaptured
                 ? selectedNode.description
-                : `信号强度 ${selectedSignal}% · 该节点仍被噪声遮蔽 | 保持被动扫描 | 等待突发异常窗口开启`
+                : `信号强度 ${selectedSignal}% · 该节点仍被噪声遮蔽 保持被动扫描 等待突发异常窗口开启`
             }}
           </p>
 
@@ -381,7 +381,7 @@ onBeforeUnmount(() => {
             <div class="radar-meter">
               <i :style="{ width: `${selectedCategory.progress}%` }"></i>
             </div>
-            <p>集齐该分类全部 8 个节点 | 永久获得全局算力 ×2</p>
+            <p>集齐该分类全部 8 个节点 永久获得全局算力 ×2</p>
           </div>
 
           <div class="radar-detail__progress">
@@ -404,7 +404,7 @@ onBeforeUnmount(() => {
               过载扫描 // OVERLOAD SCAN
             </div>
             <div class="radar-buff__timer">{{ radarOverloadScanLabel }}</div>
-            <p>被动扫描概率 ×4 | 成功时必定锁定未捕获的稀有或终焉节点</p>
+            <p>被动扫描概率 ×4 成功时必定锁定未捕获的稀有或终焉节点</p>
           </div>
 
           <div class="radar-detail__telemetry">
@@ -437,7 +437,7 @@ onBeforeUnmount(() => {
             紧急捕获 // 剩余 {{ radarBurstCountdownLabel }}
           </button>
           <p v-else class="radar-detail__hint">
-            突发异常窗口开启后此处出现紧急捕获入口 | 捕获成功获得 10 分钟过载扫描
+            突发异常窗口开启后此处出现紧急捕获入口 捕获成功获得 10 分钟过载扫描
           </p>
         </aside>
       </div>

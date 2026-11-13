@@ -166,12 +166,18 @@ function formatUnlockTime(timestamp) {
                     {{ item.unlocked ? item.name : '???' }}
                   </p>
                   <p class="achievement-card__condition">
-                    <template v-if="item.unlocked">{{ formatTextNumbers(item.condition) }}</template>
-                    <template v-else-if="item.secret">{{ item.hint }}</template>
+                    <template v-if="item.secret">{{ item.hint }}</template>
+                    <template v-else-if="item.unlocked">{{ formatTextNumbers(item.condition) }}</template>
                     <template v-else-if="item.hidden">
                       隐藏协议 // 条件未知
                     </template>
                     <template v-else>{{ formatTextNumbers(item.condition) }}</template>
+                  </p>
+                  <p
+                    v-if="item.secret && item.unlocked"
+                    class="achievement-card__record"
+                  >
+                    解锁记录 // {{ formatTextNumbers(item.condition) }}
                   </p>
                   <p class="achievement-card__code">
                     {{

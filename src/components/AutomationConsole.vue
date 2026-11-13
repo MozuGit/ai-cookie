@@ -111,7 +111,7 @@ const latestLog = computed(() => props.logs[props.logs.length - 1] || null)
         </div>
 
         <p v-if="unlockedOptions.length === 0" class="automation-console__empty">
-          中枢已觉醒 | 尚未点亮任何分支模块
+          中枢已觉醒 尚未点亮任何分支模块
           <button type="button" @click="$emit('open-matrix')">前往矩阵</button>
         </p>
 

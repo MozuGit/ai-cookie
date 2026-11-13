@@ -113,7 +113,7 @@ defineEmits(['buy'])
     </div>
 
     <p class="mt-3 border-t border-violet-900/40 pt-2.5 text-[10px] leading-relaxed tracking-[0.02em] text-slate-500">
-      每 1 个维度碎片提供全局产出 ×1.5 | 消耗碎片同步降低当前高维加成
+      每 1 个维度碎片提供全局产出 ×1.5 消耗碎片同步降低当前高维加成
       <span class="text-amber-300">高维协议是永久投资</span>
     </p>
   </div>

@@ -6,7 +6,7 @@ defineProps({
   toasts: { type: Array, default: () => [] },
 })
 
-const emit = defineEmits(['dismiss'])
+const emit = defineEmits(['dismiss-all'])
 
 const duration = getAchievementToastDuration()
 
@@ -109,9 +109,9 @@ function tierMetaFor(toast) {
           <button
             type="button"
             class="achievement-toast__close"
-            title="关闭提示"
-            :aria-label="`关闭成就提示 // ${toast.name}`"
-            @click="emit('dismiss', toast.key)"
+            title="关闭全部提示"
+            aria-label="关闭全部成就提示"
+            @click="emit('dismiss-all')"
           >
             <span aria-hidden="true">✕</span>
           </button>

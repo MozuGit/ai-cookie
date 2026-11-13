@@ -132,7 +132,7 @@ defineEmits(['buy', 'buy-max'])
               :disabled="locked || !upgrade.canAfford"
               :aria-label="
                 locked
-                  ? `核心源码升级协议已封锁 | 无法升级 ${upgrade.name}`
+                  ? `核心源码升级协议已封锁 无法升级 ${upgrade.name}`
                   : upgrade.isMax
                     ? `${upgrade.name} 已满级`
                     : `消耗 ${upgrade.nextCost} 核心源码升级${upgrade.name}至 ${upgrade.level + 1} 级`
@@ -146,7 +146,7 @@ defineEmits(['buy', 'buy-max'])
               class="architecture-card__button architecture-card__button--bulk"
               :class="{ 'architecture-card__button--bulk-ready': upgrade.canAfford && !locked }"
               :disabled="locked || !upgrade.canAfford"
-              :aria-label="`一键升级 ${upgrade.name} | 直到核心源码不足`"
+              :aria-label="`一键升级 ${upgrade.name} 直到核心源码不足`"
               @click="$emit('buy-max', upgrade.id)"
             >
               {{ locked ? '已封锁' : '一键升级' }}
@@ -157,7 +157,7 @@ defineEmits(['buy', 'buy-max'])
     </div>
 
     <p class="mt-3 border-t border-amber-900/35 pt-2.5 text-[10px] leading-relaxed tracking-[0.02em] text-slate-500">
-      升级费用每级 ×5 指数增长 |
+      升级费用每级 ×5 指数增长
       <span class="text-amber-500">一键升级连续购买直到源码不足</span>
     </p>
   </div>

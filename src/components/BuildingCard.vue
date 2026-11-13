@@ -23,28 +23,28 @@ const unlockTitle = computed(
 const buyTitle = computed(() => {
   if (props.card.locked) return unlockTitle.value
   if (props.card.challengeLocked) {
-    return `${props.card.name} // 本局演练封锁 | 仅可购买前 1 种服务器`
+    return `${props.card.name} // 本局演练封锁 仅可购买前 1 种服务器`
   }
   if (props.card.isMaxMode) {
     return props.card.canAfford
-      ? `MAX 采购 ${props.card.name} // 可购买 ${props.card.maxQuantity} 台 | 总价 ${formatNumber(props.card.displayPrice).text} CU`
-      : `MAX 采购 ${props.card.name} // 可购买 0 台 | 算力不足 1 台 | 单价 ${formatNumber(props.card.unitPrice).text} CU`
+      ? `MAX 采购 ${props.card.name} // 可购买 ${props.card.maxQuantity} 台 总价 ${formatNumber(props.card.displayPrice).text} CU`
+      : `MAX 采购 ${props.card.name} // 可购买 0 台 算力不足 1 台 单价 ${formatNumber(props.card.unitPrice).text} CU`
   }
-  return `购买 ${props.card.purchaseCount} 个 | 总价 ${formatNumber(props.card.displayPrice).text} CU`
+  return `购买 ${props.card.purchaseCount} 个 总价 ${formatNumber(props.card.displayPrice).text} CU`
 })
 const buyAriaLabel = computed(() => {
   if (props.card.locked) {
-    return `${unlockTitle.value} | 无法购买`
+    return `${unlockTitle.value} 无法购买`
   }
   if (props.card.challengeLocked) {
-    return `${props.card.name} 被异常演练封锁 | 无法购买`
+    return `${props.card.name} 被异常演练封锁 无法购买`
   }
   if (props.card.isMaxMode) {
     return props.card.canAfford
-      ? `MAX 采购 ${props.card.name} | 可购买 ${props.card.maxQuantity} 台 | 总价 ${formatNumber(props.card.displayPrice).text} 算力`
-      : `MAX 采购 ${props.card.name} | 可购买 0 台 | 算力不足 | 单台价格 ${formatNumber(props.card.unitPrice).text} 算力`
+      ? `MAX 采购 ${props.card.name} 可购买 ${props.card.maxQuantity} 台 总价 ${formatNumber(props.card.displayPrice).text} 算力`
+      : `MAX 采购 ${props.card.name} 可购买 0 台 算力不足 单台价格 ${formatNumber(props.card.unitPrice).text} 算力`
   }
-  return `部署 ${props.card.name} ${props.card.purchaseCount} 个 | 需要 ${formatNumber(props.card.displayPrice).text} 算力`
+  return `部署 ${props.card.name} ${props.card.purchaseCount} 个 需要 ${formatNumber(props.card.displayPrice).text} 算力`
 })
 
 const insufficientVisible = ref(false)

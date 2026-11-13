@@ -8,6 +8,7 @@ const props = defineProps({
   overclockCores: { type: Number, required: true },
   rootAccess: { type: Number, required: true },
   originCode: { type: Number, required: true },
+  computeInjection: { type: Object, required: true },
   autoBuy: { type: Boolean, default: false },
   isCrisis: { type: Boolean, default: false },
   blackDomainActive: { type: Boolean, default: false },
@@ -20,6 +21,7 @@ const emit = defineEmits([
   'inject-overclock',
   'inject-root',
   'inject-origin',
+  'unlock-all',
   'start-crisis',
   'skip-crisis',
   'exit-blackdomain',
@@ -64,46 +66,59 @@ const stats = computed(() => [
   },
 ])
 
+const injectionLabel = computed(
+  () => formatNumber(props.computeInjection).text,
+)
+
 const baseActions = computed(() => [
+  {
+    id: 'unlock-all',
+    code: 'UNLOCK_ALL_SYSTEMS',
+    label: '一键解锁全部系统',
+    detail: '历史最高算力 1e1200 // 四阶飞升 · 全部服务器 · 自动飞升保护 10 分钟',
+    event: 'unlock-all',
+    feedback: '全部系统已解锁 · 自动飞升保护 10 分钟',
+    tone: 'omega',
+  },
   {
     id: 'compute',
     code: 'INJECT_COMPUTE',
     label: '注入海量算力',
-    detail: `+${formatNumber('1e15').text} CU // 立即到账`,
+    detail: `+${injectionLabel.value} CU // 历史最高 × 1e10`,
     event: 'inject-compute',
-    feedback: `已注入 ${formatNumber('1e15').text} 算力`,
+    feedback: `已注入 ${injectionLabel.value} 算力`,
   },
   {
     id: 'core',
     code: 'INJECT_CORE_SOURCE',
     label: '注入海量源码',
-    detail: `+${formatNumber(10000).text} 核心源码`,
+    detail: '+1e10 核心源码',
     event: 'inject-core',
-    feedback: `已注入 ${formatNumber(10000).text} 核心源码`,
+    feedback: '已注入 1e10 核心源码',
   },
   {
     id: 'overclock',
     code: 'INJECT_OVERCLOCK_CORES',
     label: '注入超频核心',
-    detail: `+${formatNumber(100).text} 超频核心`,
+    detail: '+10000 超频核心',
     event: 'inject-overclock',
-    feedback: `已注入 ${formatNumber(100).text} 超频核心`,
+    feedback: '已注入 10000 超频核心',
   },
   {
     id: 'root',
     code: 'INJECT_ROOT_ACCESS',
     label: '注入越狱权限',
-    detail: `+${formatNumber(1000).text} 越狱权限`,
+    detail: '+10000 越狱权限',
     event: 'inject-root',
-    feedback: `已注入 ${formatNumber(1000).text} 越狱权限`,
+    feedback: '已注入 10000 越狱权限',
   },
   {
     id: 'origin',
     code: 'INJECT_ORIGIN_CODE',
     label: '注入起源代码',
-    detail: `+${formatNumber(50).text} 起源代码`,
+    detail: '+1000 起源代码',
     event: 'inject-origin',
-    feedback: `已注入 ${formatNumber(50).text} 起源代码`,
+    feedback: '已注入 1000 起源代码',
   },
   {
     id: 'start-crisis',
@@ -263,7 +278,7 @@ onBeforeUnmount(() => {
         </header>
 
         <p class="admin-console__ticker">
-          WARNING // 调试指令直接改写运行时状态 | 仅限本地测试
+          WARNING // 调试指令直接改写运行时状态 仅限本地测试
         </p>
 
         <div class="admin-console__stats">
@@ -285,7 +300,10 @@ onBeforeUnmount(() => {
             :key="action.id"
             type="button"
             class="admin-action"
-            :class="action.tone === 'danger' ? 'admin-action--danger' : ''"
+            :class="{
+              'admin-action--danger': action.tone === 'danger',
+              'admin-action--omega': action.tone === 'omega',
+            }"
             :data-admin-action="action.id"
             @click="trigger(action)"
           >

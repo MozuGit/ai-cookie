@@ -1,10 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatNumber } from '../composables/useGameState'
-import {
-  NEURAL_STAR_BRANCH_MAP,
-  NEURAL_STAR_LINKS,
-} from '../composables/neuralStarData'
+import { NEURAL_STAR_BRANCH_MAP } from '../composables/neuralStarData'
 import GameIcon from './GameIcon.vue'
 
 const props = defineProps({
@@ -27,6 +24,12 @@ const nodeMap = computed(
   () => new Map(props.nodes.map((node) => [node.id, node])),
 )
 
+const coreNode = computed(
+  () => props.nodes.find((node) => node.branch === 'core') ?? null,
+)
+
+const coreLit = computed(() => Boolean(coreNode.value?.lit))
+
 const selectedNode = computed(() =>
   selectedId.value ? nodeMap.value.get(selectedId.value) ?? null : null,
 )
@@ -42,35 +45,33 @@ const selectedState = computed(() => {
   return nodeState(node)
 })
 
-const branchChips = computed(() =>
+const forkDrops = [
+  { tone: 'cyan', d: 'M16.667 46 V100' },
+  { tone: 'gold', d: 'M50 46 V100' },
+  { tone: 'violet', d: 'M83.333 46 V100' },
+]
+
+const columns = computed(() =>
   [...NEURAL_STAR_BRANCH_MAP.values()]
     .filter((branch) => branch.id !== 'core')
     .map((branch) => {
-      const branchNodes = props.nodes.filter((node) => node.branch === branch.id)
+      const branchNodes = props.nodes
+        .filter((node) => node.branch === branch.id)
+        .sort((a, b) => a.order - b.order)
+      const steps = branchNodes.map((node, index) => ({
+        node,
+        wireLit: Boolean(
+          index === 0 ? coreNode.value?.lit : branchNodes[index - 1]?.lit,
+        ),
+      }))
       return {
         ...branch,
+        nodes: branchNodes,
+        steps,
         lit: branchNodes.filter((node) => node.lit).length,
-        total: branchNodes.length,
+        tailLit: Boolean(branchNodes[branchNodes.length - 1]?.lit),
       }
     }),
-)
-
-const links = computed(() =>
-  NEURAL_STAR_LINKS.map((link) => {
-    const source = nodeMap.value.get(link.sourceId)
-    const target = nodeMap.value.get(link.targetId)
-    if (!source || !target) return null
-    return {
-      ...link,
-      tone: NEURAL_STAR_BRANCH_MAP.get(target.branch)?.tone ?? 'core',
-      x1: source.x,
-      y1: source.y,
-      x2: target.x,
-      y2: target.y,
-      lit: source.lit && target.lit,
-      near: source.lit || target.lit,
-    }
-  }).filter(Boolean),
 )
 
 const guideNodeId = computed(() => {
@@ -103,12 +104,21 @@ function stateLabel(node) {
   return '可点亮'
 }
 
+function stateShort(node) {
+  const state = nodeState(node)
+  if (state === 'lit') return 'LIT'
+  if (state === 'sealed') return 'LOCK'
+  if (state === 'poor') return '不足'
+  if (state === 'dim') return '封印'
+  return '可点亮'
+}
+
 function nodeAriaLabel(node) {
-  if (node.lit) return `${node.name} 已点亮 | ${node.effect}`
+  if (node.lit) return `${node.name} 已点亮 ${node.effect}`
   if (!node.requiresMet) {
-    return `${node.name} 未解锁 | 需先点亮 ${node.missingRequirementName}`
+    return `${node.name} 未解锁 需先点亮 ${node.missingRequirementName}`
   }
-  return `${node.name} | ${node.effect} | 消耗 ${formatNumber(node.cost).text} 核心源码`
+  return `${node.name} ${node.effect} 消耗 ${formatNumber(node.cost).text} 核心源码`
 }
 
 function handleNodeClick(node) {
@@ -246,97 +256,201 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div class="star-legend" aria-label="星树分支">
-          <span class="star-legend__core">STAR_CORE</span>
-          <span
-            v-for="branch in branchChips"
-            :key="branch.id"
-            class="star-legend__item"
-            :data-tone="branch.tone"
-          >
-            <span class="star-legend__dot" aria-hidden="true"></span>
-            {{ branch.name }}
-            <span class="star-legend__count">{{ branch.lit }}/{{ branch.total }}</span>
-          </span>
-        </div>
-
         <div class="star-map" :class="{ 'star-map--expanded': expanded }">
-          <span class="star-map__nebula" aria-hidden="true"></span>
-          <span class="star-map__nebula star-map__nebula--gold" aria-hidden="true"></span>
-          <span class="star-map__nebula star-map__nebula--violet" aria-hidden="true"></span>
+          <div v-if="unlocked" class="star-tree">
+            <div class="star-core-stage">
+              <p class="star-core-stage__tag">STAR CORE // 永久认知层</p>
 
-          <svg
-            class="star-links"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <defs>
-              <filter id="star-line-glow" x="-80%" y="-80%" width="260%" height="260%">
-                <feGaussianBlur stdDeviation="0.9" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-            <line
-              v-for="link in links"
-              :key="link.id"
-              class="star-link"
-              :class="{ 'is-lit': link.lit, 'is-near': !link.lit && link.near }"
-              :data-tone="link.tone"
-              :x1="link.x1"
-              :y1="link.y1"
-              :x2="link.x2"
-              :y2="link.y2"
-              vector-effect="non-scaling-stroke"
-            />
-          </svg>
+              <button
+                v-if="coreNode"
+                type="button"
+                class="star-core"
+                :class="{
+                  'is-selected': selectedId === coreNode.id,
+                  'is-denied': deniedId === coreNode.id,
+                }"
+                :data-state="nodeState(coreNode)"
+                :data-guide="coreNode.id === guideNodeId ? 'topology-node' : null"
+                :aria-label="nodeAriaLabel(coreNode)"
+                :aria-pressed="selectedId === coreNode.id ? 'true' : 'false'"
+                @click="handleNodeClick(coreNode)"
+              >
+                <span class="star-core__hex">
+                  <span class="star-core__halo" aria-hidden="true"></span>
+                  <svg
+                    class="star-core__frame"
+                    viewBox="0 0 120 136"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <polygon
+                      class="star-core__hex-outer"
+                      points="60,3 114,33 114,103 60,133 6,103 6,33"
+                    />
+                    <polygon
+                      class="star-core__hex-inner"
+                      points="60,13 105,38 105,98 60,123 15,98 15,38"
+                    />
+                  </svg>
+                  <svg
+                    class="star-core__star"
+                    viewBox="0 0 48 48"
+                    aria-hidden="true"
+                  >
+                    <path
+                      class="star-core__star-glow"
+                      d="M24 3 29 17.1 44 17.5 32.1 26.6 36.3 41 24 32.5 11.7 41 15.9 26.6 4 17.5 19 17.1 Z"
+                    />
+                    <path
+                      class="star-core__star-core"
+                      d="M24 3 29 17.1 44 17.5 32.1 26.6 36.3 41 24 32.5 11.7 41 15.9 26.6 4 17.5 19 17.1 Z"
+                    />
+                  </svg>
+                  <span class="star-core__scan" aria-hidden="true"></span>
+                </span>
 
-          <button
-            v-for="node in nodes"
-            :key="node.id"
-            type="button"
-            class="star-node"
-            :class="{
-              'is-selected': selectedId === node.id,
-              'is-core': node.branch === 'core',
-              'is-denied': deniedId === node.id,
-            }"
-            :data-tone="nodeTone(node)"
-            :data-state="nodeState(node)"
-            :data-branch="node.branch"
-            :data-edge="node.x < 20 ? 'left' : node.x > 80 ? 'right' : null"
-            :data-guide="node.id === guideNodeId ? 'topology-node' : null"
-            :style="{ left: `${node.x}%`, top: `${node.y}%` }"
-            :aria-label="nodeAriaLabel(node)"
-            :aria-pressed="selectedId === node.id ? 'true' : 'false'"
-            @click="handleNodeClick(node)"
-          >
-            <span class="star-node__halo" aria-hidden="true"></span>
-            <span class="star-node__orb">
-              <span
-                v-if="node.branch === 'core'"
-                class="star-node__core"
-                aria-hidden="true"
-              ></span>
-              <span v-else class="star-node__index" aria-hidden="true">
-                {{ node.order }}
-              </span>
-            </span>
-            <span
-              class="star-node__label"
-              :class="{ 'star-node__label--above': node.labelPosition === 'above' }"
+                <span class="star-core__caption">
+                  <span class="star-core__name">星核</span>
+                  <span class="star-core__code">STAR_CORE</span>
+                  <span class="star-core__cost">
+                    <template v-if="coreLit">已点亮 永久保留</template>
+                    <template v-else>
+                      ◆ {{ formatNumber(coreNode.cost).text }} 核心源码
+                    </template>
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            <svg
+              class="star-fork"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
             >
-              <span class="star-node__name">{{ node.name }}</span>
-              <span class="star-node__cost">
-                {{ node.lit ? 'LIT' : formatNumber(node.cost).text }}
-              </span>
-            </span>
-          </button>
+              <path
+                class="star-fork__trunk"
+                :class="{ 'is-lit': coreLit }"
+                d="M50 0 V46"
+                vector-effect="non-scaling-stroke"
+              />
+              <path
+                class="star-fork__bus"
+                :class="{ 'is-lit': coreLit }"
+                d="M16.667 46 H83.333"
+                vector-effect="non-scaling-stroke"
+              />
+              <path
+                v-for="drop in forkDrops"
+                :key="drop.tone"
+                class="star-fork__drop"
+                :class="{ 'is-lit': coreLit }"
+                :data-tone="drop.tone"
+                :d="drop.d"
+                vector-effect="non-scaling-stroke"
+              />
+            </svg>
 
-          <div v-if="!unlocked" class="topology-lock">
+            <div class="star-columns">
+              <section
+                v-for="column in columns"
+                :key="column.id"
+                class="star-column"
+                :data-tone="column.tone"
+              >
+                <header
+                  class="star-column__head"
+                  :class="{ 'is-lit': coreLit }"
+                >
+                  <span class="star-column__dot" aria-hidden="true"></span>
+                  <span class="star-column__name">{{ column.name }}</span>
+                  <span class="star-column__count">
+                    {{ column.lit }}/{{ column.nodes.length }}
+                  </span>
+                </header>
+
+                <div class="star-column__track">
+                  <div
+                    v-for="step in column.steps"
+                    :key="step.node.id"
+                    class="star-step"
+                  >
+                    <svg
+                      class="star-link"
+                      :class="{ 'is-lit': step.wireLit }"
+                      :data-tone="column.tone"
+                      viewBox="0 0 2 24"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <line
+                        x1="1"
+                        y1="0"
+                        x2="1"
+                        y2="24"
+                        vector-effect="non-scaling-stroke"
+                      />
+                    </svg>
+
+                    <button
+                      type="button"
+                      class="star-node"
+                      :class="{
+                        'is-selected': selectedId === step.node.id,
+                        'is-denied': deniedId === step.node.id,
+                      }"
+                      :data-tone="nodeTone(step.node)"
+                      :data-state="nodeState(step.node)"
+                      :data-branch="step.node.branch"
+                      :data-guide="
+                        step.node.id === guideNodeId ? 'topology-node' : null
+                      "
+                      :aria-label="nodeAriaLabel(step.node)"
+                      :aria-pressed="
+                        selectedId === step.node.id ? 'true' : 'false'
+                      "
+                      @click="handleNodeClick(step.node)"
+                    >
+                      <span class="star-node__top">
+                        <span class="star-node__order">
+                          {{ String(step.node.order).padStart(2, '0') }}
+                        </span>
+                        <span class="star-node__name">{{ step.node.name }}</span>
+                      </span>
+                      <span class="star-node__bottom">
+                        <span class="star-node__flag">
+                          {{ stateShort(step.node) }}
+                        </span>
+                        <span class="star-node__cost">
+                          <i aria-hidden="true">◆</i>
+                          {{ formatNumber(step.node.cost).text }}
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+
+                  <svg
+                    class="star-link star-link--tail"
+                    :class="{ 'is-lit': column.tailLit }"
+                    :data-tone="column.tone"
+                    viewBox="0 0 2 18"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <line
+                      x1="1"
+                      y1="0"
+                      x2="1"
+                      y2="18"
+                      vector-effect="non-scaling-stroke"
+                    />
+                  </svg>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <div v-else class="topology-lock">
             <svg
               viewBox="0 0 24 24"
               class="h-7 w-7 text-cyan-400/80"
@@ -393,13 +507,13 @@ onBeforeUnmount(() => {
                 <span class="star-info__hint" :data-state="selectedState">
                   {{
                     selectedNode.lit
-                      ? '永久生效 | 不随重置回退'
+                      ? '永久生效 不随重置回退'
                       : selectedState === 'ready'
                         ? '再次点击节点确认点亮'
                         : selectedState === 'sealed'
                           ? `需先点亮 [ ${selectedNode.missingRequirementName || '前置节点'} ]`
                           : selectedState === 'poor'
-                            ? '核心源码不足 | 继续架构降维'
+                            ? '核心源码不足 继续架构降维'
                             : '星树未解锁'
                   }}
                 </span>
@@ -410,7 +524,7 @@ onBeforeUnmount(() => {
           <div v-else class="star-info__idle">
             <span class="star-info__idle-title">NEURAL STAR TREE // 待命</span>
             <span class="star-info__idle-text">
-              第一次点击节点查看效果与消耗 | 再次点击同一节点完成点亮
+              第一次点击节点查看效果与消耗 再次点击同一节点完成点亮
             </span>
           </div>
 

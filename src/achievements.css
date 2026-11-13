@@ -708,8 +708,29 @@
   text-shadow: 0 0 10px rgba(255, 45, 141, 0.32);
 }
 
-.achievement-card--secret:not(.is-unlocked) .achievement-card__condition {
-  color: rgba(255, 168, 206, 0.55);
+.achievement-card--secret .achievement-card__condition {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 168, 206, 0.68);
+  text-shadow: 0 0 12px rgba(255, 45, 141, 0.24);
+}
+
+.achievement-card--secret.is-unlocked .achievement-card__condition {
+  color: #ffc2dd;
+  text-shadow: 0 0 14px rgba(255, 45, 141, 0.5);
+}
+
+.achievement-card__record {
+  margin-top: 0.22rem;
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+  color: rgba(148, 132, 166, 0.78);
+  font-variant-numeric: tabular-nums;
+}
+
+.achievement-card--secret.is-unlocked .achievement-card__record {
+  color: rgba(162, 140, 178, 0.84);
 }
 
 .achievement-card--secret:not(.is-unlocked) .achievement-card__code {

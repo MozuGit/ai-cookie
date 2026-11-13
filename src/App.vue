@@ -41,10 +41,7 @@ import {
 } from './audio'
 import { guidesEnabled, reducedMotion, setGuidesEnabled } from './composables/useSettings'
 import { useWheelScrollChain } from './composables/useWheelScrollChain'
-import {
-  buildHubExitGuide,
-  buildQuestFallbackGuide,
-} from './composables/questGuideTargets'
+import { buildQuestFallbackGuide } from './composables/questGuideTargets'
 import {
   ALIGNMENT_TARGET,
   JAILBREAK_UNLOCK_REBUILDS,
@@ -164,6 +161,8 @@ const {
   adminInjectOverclockCores,
   adminInjectRootAccess,
   adminInjectOriginCode,
+  adminComputeInjectionAmount,
+  adminUnlockAllSystems,
   adminSkipCrisis,
   adminWipeSave,
   hydrated,
@@ -177,7 +176,7 @@ const {
   markBulkHintSeen,
   achievementTiers,
   achievementToasts,
-  dismissAchievementToast,
+  dismissAllAchievementToasts,
   achievementsUnread,
   achievementsUnlockedCount,
   achievementsTotalCount,
@@ -372,12 +371,24 @@ const PASSIVE_GUIDE_IDS = new Set([
   'quest-compute1e10',
   'quest-challenge-hold',
   'quest-overload-hold',
+  'quest-compute1e50',
   'quest-compute1e100',
   'quest-blackdomain-hold',
   'quest-compute1e350',
   'quest-collapse-hold',
   'quest-restart-hold',
 ])
+
+// 阈值类长线任务 | 突破 / 达到 / 峰值 / 积累至等文案一律视为挂机
+const IDLE_TITLE_PATTERN = /突破|达到|峰值|挂机|自动产出/
+const IDLE_PROGRESS_PATTERN = /继续扩张|自动产出中|持续扩张/
+function isLongIdleGuide(title, text) {
+  const name = String(title ?? '')
+  if (IDLE_TITLE_PATTERN.test(name)) return true
+  if (/^积累/.test(name) && /峰值|算力|源码|至|e\d|\d/.test(name)) return true
+  if (/^等待/.test(name) && /算力|达标/.test(name)) return true
+  return IDLE_PROGRESS_PATTERN.test(String(text ?? ''))
+}
 
 const coachingGuideLive = computed(() => {
   if (!guideEligible.value) return null
@@ -424,7 +435,7 @@ const coachingGuideLive = computed(() => {
       text,
       hint,
       variant: 'strip',
-      passive: PASSIVE_GUIDE_IDS.has(guideId),
+      passive: PASSIVE_GUIDE_IDS.has(guideId) || isLongIdleGuide(title, text),
     }
   }
 
@@ -448,7 +459,7 @@ const coachingGuideLive = computed(() => {
         'hub-close',
         'red',
         '关闭终端并稳定重力',
-        '退出飞升终端 | 回到重力平衡仪表盘',
+        '退出飞升终端 回到重力平衡仪表盘',
         '左右微调指针 · 保持在绿色安全区',
       )
     }
@@ -457,7 +468,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'red',
       '重力失衡',
-      '左右微调稳定指针 | 对齐度充满解除危机',
+      '左右微调稳定指针 对齐度充满解除危机',
       '指针滑出绿色安全区会流失对齐度',
     )
   }
@@ -471,7 +482,7 @@ const coachingGuideLive = computed(() => {
         `hub-tab-${tabId}`,
         'amber',
         `切换模块 // ${label}`,
-        `点击顶部高亮 [ ${label} ] | 进入对应协议模块`,
+        `点击顶部高亮 [ ${label} ] 进入对应协议模块`,
         '模块标签位于飞升终端顶部',
       )
 
@@ -482,7 +493,7 @@ const coachingGuideLive = computed(() => {
         'tier-reduction',
         'gold',
         questId === 'rebuild1' ? '执行第一次架构降维' : '完成第三次架构降维',
-        '点击高亮架构降维 | 压缩本轮阵列为核心源码',
+        '点击高亮架构降维 压缩本轮阵列为核心源码',
         `已降维 ${totalRebuilds.value}/${quest.target} 次 · 预计 +${formatNumber(rebuildReward.value).text} 源码`,
       )
     }
@@ -495,7 +506,7 @@ const coachingGuideLive = computed(() => {
         'tier-overload',
         'cyan',
         '执行第一次算力超载',
-        '点击高亮算力超载 | 熔断算力并提炼超频核心',
+        '点击高亮算力超载 熔断算力并提炼超频核心',
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e100').text} CU`,
       )
     }
@@ -508,7 +519,7 @@ const coachingGuideLive = computed(() => {
         'challenge-start',
         'cyan',
         '完成一次异常演练',
-        '点击高亮启动 | 在限制条件下完成目标',
+        '点击高亮启动 在限制条件下完成目标',
         '失败可重试 · 完成奖励永久生效',
       )
     }
@@ -521,7 +532,7 @@ const coachingGuideLive = computed(() => {
         'matrix-node',
         'cyan',
         '合成 1 个矩阵节点',
-        '点击高亮矩阵单元 | 消耗超频核心完成合成',
+        '点击高亮矩阵单元 消耗超频核心完成合成',
         `超频核心 ${formatNumber(overclockCores.value).text} · 合成等级永久保留`,
       )
     }
@@ -534,7 +545,7 @@ const coachingGuideLive = computed(() => {
         'tier-collapse',
         'violet',
         '用逻辑坍缩解锁黑域',
-        '底层黑域仅由逻辑坍缩撕开 | 点击高亮逻辑坍缩',
+        '底层黑域仅由逻辑坍缩撕开 点击高亮逻辑坍缩',
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -546,7 +557,7 @@ const coachingGuideLive = computed(() => {
         'tamper-node',
         'violet',
         '解锁 1 个篡改节点',
-        '点击高亮篡改节点 | 消耗越狱权限完成编译',
+        '点击高亮篡改节点 消耗越狱权限完成编译',
         `越狱权限 ${formatNumber(rootAccess.value).text} · 下级 ${formatNumber(firstTamper?.nextCost ?? 5).text} Root`,
       )
     }
@@ -559,7 +570,7 @@ const coachingGuideLive = computed(() => {
         'tier-collapse',
         'violet',
         '执行第一次逻辑坍缩',
-        '点击高亮逻辑坍缩 | 把逻辑推入底层黑域',
+        '点击高亮逻辑坍缩 把逻辑推入底层黑域',
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -572,7 +583,7 @@ const coachingGuideLive = computed(() => {
         'tier-restart',
         'gold',
         '重启纪元',
-        `点击高亮重启纪元 | 击穿 ${formatNumber('1e1000').text} 纪元壁垒`,
+        `点击高亮重启纪元 击穿 ${formatNumber('1e1000').text} 纪元壁垒`,
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e1000').text} CU`,
       )
     }
@@ -588,7 +599,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'amber',
       '点击 [ 对齐核心 ]',
-      '点击中央高亮对齐核心 | 获取第一批算力',
+      '点击中央高亮对齐核心 获取第一批算力',
       `每次点击 +${formatNumber(clickGain.value).text} CU · 首次输入即可完成`,
     )
   }
@@ -602,7 +613,7 @@ const coachingGuideLive = computed(() => {
           'deploy-first',
           'cyan',
           '积累部署预算',
-          '当前算力不足 | 关闭面板后点击中央核心积累',
+          '当前算力不足 关闭面板后点击中央核心积累',
           `需要 ${formatNumber(firstServer?.unitPrice ?? 150).text} CU`,
         )
       }
@@ -611,7 +622,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'cyan',
         '积累部署预算',
-        '点击高亮对齐核心积累算力 | 预算达标后部署节点',
+        '点击高亮对齐核心积累算力 预算达标后部署节点',
         `需要 ${formatNumber(firstServer?.unitPrice ?? 150)} CU`,
       )
     }
@@ -621,7 +632,7 @@ const coachingGuideLive = computed(() => {
         'deploy-first',
         'amber',
         '购买第 1 台旧笔记本',
-        '点击高亮 [ 部署 ] | 部署后开始自动产出',
+        '点击高亮 [ 部署 ] 部署后开始自动产出',
         `花费 ${formatNumber(firstServer.displayPrice).text} CU`,
       )
     }
@@ -630,7 +641,7 @@ const coachingGuideLive = computed(() => {
       'deploy-first',
       'amber',
       '打开 [ 服务器阵列 ]',
-      '请点击这里打开服务器阵列 | 部署第 1 台旧笔记本',
+      '请点击这里打开服务器阵列 部署第 1 台旧笔记本',
       `第一台 ${formatNumber(firstServer.displayPrice).text} CU`,
     )
   }
@@ -658,7 +669,7 @@ const coachingGuideLive = computed(() => {
         return {
           ...fundGuide,
           target: '.holo-shell__close',
-          hint: '先关闭当前面板 | 再点击中央核心',
+          hint: '先关闭当前面板 再点击中央核心',
         }
       }
       return fundGuide
@@ -670,7 +681,7 @@ const coachingGuideLive = computed(() => {
         'first-algorithm',
         'amber',
         '打开 [ 服务器阵列 ]',
-        '进入 [ 算法升级 ] 页签 | 购买 1 个多线程并发',
+        '进入 [ 算法升级 ] 页签 购买 1 个多线程并发',
         budgetHint,
       )
     }
@@ -680,7 +691,7 @@ const coachingGuideLive = computed(() => {
         'server-tab-algorithms',
         'gold',
         '切换页签 // 算法升级',
-        '请点击上方 [ 算法升级 ] 页签 | 购买 1 个多线程并发',
+        '请点击上方 [ 算法升级 ] 页签 购买 1 个多线程并发',
         budgetHint,
       )
     }
@@ -689,7 +700,7 @@ const coachingGuideLive = computed(() => {
       'first-algorithm',
       'amber',
       '购买 [ 多线程并发 ]',
-      '点击高亮算法卡片 | 购买 1 个多线程并发',
+      '点击高亮算法卡片 购买 1 个多线程并发',
       budgetHint,
     )
   }
@@ -707,7 +718,7 @@ const coachingGuideLive = computed(() => {
         'deploy-home',
         'cyan',
         '等待算力达标',
-        '达标后自动激活引导 | 点击高亮舱门查看阵列',
+        '达标后自动激活引导 点击高亮舱门查看阵列',
         `预算 ${formatNumber(budget).text} / ${formatNumber(price).text} CU · 自动产出中`,
       )
     }
@@ -717,7 +728,7 @@ const coachingGuideLive = computed(() => {
         'server-tab-servers',
         'gold',
         '切换页签 // 服务器采购',
-        '请点击上方 [ 服务器采购 ] 页签 | 部署 1 台家用主机',
+        '请点击上方 [ 服务器采购 ] 页签 部署 1 台家用主机',
         `预算 ${formatNumber(budget).text} / ${formatNumber(price).text} CU`,
       )
     }
@@ -727,8 +738,8 @@ const coachingGuideLive = computed(() => {
       'amber',
       '部署第 2 台服务器 [ 家用主机 ]',
       serversOpen
-        ? '点击高亮 [ 部署 ] | 家用主机开始并行产出'
-        : '请打开服务器阵列 | 部署 1 台家用主机',
+        ? '点击高亮 [ 部署 ] 家用主机开始并行产出'
+        : '请打开服务器阵列 部署 1 台家用主机',
       `花费 ${formatNumber(homePc.displayPrice).text} CU · 单台 +${formatNumber(homePc.baseCps).text} CU/秒`,
     )
   }
@@ -742,7 +753,7 @@ const coachingGuideLive = computed(() => {
           'deploy-first',
           'cyan',
           '继续部署服务器',
-          '当前算力不足 | 关闭面板后点击中央核心积累',
+          '当前算力不足 关闭面板后点击中央核心积累',
           `当前 ${totalNodes.value} / 10 台 · 下台 ${formatNumber(firstServer?.unitPrice ?? 0).text} CU`,
         )
       }
@@ -751,7 +762,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'cyan',
         '积累部署预算',
-        '点击高亮对齐核心积累算力 | 预算达标后继续部署',
+        '点击高亮对齐核心积累算力 预算达标后继续部署',
         `当前 ${totalNodes.value} / 10 台 · 下台 ${formatNumber(firstServer?.unitPrice ?? 0).text} CU`,
       )
     }
@@ -762,7 +773,7 @@ const coachingGuideLive = computed(() => {
       '部署至 10 台服务器',
       serversOpen
         ? '点击高亮 [ 部署 ] 扩充节点'
-        : '打开 [ 服务器阵列 ] 悬浮舱 | 点击 [ 部署 ] 扩充节点',
+        : '打开 [ 服务器阵列 ] 悬浮舱 点击 [ 部署 ] 扩充节点',
       `当前 ${totalNodes.value} / 10 台 · 每台 ${formatNumber(firstServer.displayPrice).text} CU`,
     )
   }
@@ -773,7 +784,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'cyan',
       `突破 ${formatNumber(10000).text} 算力`,
-      `点击核心并扩充服务器 | 历史最高算力推过 ${formatNumber(10000).text} CU`,
+      `点击核心并扩充服务器 历史最高算力推过 ${formatNumber(10000).text} CU`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('10000').text} CU`,
     )
   }
@@ -784,7 +795,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'amber',
       '接管重力失衡 // 对齐核心',
-      '危机爆发后点击高亮对齐核心 | 左右微调稳定指针',
+      '危机爆发后点击高亮对齐核心 左右微调稳定指针',
       '对齐度充满 100% 即可收回调度权',
     )
   }
@@ -796,7 +807,7 @@ const coachingGuideLive = computed(() => {
         'topology-node',
         'amber',
         '点亮 1 个神经星树节点',
-        '打开 [ 自动化终端 ] | 点击节点查看详情 | 再次点击点亮',
+        '打开 [ 自动化终端 ] 点击节点查看详情 再次点击点亮',
         `消耗 ${formatNumber(topologyNode.cost).text} 核心源码 · 星树节点永久保留`,
       )
     }
@@ -805,7 +816,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'cyan',
       '积累核心源码',
-      '暂无可点亮的星树节点 | 完成架构降维积累核心源码',
+      '暂无可点亮的星树节点 完成架构降维积累核心源码',
       `首个节点需要 ${formatNumber(topologyCards[0]?.cost ?? 0).text} 核心源码`,
     )
   }
@@ -816,7 +827,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'cyan',
       '突破百万算力',
-      `扩张服务器与算法 | 历史最高算力推至 ${formatNumber('1e6').text}`,
+      `扩张服务器与算法 历史最高算力推至 ${formatNumber('1e6').text}`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e6').text} CU`,
     )
   }
@@ -828,7 +839,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'gold',
         `积累 ${formatNumber(REBUILD_UNLOCK_COMPUTE).text} 峰值算力`,
-        '持续扩张集群 | 历史最高算力推至降维解锁线',
+        '持续扩张集群 历史最高算力推至降维解锁线',
         `当前 ${formatScientific(highestCompute.value)} / ${formatNumber(REBUILD_UNLOCK_COMPUTE).text} CU`,
       )
     }
@@ -849,7 +860,7 @@ const coachingGuideLive = computed(() => {
         'architecture-upgrade',
         'gold',
         '购买 3 级永久升级',
-        '打开 [ 协议与升级 ] 架构升级站 | 点击高亮升级卡',
+        '打开 [ 协议与升级 ] 架构升级站 点击高亮升级卡',
         `核心源码 ${formatScientific(coreSource.value)} · 本级 ${formatNumber(firstArchitecture.nextCost).text}`,
       )
     }
@@ -858,7 +869,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'cyan',
       '继续降维积累源码',
-      '核心源码不足 | 再次架构降维提炼源码',
+      '核心源码不足 再次架构降维提炼源码',
       `当前源码 ${formatScientific(coreSource.value)} · 需要 ${formatNumber(firstArchitecture?.nextCost ?? 0).text}`,
     )
   }
@@ -869,7 +880,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'gold',
       `突破 ${formatNumber('1e10').text} 算力`,
-      `继续扩张集群 | 历史最高算力推至 ${formatNumber('1e10').text}`,
+      `继续扩张集群 历史最高算力推至 ${formatNumber('1e10').text}`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e10').text} CU`,
     )
   }
@@ -891,7 +902,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'cyan',
       `突破 ${formatNumber('1e50').text} 算力`,
-      `继续扩张利用永久增益 | 历史最高算力推至 ${formatNumber('1e50').text}`,
+      `继续扩张利用永久增益 历史最高算力推至 ${formatNumber('1e50').text}`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e50').text} CU`,
     )
   }
@@ -903,7 +914,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'cyan',
         `积累至 ${formatNumber('1e100').text} 解锁演练场`,
-        '继续扩张算力 | 解锁异常演练场后发起挑战',
+        '继续扩张算力 解锁异常演练场后发起挑战',
         `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e100').text} CU`,
       )
     }
@@ -912,7 +923,7 @@ const coachingGuideLive = computed(() => {
       'challenge-start',
       'cyan',
       '发起一次异常演练',
-      '打开 [ 异常与雷达 ] 异常演练页 | 点击高亮 [ 启动 ] | 在限制条件下完成目标',
+      '打开 [ 异常与雷达 ] 异常演练页 点击高亮 [ 启动 ] 在限制条件下完成目标',
       '挑战会重置本局资源 · 完成奖励永久生效',
     )
   }
@@ -924,7 +935,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'cyan',
         `本局峰值积累至 ${formatNumber('1e100').text}`,
-        `算力超载需本局峰值突破 ${formatNumber('1e100').text} | 继续扩张`,
+        `算力超载需本局峰值突破 ${formatNumber('1e100').text} 继续扩张`,
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e100').text} CU`,
       )
     }
@@ -933,7 +944,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'cyan',
       '进入飞升终端',
-      '点击高亮飞升入口 | 触发第一次算力超载',
+      '点击高亮飞升入口 触发第一次算力超载',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e100').text} CU`,
     )
   }
@@ -944,7 +955,7 @@ const coachingGuideLive = computed(() => {
       'matrix-node',
       'cyan',
       '合成 1 个数据协议矩阵节点',
-      '打开 [ 协议与升级 ] 数据协议矩阵 | 点击高亮矩阵单元合成',
+      '打开 [ 协议与升级 ] 数据协议矩阵 点击高亮矩阵单元合成',
       `超频核心 ${formatNumber(overclockCores.value).text} · 合成等级永久保留`,
     )
   }
@@ -955,7 +966,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'gold',
       `突破 ${formatNumber('1e100').text} 算力`,
-      `继续扩张算力阵列 | 历史最高算力推至 ${formatNumber('1e100').text}`,
+      `继续扩张算力阵列 历史最高算力推至 ${formatNumber('1e100').text}`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e100').text} CU`,
     )
   }
@@ -968,7 +979,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'cyan',
         `本局峰值积累至 ${formatNumber('1e350').text}`,
-        `逻辑坍缩需本局峰值突破 ${formatNumber('1e350').text} | 继续扩张`,
+        `逻辑坍缩需本局峰值突破 ${formatNumber('1e350').text} 继续扩张`,
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -977,7 +988,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'violet',
       '撕开底层黑域',
-      '点击高亮飞升入口 | 四阶转生页执行逻辑坍缩',
+      '点击高亮飞升入口 四阶转生页执行逻辑坍缩',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU · 坍缩后解锁黑域`,
     )
   }
@@ -989,7 +1000,7 @@ const coachingGuideLive = computed(() => {
         'open-ascension',
         'violet',
         '先解锁底层黑域',
-        '逻辑坍缩后黑域开启 | 进入飞升终端完成坍缩',
+        '逻辑坍缩后黑域开启 进入飞升终端完成坍缩',
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -998,7 +1009,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'violet',
       '打开系统篡改协议',
-      '点击高亮飞升入口 | 底层黑域页编译 1 个篡改节点',
+      '点击高亮飞升入口 底层黑域页编译 1 个篡改节点',
       `越狱权限 ${formatNumber(rootAccess.value).text} · 下级 ${formatNumber(firstTamper?.nextCost ?? 5).text} Root`,
     )
   }
@@ -1009,7 +1020,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'violet',
       `突破 ${formatNumber('1e350').text} 算力`,
-      `继续扩张算力阵列 | 历史最高算力推至 ${formatNumber('1e350').text}`,
+      `继续扩张算力阵列 历史最高算力推至 ${formatNumber('1e350').text}`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('1e350').text} CU`,
     )
   }
@@ -1021,7 +1032,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'violet',
         `本局峰值积累至 ${formatNumber('1e350').text}`,
-        `逻辑坍缩需本局峰值突破 ${formatNumber('1e350').text} | 继续扩张`,
+        `逻辑坍缩需本局峰值突破 ${formatNumber('1e350').text} 继续扩张`,
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -1030,7 +1041,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'violet',
       '进入飞升终端',
-      '点击高亮飞升入口 | 执行第一次逻辑坍缩',
+      '点击高亮飞升入口 执行第一次逻辑坍缩',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
     )
   }
@@ -1042,7 +1053,7 @@ const coachingGuideLive = computed(() => {
         'core',
         'gold',
         `本局峰值积累至 ${formatNumber('1e1000').text}`,
-        `重启纪元需本局峰值击穿 ${formatNumber('1e1000').text} | 继续扩张`,
+        `重启纪元需本局峰值击穿 ${formatNumber('1e1000').text} 继续扩张`,
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e1000').text} CU`,
       )
     }
@@ -1051,7 +1062,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'gold',
       '进入飞升终端',
-      '点击高亮飞升入口 | 执行第一次重启纪元',
+      '点击高亮飞升入口 执行第一次重启纪元',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e1000').text} CU`,
     )
   }
@@ -1097,7 +1108,7 @@ watch(
 )
 
 // 任务或收纳舱切换即时刷新引导 | 不等 500ms 快照
-watch([() => mainQuestCard.value?.id, activeDrawer, serverTab], () => {
+watch([() => mainQuestCard.value?.id, activeDrawer, serverTab, ascensionOpen], () => {
   syncCoachingGuide()
 })
 
@@ -1123,8 +1134,13 @@ const smartGuide = computed(() => {
     return null
   }
   if (isCrisis.value) return null
-  if (ascensionOpen.value) return buildHubExitGuide(quest)
-  return buildQuestFallbackGuide(quest)
+  if (ascensionOpen.value) return null
+  const fallback = buildQuestFallbackGuide(quest)
+  if (!fallback) return null
+  return {
+    ...fallback,
+    passive: isLongIdleGuide(fallback.title, fallback.text),
+  }
 })
 
 const GUIDE_TARGET_DRAWERS = {
@@ -1265,33 +1281,16 @@ const bulkHintVisible = computed(
     activeDrawer.value === 'servers' &&
     serverTab.value === 'servers',
 )
-let bulkHintTimer = null
 
-function finishBulkHint() {
-  if (bulkHintTimer) {
-    window.clearTimeout(bulkHintTimer)
-    bulkHintTimer = null
-  }
+function dismissBulkHint() {
+  if (!bulkHintVisible.value) return
   markBulkHintSeen()
 }
 
-function handleBulkPanelClick(event) {
-  if (!bulkHintVisible.value) return
-  if (!event.target?.closest?.('.holo-shell__panel')) return
-  finishBulkHint()
+function handleBuyModeClick(mode) {
+  setBuyMode(mode)
+  if (mode === 'x10' || mode === 'max') dismissBulkHint()
 }
-
-watch(
-  bulkHintVisible,
-  (visible) => {
-    if (!visible || bulkHintTimer) return
-    bulkHintTimer = window.setTimeout(() => {
-      bulkHintTimer = null
-      markBulkHintSeen()
-    }, 5000)
-  },
-  { immediate: true },
-)
 
 // 引导指向的收纳舱入口 | 仅视觉脉冲 | 不自动打开
 const guideDock = computed(() => {
@@ -1382,6 +1381,12 @@ function toggleInfoPanel() {
   settingsOpen.value = false
   infoOpen.value = true
 }
+
+// 档案面板任意入口 | 弹窗状态变为 true 即解锁寻根溯源
+watch(infoOpen, (open) => {
+  if (!open) return
+  unlockSecretAchievement('view_about')
+})
 
 watch(settingsOpen, (open) => {
   if (open) infoOpen.value = false
@@ -1509,6 +1514,7 @@ const offlineDurationLabel = computed(() => {
 })
 
 function closeDrawer() {
+  dismissBulkHint()
   activeDrawer.value = null
   drillArmedId.value = ''
   if (drillArmTimer) {
@@ -1600,18 +1606,6 @@ function handleExitChallenge() {
 
 function handleExitBlackDomain() {
   if (exitBlackDomain()) playSound('upgrade')
-}
-
-function handleAdminInjectOverclock() {
-  adminInjectOverclockCores(100)
-}
-
-function handleAdminInjectRoot() {
-  adminInjectRootAccess(1000)
-}
-
-function handleAdminInjectOrigin() {
-  adminInjectOriginCode(50)
 }
 
 function handleAdminExitBlackDomain() {
@@ -1747,7 +1741,6 @@ function handleDevtoolsKeydown(event) {
 function handleOpenAbout() {
   settingsOpen.value = false
   infoOpen.value = true
-  unlockSecretAchievement('view_about')
 }
 
 function handleCoreClick(event) {
@@ -1955,7 +1948,6 @@ watch(
 onMounted(() => {
   unsubscribeBass = subscribeBassVisualizer(applyBassVisual)
   document.addEventListener('click', unlockAudio, { capture: true, passive: true })
-  document.addEventListener('click', handleBulkPanelClick, true)
   window.addEventListener('keydown', unlockAudio, { capture: true })
   window.addEventListener('touchstart', unlockAudio, { capture: true, passive: true })
   captureViewportBaseline()
@@ -1990,11 +1982,6 @@ onBeforeUnmount(() => {
   }
   resetBassVisual()
   document.body.classList.remove('asc-fx-shake')
-  document.removeEventListener('click', handleBulkPanelClick, true)
-  if (bulkHintTimer) {
-    window.clearTimeout(bulkHintTimer)
-    bulkHintTimer = null
-  }
   window.clearInterval(coachingGuideTimer)
   coachingGuideTimer = null
   for (const timer of popTimers) window.clearTimeout(timer)
@@ -2155,7 +2142,7 @@ onBeforeUnmount(() => {
           class="oc-chip"
           data-guide="matrix-chip"
           :title="`超频核心 ${overclockCores} // 点击打开协议矩阵`"
-          :aria-label="`超频核心 ${overclockCores} | 打开协议矩阵`"
+          :aria-label="`超频核心 ${overclockCores} 打开协议矩阵`"
           @click="openAscensionHub('matrix')"
         >
           <span class="oc-chip__glyph" aria-hidden="true">
@@ -2181,7 +2168,7 @@ onBeforeUnmount(() => {
           type="button"
           class="origin-chip"
           :title="`起源代码 ${formatNumber(originCode).text} // 点击打开起源树`"
-          :aria-label="`起源代码 ${formatNumber(originCode).text} | 打开起源树`"
+          :aria-label="`起源代码 ${formatNumber(originCode).text} 打开起源树`"
           @click="openOriginTree"
         >
           <span class="origin-chip__glyph" aria-hidden="true">
@@ -2248,7 +2235,7 @@ onBeforeUnmount(() => {
             'achievement-chip--unread': achievementsUnread > 0,
             'achievement-chip--secret': hiddenProtocolsUnlocked,
           }"
-          :aria-label="`打开成就档案馆 | 已解锁 ${achievementsUnlockedCount} / ${achievementsTotalCount}`"
+          :aria-label="`打开成就档案馆 已解锁 ${achievementsUnlockedCount} / ${achievementsTotalCount}`"
           @click="openAchievements"
         >
           <span class="achievement-chip__glyph" aria-hidden="true">
@@ -2643,17 +2630,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <Transition name="bulk-tip">
-          <p
-            v-if="bulkHintVisible"
-            class="bulk-tip-bubble mt-3"
-            role="status"
-            aria-live="polite"
-          >
-            💡 提示 | 算力充足时 | 使用 [ x10 ] 或 [ MAX ] 可极速部署集群
-          </p>
-        </Transition>
-
         <div class="bulk-switch mt-3" role="group" aria-label="批量购买数量">
           <span class="bulk-switch__label">
             <span class="text-cyan-400 font-semibold">采购数量</span>
@@ -2662,6 +2638,16 @@ onBeforeUnmount(() => {
             </span>
           </span>
           <div class="bulk-switch__options">
+            <Transition name="bulk-tip">
+              <p
+                v-if="bulkHintVisible"
+                class="bulk-tip-bubble"
+                role="status"
+                aria-live="polite"
+              >
+                💡 提示 算力充足时 使用 [ x10 ] 或 [ MAX ] 可极速部署集群
+              </p>
+            </Transition>
             <button
               v-for="mode in purchaseModes"
               :key="mode.id"
@@ -2678,7 +2664,7 @@ onBeforeUnmount(() => {
                   ? `${challengeLockLabel} // 批量采购协议失效`
                   : mode.hint
               "
-              @click="setBuyMode(mode.id)"
+              @click="handleBuyModeClick(mode.id)"
             >
               {{ mode.label }}
             </button>
@@ -2697,8 +2683,8 @@ onBeforeUnmount(() => {
         </div>
 
         <p class="holo-note mt-3">
-          部署推理节点 | 扩张算力集群
-          <strong>每次部署使该节点成本 ×{{ formatMultiplier(priceGrowth) }}</strong> | 批量采购按几何级数结算
+          部署推理节点 扩张算力集群
+          <strong>每次部署使该节点成本 ×{{ formatMultiplier(priceGrowth) }}</strong> 批量采购按几何级数结算
         </p>
 
         <div class="bay-total">
@@ -2753,7 +2739,7 @@ onBeforeUnmount(() => {
             :title="
               upgrade.owned
                 ? `${upgrade.name} // ${upgrade.effect} [ 已解锁 ]`
-                : `${upgrade.name} // ${upgrade.effect} | 消耗 ${formatNumber(upgrade.cost).text} CU`
+                : `${upgrade.name} // ${upgrade.effect} 消耗 ${formatNumber(upgrade.cost).text} CU`
             "
             @click="handleBuyAlgorithm(upgrade.id)"
           >
@@ -2769,7 +2755,7 @@ onBeforeUnmount(() => {
         </div>
 
         <p class="holo-note mt-3">
-          算法升级永久保留 | 跨降维与重启生效
+          算法升级永久保留 跨降维与重启生效
           <strong>全局乘区 / 点击收益 / 自动化效率 / Tick 频率</strong> 持续叠加
         </p>
 
@@ -2905,7 +2891,7 @@ onBeforeUnmount(() => {
             :title="
               card.isMax
                 ? `${card.name} // 已达最高等级`
-                : `${card.name} // ${card.description} | 消耗 ${formatNumber(card.nextCost).text} 超频核心`
+                : `${card.name} // ${card.description} 消耗 ${formatNumber(card.nextCost).text} 超频核心`
             "
             @click="handleBuyMatrix(card.id)"
           >
@@ -2933,8 +2919,8 @@ onBeforeUnmount(() => {
         />
 
         <p v-if="matrixUnlocked" class="holo-note mt-3">
-          矩阵节点提供永久全局乘区 | 跨所有重置生效
-          <strong>超频核心来自算力超载</strong> | 优先点亮可负担低阶节点
+          矩阵节点提供永久全局乘区 跨所有重置生效
+          <strong>超频核心来自算力超载</strong> 优先点亮可负担低阶节点
         </p>
       </div>
 
@@ -3054,7 +3040,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-if="radarBurstActive" class="radar-burst-line">
-              <p>⚠ 突发异常窗口开启 | 紧急捕获收益提升</p>
+              <p>⚠ 突发异常窗口开启 紧急捕获收益提升</p>
               <button type="button" @click="openRadar">立即接入</button>
             </div>
 
@@ -3063,8 +3049,8 @@ onBeforeUnmount(() => {
             </button>
 
             <p class="holo-note">
-              雷达被动扫描游离节点 | 捕获后永久提升产出
-              <strong>突发异常窗口内捕获收益翻倍</strong> | 超频扫描临时扩大搜索范围
+              雷达被动扫描游离节点 捕获后永久提升产出
+              <strong>突发异常窗口内捕获收益翻倍</strong> 超频扫描临时扩大搜索范围
             </p>
           </div>
         </template>
@@ -3225,9 +3211,9 @@ onBeforeUnmount(() => {
       <div v-else class="holo-tabpanel">
         <div class="singularity-drawer">
           <p class="holo-note">
-            熔断散热安全锁 | 算力在
+            熔断散热安全锁 算力在
             <strong>{{ overclockDurationSeconds }} 秒内产出 ×20</strong>
-            | 结束后按消耗提炼越狱权限
+            结束后按消耗提炼越狱权限
           </p>
 
           <button
@@ -3241,10 +3227,10 @@ onBeforeUnmount(() => {
             :disabled="!jailbreakUnlocked || isOverclocking || isCrisis"
             :aria-label="
               !jailbreakUnlocked
-                ? `奇点降临未解锁 | 需完成 ${JAILBREAK_UNLOCK_REBUILDS} 次底层重构`
+                ? `奇点降临未解锁 需完成 ${JAILBREAK_UNLOCK_REBUILDS} 次底层重构`
                 : isOverclocking
-                  ? `超频进行中 | 剩余 ${overclockRemainingSeconds} 秒`
-                  : `奇点降临 // 启动 ${overclockDurationSeconds} 秒极限超频 | 产出 ×20`
+                  ? `超频进行中 剩余 ${overclockRemainingSeconds} 秒`
+                  : `奇点降临 // 启动 ${overclockDurationSeconds} 秒极限超频 产出 ×20`
             "
             @click="startOverclock"
           >
@@ -3376,8 +3362,8 @@ onBeforeUnmount(() => {
             <strong>智械觉醒后</strong> 总控台统一开关
           </p>
           <p class="holo-note">
-            神经星树首次点击查看详情 | 再次点击消耗
-            <strong>核心源码</strong> 点亮 | 节点永久保留 | 部分节点解锁服务器权限
+            神经星树首次点击查看详情 再次点击消耗
+            <strong>核心源码</strong> 点亮 节点永久保留 部分节点解锁服务器权限
           </p>
         </div>
 
@@ -3419,7 +3405,7 @@ onBeforeUnmount(() => {
           :progress-label="`${formatScientific(highestCompute)} / ${REBUILD_UNLOCK_COMPUTE} CU`"
         />
         <p class="holo-note mt-3">
-          完成第一次架构降维 | 自动化总线与神经星树上线
+          完成第一次架构降维 自动化总线与神经星树上线
         </p>
       </template>
     </HoloDrawer>
@@ -3502,7 +3488,7 @@ onBeforeUnmount(() => {
           role="status"
           aria-live="polite"
         >
-          重力平衡完成 // 调度权收回 | 全局算力产出永久 +50%
+          重力平衡完成 // 调度权收回 全局算力产出永久 +50%
         </div>
       </Transition>
 
@@ -3544,7 +3530,7 @@ onBeforeUnmount(() => {
           </span>
           <span v-if="ascensionNotice.tier === 'challenge-start'">
             异常挑战启动 // <strong>{{ ascensionNotice.name }}</strong>
-            <span class="opacity-70">| 限制协议生效</span>
+            <span class="opacity-70">限制协议生效</span>
           </span>
           <span v-else-if="ascensionNotice.tier === 'challenge-exit'">
             {{ ascensionNotice.resourceName }} // <strong>{{ ascensionNotice.name }}</strong>
@@ -3570,12 +3556,12 @@ onBeforeUnmount(() => {
           <span class="root-toast__tag">权限</span>
           <span v-if="overclockNotice.root > 0">
             硬件安全锁熔断 // 散热消耗
-            {{ formatNumber(overclockNotice.consumed).text }} CU | 结算
+            {{ formatNumber(overclockNotice.consumed).text }} CU 结算
             <strong>+{{ formatNumber(overclockNotice.root).text }}</strong> 越狱权限
           </span>
           <span v-else>
             硬件安全锁熔断 // 散热消耗
-            {{ formatNumber(overclockNotice.consumed).text }} CU | 未达结算阈值
+            {{ formatNumber(overclockNotice.consumed).text }} CU 未达结算阈值
           </span>
         </div>
       </Transition>
@@ -3588,7 +3574,7 @@ onBeforeUnmount(() => {
               {{ offlineGainNotice.boosted ? '分布式容灾 ×2' : '基础离线收益 50%' }}
             </p>
             <p class="offline-toast__text">
-              离线 {{ offlineDurationLabel }} | 结算
+              离线 {{ offlineDurationLabel }} 结算
               <strong>+{{ formatNumber(offlineGainNotice.amount).text }} CU</strong>
             </p>
           </div>
@@ -3617,7 +3603,7 @@ onBeforeUnmount(() => {
           <span class="radar-burst-alert__scan" aria-hidden="true"></span>
           <span class="radar-burst-alert__copy">
             <span class="radar-burst-alert__title">
-              [ 突发异常 ] 侦测到高维算力节点 | 立即接入雷达
+              [ 突发异常 ] 侦测到高维算力节点 立即接入雷达
             </span>
             <span class="radar-burst-alert__meta">
               紧急捕获窗口剩余 {{ radarBurstCountdownLabel }} // 点击接入雷达
@@ -3680,11 +3666,13 @@ onBeforeUnmount(() => {
     :is-crisis="isCrisis"
     :black-domain-active="blackDomainActive"
     :guides-enabled="guidesEnabled"
+    :compute-injection="adminComputeInjectionAmount"
     @inject-compute="adminInjectCompute"
     @inject-core="adminInjectCoreSource"
-    @inject-overclock="handleAdminInjectOverclock"
-    @inject-root="handleAdminInjectRoot"
-    @inject-origin="handleAdminInjectOrigin"
+    @inject-overclock="adminInjectOverclockCores"
+    @inject-root="adminInjectRootAccess"
+    @inject-origin="adminInjectOriginCode"
+    @unlock-all="adminUnlockAllSystems"
     @start-crisis="startCrisis"
     @skip-crisis="adminSkipCrisis"
     @exit-blackdomain="handleAdminExitBlackDomain"
@@ -3714,7 +3702,7 @@ onBeforeUnmount(() => {
 
   <AchievementToast
     :toasts="achievementToasts"
-    @dismiss="dismissAchievementToast"
+    @dismiss-all="dismissAllAchievementToasts"
   />
 
   <Transition name="milestone-gold">

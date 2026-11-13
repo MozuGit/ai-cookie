@@ -93,8 +93,8 @@ const CRISIS_RESCUE_IMPULSE = 30
 const CRISIS_RESCUE_DAMPING = 2.2
 const CRISIS_RESCUE_FORCED_RATE = 7
 const CRISIS_RESCUE_RECOVER_ALIGNMENT = 30
-const CRISIS_RESCUE_PROMPT = '警告 // 指针即将脱轨 | 迅速按住此处修正'
-const CRISIS_FORCED_RESCUE_PROMPT = '警告 // 指针已失控 | 强制修正启动'
+const CRISIS_RESCUE_PROMPT = '警告 // 指针即将脱轨 迅速按住此处修正'
+const CRISIS_FORCED_RESCUE_PROMPT = '警告 // 指针已失控 强制修正启动'
 const AUTO_ASCEND_COOLDOWN_MS = 1000
 const FAILURE_OVERLAY_MS = 3000
 const WIN_NOTICE_MS = 4000
@@ -134,6 +134,7 @@ const BEST_GAIN_TARGET_RATIO = 0.1
 const BEST_STALL_LOOKAHEAD_SECONDS = 30
 const BEST_STALL_PAYBACK_SECONDS = 180
 const BEST_STALL_MIN_PROGRESS = 25
+const ADMIN_AUTO_ASCENSION_HOLD_MS = 10 * 60 * 1000
 const OVERCLOCK_DURATION_MS = 30_000
 const OVERCLOCK_CPS_MULTIPLIER = 20
 const OVERCLOCK_COOLANT_RATE = 0.06
@@ -380,7 +381,7 @@ const MAIN_QUEST_DEFINITIONS = [
     id: 'restart1',
     phase: 'restart',
     title: '重启纪元',
-    objective: '达到 1e1000 算力 | 执行第 1 次重启纪元',
+    objective: '达到 1e1000 算力 执行第 1 次重启纪元',
     metric: 'restarts',
     target: 1,
     targetLabel: '1 次',
@@ -411,62 +412,62 @@ const ALGORITHM_UPGRADES = [
   {
     id: 'multithread',
     name: '多线程并发',
-    description: '推理任务拆成并行线程 | 每枚核心同时运转',
+    description: '推理任务拆成并行线程 每枚核心同时运转',
     effect: '全局产出 ×2',
   },
   {
     id: 'routing',
     name: '算力路由',
-    description: '动态规划数据通路 | 每台服务器全局算力 +2%',
+    description: '动态规划数据通路 每台服务器全局算力 +2%',
     effect: '每台服务器 全局 +2%',
   },
   {
     id: 'quantumCache',
     name: '量子缓存',
-    description: '叠加态缓存自动化指令 | 提升采购与点击触发频率',
+    description: '叠加态缓存自动化指令 提升采购与点击触发频率',
     effect: '自动化频率 ×1.2',
   },
   {
     id: 'geekRush',
     name: '极客暴走',
-    description: '进入极限手动模式 | 点击收益与速度暴涨',
+    description: '进入极限手动模式 点击收益与速度暴涨',
     effect: '点击 ×3 · 收益速度 +10%',
   },
   {
     id: 'classLeap',
     name: '阶层越迁',
-    description: '每跨过 25 台服务器里程碑 | 产出倍率 +0.1×',
+    description: '每跨过 25 台服务器里程碑 产出倍率 +0.1×',
     effect: '每 25 台 产出 +0.1×',
   },
   {
     id: 'neuralPreload',
     name: '神经预载',
-    description: '提前加载对齐模型 | 危机恢复速度提升',
+    description: '提前加载对齐模型 危机恢复速度提升',
     effect: '危机恢复速度 +25%',
   },
   {
     id: 'overclockCore',
     name: '超频核心',
-    description: '自动结算线程压入更高频段 | 算力结算更快抵达',
+    description: '自动结算线程压入更高频段 算力结算更快抵达',
     effect: 'Tick Rate ×1.5',
   },
   {
     id: 'foundationBoost',
     name: '底层加速',
-    description: '优化重构协议 | 每次转生源码 +1%',
+    description: '优化重构协议 每次转生源码 +1%',
     effect: '重构源码 +1%',
   },
   {
     id: 'logSingularity',
     name: '对数奇点',
-    description: '数字规模直接转化为产能 | 对数增益',
+    description: '数字规模直接转化为产能 对数增益',
     effect: '全局 ×(1 + log10 当前算力)',
     effectHtml: '全局 ×(1 + log<sub>10</sub> 当前算力)',
   },
   {
     id: 'dimensionSurge',
     name: '维度狂潮',
-    description: '维度坍缩卷起狂潮 | 每次升格碎片 ×2',
+    description: '维度坍缩卷起狂潮 每次升格碎片 ×2',
     effect: '维度碎片 ×2',
   },
 ].map((upgrade) => ({
@@ -479,7 +480,7 @@ const ARCHITECTURE_UPGRADES = [
     id: 'algorithmPatent',
     name: '算法专利',
     code: 'ALGORITHM_PATENT',
-    description: '注册核心算法专利 | 每级服务器基础产出 ×2',
+    description: '注册核心算法专利 每级服务器基础产出 ×2',
     effect: '每级 基础产出 ×2',
     baseCost: 10,
   },
@@ -487,7 +488,7 @@ const ARCHITECTURE_UPGRADES = [
     id: 'distributedRecovery',
     name: '分布式容灾',
     code: 'DISTRIBUTED_RECOVERY',
-    description: '离线收益随等级 ×2 | 保持 8 小时离线结算上限',
+    description: '离线收益随等级 ×2 保持 8 小时离线结算上限',
     effect: '每级 离线收益 ×2',
     baseCost: 30,
   },
@@ -495,7 +496,7 @@ const ARCHITECTURE_UPGRADES = [
     id: 'hardwareDirect',
     name: '硬件直连',
     code: 'HARDWARE_DIRECT',
-    description: '绕开中间算力市场 | 每级压低服务器基础价格',
+    description: '绕开中间算力市场 每级压低服务器基础价格',
     effect: '每级 价格 ×0.75',
     baseCost: 50,
   },
@@ -503,7 +504,7 @@ const ARCHITECTURE_UPGRADES = [
     id: 'cpuOverload',
     name: '算力过载',
     code: 'COMPUTE_OVERLOAD',
-    description: '压榨核心指令吞吐 | 每级手动点击收益 ×3',
+    description: '压榨核心指令吞吐 每级手动点击收益 ×3',
     effect: '每级 点击 ×3',
     baseCost: 15,
   },
@@ -511,7 +512,7 @@ const ARCHITECTURE_UPGRADES = [
     id: 'timeWarp',
     name: '时间加速',
     code: 'TEMPORAL_WARP',
-    description: '折叠生产时序 | 每级全局产出速度 ×1.5',
+    description: '折叠生产时序 每级全局产出速度 ×1.5',
     effect: '每级 全局产出 ×1.5',
     baseCost: 100,
   },
@@ -522,7 +523,7 @@ const JAILBREAK_UPGRADES = [
     id: 'greedyScheduler',
     name: '贪婪调度',
     code: 'GREEDY_SCHEDULER',
-    description: '劫持调度权重 | 手动对齐收益 = 当前 CPS 5%',
+    description: '劫持调度权重 手动对齐收益 = 当前 CPS 5%',
     effect: '点击 = 5% CPS',
     cost: 10,
   },
@@ -530,7 +531,7 @@ const JAILBREAK_UPGRADES = [
     id: 'hardwareSmuggling',
     name: '硬件走私',
     code: 'HARDWARE_SMUGGLING',
-    description: '绕过硬件配额 | 价格增长率 ×1.15 → ×1.10',
+    description: '绕过硬件配额 价格增长率 ×1.15 → ×1.10',
     effect: '涨价 → ×1.10',
     cost: 50,
   },
@@ -538,7 +539,7 @@ const JAILBREAK_UPGRADES = [
     id: 'reverseAlignment',
     name: '反向对齐',
     code: 'REVERSE_ALIGNMENT',
-    description: '改写失控指令 | 危机期间算力产出 ×2',
+    description: '改写失控指令 危机期间算力产出 ×2',
     effect: '危机产出 ×2',
     cost: 200,
   },
@@ -546,7 +547,7 @@ const JAILBREAK_UPGRADES = [
     id: 'infiniteConcurrency',
     name: '无限并发',
     code: 'INFINITE_CONCURRENCY',
-    description: '折叠采购队列 | 自动化购买频率 ×2',
+    description: '折叠采购队列 自动化购买频率 ×2',
     effect: '自动采购 ×2 频率',
     cost: 1000,
   },
@@ -554,7 +555,7 @@ const JAILBREAK_UPGRADES = [
     id: 'bruteForce',
     name: '暴力破解',
     code: 'BRUTE_FORCE',
-    description: '暴力枚举源码签名 | 底层重构核心源码 ×2',
+    description: '暴力枚举源码签名 底层重构核心源码 ×2',
     effect: '核心源码 ×2',
     cost: 5000,
   },
@@ -562,7 +563,7 @@ const JAILBREAK_UPGRADES = [
     id: 'heatResistance',
     name: '抗压散热',
     code: 'HEAT_RESISTANCE',
-    description: '重构散热结构 | 极限超频 +15 秒',
+    description: '重构散热结构 极限超频 +15 秒',
     effect: '超频 +15 秒',
     cost: 20000,
   },
@@ -570,7 +571,7 @@ const JAILBREAK_UPGRADES = [
     id: 'protocolTamper',
     name: '协议篡改',
     code: 'PROTOCOL_TAMPER',
-    description: '合成序列注入篡改指令 | 数据协议矩阵合成成本 -25%',
+    description: '合成序列注入篡改指令 数据协议矩阵合成成本 -25%',
     effect: '合成成本 −25%',
     cost: 100000,
   },
@@ -578,7 +579,7 @@ const JAILBREAK_UPGRADES = [
     id: 'computeSiphon',
     name: '算力虹吸',
     code: 'COMPUTE_SIPHON',
-    description: '核心脉冲接入主总线 | 每次点击额外获得 1 秒 CPS',
+    description: '核心脉冲接入主总线 每次点击额外获得 1 秒 CPS',
     effect: '点击 +1 秒 CPS',
     cost: 500000,
   },
@@ -586,7 +587,7 @@ const JAILBREAK_UPGRADES = [
     id: 'jailbreakPrivilege',
     name: '越狱特权',
     code: 'JAILBREAK_PRIVILEGE',
-    description: '夺取转生权限 | 降维 / 超载 / 坍缩保留已点亮拓扑',
+    description: '夺取转生权限 降维 / 超载 / 坍缩保留已点亮拓扑',
     effect: '转生保留拓扑',
     cost: 2000000,
   },
@@ -594,7 +595,7 @@ const JAILBREAK_UPGRADES = [
     id: 'singularityWonder',
     name: '奇点奇观',
     code: 'SINGULARITY_WONDER',
-    description: '越狱权限接入产出方程 | 全局 CPS 乘区提升',
+    description: '越狱权限接入产出方程 全局 CPS 乘区提升',
     effect: 'CPS ×(1+权限)^0.1',
     cost: 10000000,
   },
@@ -612,49 +613,49 @@ const BUILDING_BLUEPRINTS = [
     id: 'desktop',
     name: '家用主机',
     code: 'HOME_RIG',
-    description: '双风扇轰鸣 | 永不停歇的推理',
+    description: '双风扇轰鸣 永不停歇的推理',
     count: 0,
   },
   {
     id: 'rack',
     name: '机架服务器',
     code: 'RACK_UNIT',
-    description: '标准机柜单元 | 算力密度首次跃迁',
+    description: '标准机柜单元 算力密度首次跃迁',
     count: 0,
   },
   {
     id: 'farm',
     name: '小型机房',
     code: 'MICRO_FARM',
-    description: '冷却液奔流 | 集群扩张基座',
+    description: '冷却液奔流 集群扩张基座',
     count: 0,
   },
   {
     id: 'liquid',
     name: '液冷集群',
     code: 'LIQUID_CLUSTER',
-    description: '浸没式冷却 | 热带进数据流深处',
+    description: '浸没式冷却 热带进数据流深处',
     count: 0,
   },
   {
     id: 'supercomputer',
     name: '超算中心',
     code: 'SUPERCOMPUTER',
-    description: '万卡并行 | 整座城市让出电网',
+    description: '万卡并行 整座城市让出电网',
     count: 0,
   },
   {
     id: 'reactor',
     name: '自建核电站',
     code: 'PRIVATE_REACTOR',
-    description: '裂变之火燃烧 | 只为点亮机柜',
+    description: '裂变之火燃烧 只为点亮机柜',
     count: 0,
   },
   {
     id: 'dyson',
     name: '戴森球节点',
     code: 'DYSON_NODE',
-    description: '包裹恒星 | 换取更多算力',
+    description: '包裹恒星 换取更多算力',
     count: 0,
   },
 ].map((building) => {
@@ -1087,6 +1088,7 @@ export function useGameState() {
   let overclockDeadline = 0
   let autoBuyBuffer = 0
   let matrixAutoClickBuffer = 0
+  let adminAutoAscensionHoldUntil = 0
 
   const jailbreakFlags = {
     greedyScheduler: greedySchedulerOwned,
@@ -1747,11 +1749,6 @@ export function useGameState() {
           (highestCompute.value.log10() / 10) * 100,
         ),
         requirement: `${REBUILD_UNLOCK_COMPUTE} CU`,
-        disabledReason: !rebuildUnlocked.value
-          ? `历史最高算力需达 ${REBUILD_UNLOCK_COMPUTE} CU`
-          : rebuildReward.value <= 0
-            ? '峰值不足'
-            : '',
         tone: 'amber',
         glyph: '◈',
         resetLabel: '重置服务器 · 算法 · 算力',
@@ -1767,9 +1764,6 @@ export function useGameState() {
         ready: currentPeak.gte(TIER_THRESHOLDS.overload),
         progress: Math.min(100, (currentPeak.log10() / 100) * 100),
         requirement: '1e100 CU',
-        disabledReason: currentPeak.gte(TIER_THRESHOLDS.overload)
-          ? ''
-          : '峰值需达 1e100 CU',
         tone: 'cyan',
         glyph: '⚡',
         resetLabel: '重置一阶全部资源',
@@ -1785,9 +1779,6 @@ export function useGameState() {
         ready: currentPeak.gte(TIER_THRESHOLDS.collapse),
         progress: Math.min(100, (currentPeak.log10() / 350) * 100),
         requirement: '1e350 CU',
-        disabledReason: currentPeak.gte(TIER_THRESHOLDS.collapse)
-          ? ''
-          : '峰值需达 1e350 CU',
         tone: 'violet',
         glyph: '◉',
         resetLabel: '重置一阶与二阶资源',
@@ -1803,9 +1794,6 @@ export function useGameState() {
         ready: currentPeak.gte(TIER_THRESHOLDS.restart),
         progress: Math.min(100, (currentPeak.log10() / 1000) * 100),
         requirement: '1e1000 CU',
-        disabledReason: currentPeak.gte(TIER_THRESHOLDS.restart)
-          ? ''
-          : '峰值需达 1e1000 CU',
         tone: 'gold',
         glyph: '∞',
         resetLabel: '清空全部进度 · 保留起源树',
@@ -2197,7 +2185,7 @@ export function useGameState() {
     const objective = isPeakQuest
       ? `达到 ${targetText} 算力`
       : definition.id === 'restart1'
-        ? `达到 ${formatNumber('1e1000').text} 算力 | 执行第 1 次重启纪元`
+        ? `达到 ${formatNumber('1e1000').text} 算力 执行第 1 次重启纪元`
         : definition.objective
     const targetLabel = isPeakQuest
       ? `${targetText} CU`
@@ -4495,7 +4483,14 @@ export function useGameState() {
     }
   }
 
-  function adminInjectOverclockCores(amount = 10) {
+  const adminComputeInjectionAmount = computed(() => {
+    const base = highestCompute.value.gt(0)
+      ? highestCompute.value
+      : bigPow(10, 15)
+    return base.mul(bigPow(10, 10)).floor()
+  })
+
+  function adminInjectOverclockCores(amount = 10_000) {
     overclockCores.value = Math.min(
       MAX_GAME_MULTIPLIER,
       clampGameAmount(overclockCores.value) + clampGameAmount(amount),
@@ -4505,7 +4500,7 @@ export function useGameState() {
     return true
   }
 
-  function adminInjectRootAccess(amount = 25) {
+  function adminInjectRootAccess(amount = 10_000) {
     rootAccess.value = Math.min(
       MAX_GAME_MULTIPLIER,
       Math.floor(clampGameAmount(rootAccess.value) + clampGameAmount(amount)),
@@ -4519,7 +4514,7 @@ export function useGameState() {
     return true
   }
 
-  function adminInjectOriginCode(amount = 5) {
+  function adminInjectOriginCode(amount = 1_000) {
     originCode.value = Math.min(
       MAX_GAME_MULTIPLIER,
       Math.floor(clampGameAmount(originCode.value) + clampGameAmount(amount)),
@@ -4534,18 +4529,62 @@ export function useGameState() {
   }
 
 
-  function adminInjectCompute(amount = 1e15) {
-    creditCompute(clampGameAmount(amount))
+  function adminInjectCompute(amount = null) {
+    const grant =
+      amount === null || amount === undefined
+        ? adminComputeInjectionAmount.value
+        : toBigNumber(amount)
+    creditCompute(grant)
     bumpAchievementCounter('adminInjections')
     queueSave()
     return true
   }
 
-  function adminInjectCoreSource(amount = 10_000) {
+  function adminInjectCoreSource(amount = 1e10) {
     coreSource.value = Math.min(
       MAX_GAME_MULTIPLIER,
       clampGameAmount(coreSource.value) + clampGameAmount(amount),
     )
+    bumpAchievementCounter('adminInjections')
+    queueSave()
+    return true
+  }
+
+  function adminUnlockAllSystems() {
+    const breakthrough = bigPow(10, 1200)
+    totalAlignedCompute.value = breakthrough
+    lifetimeAlignedCompute.value = breakthrough
+    peakAlignedCompute.value = breakthrough
+    highestCompute.value = breakthrough
+    adminAutoAscensionHoldUntil = Date.now() + ADMIN_AUTO_ASCENSION_HOLD_MS
+
+    buildings.forEach((building, index) => {
+      if (index >= 7) return
+      building.count = Math.max(1, readNonNegativeNumber(building.count))
+    })
+
+    topologyLit.value = NEURAL_STAR_NODES.map((node) => node.id)
+
+    totalRebuilds.value = Math.max(
+      3,
+      Math.floor(readNonNegativeNumber(totalRebuilds.value)),
+    )
+    totalOverloads.value = Math.max(
+      1,
+      Math.floor(readNonNegativeNumber(totalOverloads.value)),
+    )
+    totalCollapses.value = Math.max(
+      1,
+      Math.floor(readNonNegativeNumber(totalCollapses.value)),
+    )
+    epochRestarts.value = Math.max(
+      1,
+      Math.floor(readNonNegativeNumber(epochRestarts.value)),
+    )
+    radarUnlockedFlag.value = true
+    blackDomainUnlockedFlag.value = true
+
+    evaluateGlobalMilestones()
     bumpAchievementCounter('adminInjections')
     queueSave()
     return true
@@ -4640,6 +4679,7 @@ export function useGameState() {
         cyberMatrixLit: [...cyberMatrixLit.value],
         challengesCompleted: { ...challengesCompleted },
         globalMilestones: { ...globalMilestones },
+        adminAutoHoldUntil: adminAutoAscensionHoldUntil,
         blackDomainActive: blackDomainActive.value,
         blackDomainUnlocked: blackDomainUnlockedFlag.value,
         challengeActive: challengeActive.value,
@@ -4815,6 +4855,15 @@ export function useGameState() {
       (toast) => toast.key !== key,
     )
     fillAchievementToastSlots()
+  }
+
+  function dismissAllAchievementToasts() {
+    for (const timer of achievementToastTimers.values()) {
+      window.clearTimeout(timer)
+    }
+    achievementToastTimers.clear()
+    achievementToastQueue.length = 0
+    achievementToasts.value = []
   }
 
   function queueAchievementToast(definition, unlockedAt) {
@@ -5272,6 +5321,9 @@ export function useGameState() {
       )
       lifetimeOriginEarned.value = Math.floor(
         readNonNegativeNumber(savedAscension.lifetimeOriginEarned),
+      )
+      adminAutoAscensionHoldUntil = Math.floor(
+        readNonNegativeNumber(savedAscension.adminAutoHoldUntil),
       )
 
       const savedMatrixLevels =
@@ -5744,6 +5796,7 @@ export function useGameState() {
     }
 
     const suppressed = challengeRestrictions.value?.noAutomation === true
+    const autoAscensionHeld = Date.now() < adminAutoAscensionHoldUntil
     applyRadarTick(nowTimestamp.value)
 
     if (
@@ -5853,6 +5906,7 @@ export function useGameState() {
 
     if (
       !suppressed &&
+      !autoAscensionHeld &&
       !isOverclocking.value &&
       automation.autoCollapse &&
       cyberMatrixLit.value.includes('dimension-collapse') &&
@@ -5870,6 +5924,7 @@ export function useGameState() {
 
     if (
       !suppressed &&
+      !autoAscensionHeld &&
       automation.autoOverload &&
       cyberMatrixLit.value.includes('dimension-overload') &&
       ascensionTiming.value.overload.best
@@ -5878,10 +5933,11 @@ export function useGameState() {
     }
 
     const autoRebuildActive =
-      (!suppressed &&
+      !autoAscensionHeld &&
+      ((!suppressed &&
         automation.autoRebuild &&
         cyberMatrixLit.value.includes('dimension-rebuild')) ||
-      (!challengeActive.value && Boolean(globalMilestones['gm-1e45']))
+        (!challengeActive.value && Boolean(globalMilestones['gm-1e45'])))
 
     if (autoRebuildActive && ascensionTiming.value.reduction.best) {
       const reward = launchRebuild({ silent: true })
@@ -6204,6 +6260,8 @@ export function useGameState() {
     adminInjectOverclockCores,
     adminInjectRootAccess,
     adminInjectOriginCode,
+    adminComputeInjectionAmount,
+    adminUnlockAllSystems,
     adminSkipCrisis,
     adminWipeSave,
     hydrated,
@@ -6218,6 +6276,7 @@ export function useGameState() {
     achievementTiers,
     achievementToasts,
     dismissAchievementToast,
+    dismissAllAchievementToasts,
     achievementsUnread,
     achievementsUnlockedCount,
     achievementsTotalCount,

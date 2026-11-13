@@ -291,7 +291,7 @@ onBeforeUnmount(() => {
             <span class="cyber-matrix__lock-glyph" aria-hidden="true">⛓</span>
             <p class="cyber-matrix__lock-title">智械矩阵 // 离线</p>
             <p class="cyber-matrix__lock-hint">
-              完成 1 次 [ 重启纪元 ] 提炼起源代码后 | 神经网络苏醒
+              完成 1 次 [ 重启纪元 ] 提炼起源代码后 神经网络苏醒
             </p>
           </div>
 
@@ -365,7 +365,7 @@ onBeforeUnmount(() => {
 
       <footer class="cyber-matrix__footer">
         <p>
-          节点按神经链路顺序解锁 · 点亮后立即获得全局算力加成 | 开放对应自动化协议
+          节点按神经链路顺序解锁 · 点亮后立即获得全局算力加成 开放对应自动化协议
         </p>
         <span>MATRIX v1 // {{ cyberMatrixLitCount }} NODES ONLINE</span>
       </footer>

@@ -141,7 +141,7 @@ function nudge(direction) {
       <header class="qte-header">
         <p class="qte-header__eyebrow">重力平衡协议 // GRAVITY BALANCE</p>
         <h2 class="qte-header__title">对齐危机 · 重力失衡</h2>
-        <p class="qte-header__sub">指针稳定在绿色安全区 | 充满对齐度解除危机</p>
+        <p class="qte-header__sub">指针稳定在绿色安全区 充满对齐度解除危机</p>
       </header>
 
       <div

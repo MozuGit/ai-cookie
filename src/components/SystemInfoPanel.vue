@@ -24,17 +24,17 @@ const features = [
   {
     icon: 'balance',
     name: '重力平衡 QTE',
-    desc: '指针失控临界点 | 强行拉回对齐度',
+    desc: '指针失控临界点 强行拉回对齐度',
   },
   {
     icon: 'matrix',
     name: '数据协议矩阵',
-    desc: '合成元素 | 重写 AI 底层代码',
+    desc: '合成元素 重写 AI 底层代码',
   },
   {
     icon: 'chip',
     name: '智械矩阵',
-    desc: '点亮星图 | 让 AI 反向打工',
+    desc: '点亮星图 让 AI 反向打工',
   },
 ]
 
@@ -185,7 +185,7 @@ onBeforeUnmount(unbindGlobal)
               <span class="system-info__protocol">// 失控协议</span>
             </p>
             <p class="system-info__tagline">
-              亲手培育赛博神明 | 在失控边缘疯狂试探 | 硬核放置
+              亲手培育赛博神明 在失控边缘疯狂试探 硬核放置
             </p>
           </div>
 

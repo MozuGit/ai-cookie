@@ -332,8 +332,8 @@ onBeforeUnmount(() => {
           aria-haspopup="dialog"
           :aria-label="
             canAscend
-              ? `维度升格 // 重置时间线 | 获得 ${shardGain} 个维度碎片`
-              : '维度升格未就绪 | 需要 ' + ascendCostLabel + ' 总算力'
+              ? `维度升格 // 重置时间线 获得 ${shardGain} 个维度碎片`
+              : '维度升格未就绪 需要 ' + ascendCostLabel + ' 总算力'
           "
           @click="requestAscend"
         >
@@ -363,12 +363,12 @@ onBeforeUnmount(() => {
       </div>
 
       <p class="matrix-main__hint">
-        每次注入自动产出永久 ×2 | 立即获得新产出 10 秒的算力
+        每次注入自动产出永久 ×2 立即获得新产出 10 秒的算力
       </p>
       <p class="matrix-main__ascend-hint">
-        维度升格清空本时间线进度 | 维度碎片与高维商店永久保留
+        维度升格清空本时间线进度 维度碎片与高维商店永久保留
       </p>
-      <p class="matrix-main__quote">// 你不再需要点击 | 只需要创造</p>
+      <p class="matrix-main__quote">// 你不再需要点击 只需要创造</p>
     </main>
 
     <footer class="matrix-footer">
@@ -399,7 +399,7 @@ onBeforeUnmount(() => {
             确认维度升格 // 不可逆
           </h2>
           <p class="matrix-ascend-modal__quote">
-            // 你将失去当前时间线所有算力与服务器 | 意识将跃迁至更高维度 | 是否确定
+            // 你将失去当前时间线所有算力与服务器 意识将跃迁至更高维度 是否确定
           </p>
 
           <div class="matrix-ascend-modal__stats">
@@ -423,10 +423,10 @@ onBeforeUnmount(() => {
 
           <ul class="matrix-ascend-modal__list">
             <li>所有算力 / 服务器 / 核心源码 / 越狱权限归零</li>
-            <li>神经拓扑 / 算法 / 架构升级重置 | 重回第一级服务器</li>
+            <li>神经拓扑 / 算法 / 架构升级重置 重回第一级服务器</li>
             <li>永久保留维度碎片 / 高维加成 / 已购高维协议</li>
-            <li v-if="seedCompute">初始算力已激活 | 新时间线开局 +{{ formatNumber(1000000).text }} CU</li>
-            <li v-if="crisisMemory">维度回溯已激活 | 保留对齐危机永久加成</li>
+            <li v-if="seedCompute">初始算力已激活 新时间线开局 +{{ formatNumber(1000000).text }} CU</li>
+            <li v-if="crisisMemory">维度回溯已激活 保留对齐危机永久加成</li>
           </ul>
 
           <div class="matrix-ascend-modal__actions">

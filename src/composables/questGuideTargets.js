@@ -5,7 +5,7 @@ export const QUEST_GUIDE_TARGETS = {
   awaken: {
     target: 'core',
     title: '点击对齐核心',
-    hint: '点击中央大圆盘 | 获取第一批算力',
+    hint: '点击中央大圆盘 获取第一批算力',
   },
   laptop: {
     target: 'deploy-first',
@@ -15,17 +15,17 @@ export const QUEST_GUIDE_TARGETS = {
   algorithm: {
     target: 'first-algorithm',
     title: '购买第 1 个算法升级',
-    hint: '请点击上方 [ 算法升级 ] 页签 | 购买 1 个多线程并发',
+    hint: '请点击上方 [ 算法升级 ] 页签 购买 1 个多线程并发',
   },
   homepc: {
     target: 'deploy-home',
     title: '部署第 2 台服务器 [ 家用主机 ]',
-    hint: '打开 [ 服务器阵列 ] | 部署 1 台家用主机',
+    hint: '打开 [ 服务器阵列 ] 部署 1 台家用主机',
   },
   servers: {
     target: 'deploy-first',
     title: '部署至 10 台服务器',
-    hint: '在 [ 服务器阵列 ] 悬浮舱继续部署 | 扩充节点',
+    hint: '在 [ 服务器阵列 ] 悬浮舱继续部署 扩充节点',
   },
   compute10k: {
     target: 'core',
@@ -45,7 +45,7 @@ export const QUEST_GUIDE_TARGETS = {
   topology: {
     target: 'topology-node',
     title: '点亮 1 个神经星树节点',
-    hint: '打开 [ 自动化终端 ] | 点击节点查看详情 再次点击点亮',
+    hint: '打开 [ 自动化终端 ] 点击节点查看详情 再次点击点亮',
   },
   compute1m: {
     target: 'core',
@@ -55,7 +55,7 @@ export const QUEST_GUIDE_TARGETS = {
   architecture3: {
     target: 'architecture-upgrade',
     title: '购买 3 级永久升级',
-    hint: '打开 [ 协议与升级 ] 架构升级站 | 购买永久升级',
+    hint: '打开 [ 协议与升级 ] 架构升级站 购买永久升级',
   },
   compute1e10: {
     target: 'core',
@@ -75,7 +75,7 @@ export const QUEST_GUIDE_TARGETS = {
   challenge1: {
     target: 'challenge-start',
     title: '完成一次异常演练',
-    hint: '打开 [ 异常与雷达 ] 异常演练 | 启动挑战',
+    hint: '打开 [ 异常与雷达 ] 异常演练 启动挑战',
   },
   overload1: {
     target: 'open-ascension',
@@ -85,7 +85,7 @@ export const QUEST_GUIDE_TARGETS = {
   matrix1: {
     target: 'matrix-node',
     title: '合成 1 个矩阵节点',
-    hint: '打开 [ 协议与升级 ] 数据协议矩阵 | 完成合成',
+    hint: '打开 [ 协议与升级 ] 数据协议矩阵 完成合成',
   },
   compute1e100: {
     target: 'core',
@@ -148,17 +148,5 @@ export function buildQuestFallbackGuide(quest) {
     formatTextNumbers(entry.title),
     formatTextNumbers(entry.hint),
     `${quest.objective ?? entry.title} · ${quest.targetLabel ?? ''}`.trim(),
-  )
-}
-
-// 飞升终端等待态 | 条件未满足时引导退出终端
-export function buildHubExitGuide(quest, hint = '条件未满足 | 返回主界面继续积累算力') {
-  return makeGuide(
-    `hub-exit-${quest?.id ?? 'idle'}`,
-    'hub-close',
-    quest,
-    '先关闭飞升终端',
-    hint,
-    '点击右上角关闭 | 回到核心界面继续扩张',
   )
 }

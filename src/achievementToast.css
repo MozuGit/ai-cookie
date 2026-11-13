@@ -3,16 +3,16 @@
 .achievement-toast-layer {
   position: fixed;
   inset: 0;
-  z-index: 9900;
+  z-index: 150;
   pointer-events: none;
 }
 
 .achievement-toast-stack {
   position: absolute;
-  top: 5.2rem;
-  left: clamp(0.75rem, 1.4vw, 1.35rem);
+  bottom: 5.5rem;
+  left: calc(58px + 20px + 0.75rem);
   display: flex;
-  width: min(27rem, max(15rem, calc(50vw - 11.5rem)), calc(100vw - 2rem));
+  width: min(27rem, max(15rem, calc(50vw - 12.5rem)), calc(100vw - 4.5rem));
   flex-direction: column;
   gap: 0.65rem;
   pointer-events: none;
@@ -132,7 +132,7 @@
   z-index: 1;
   min-width: 0;
   flex: 1;
-  padding-right: 2.1rem;
+  padding-right: 2.6rem;
 }
 
 .achievement-toast__eyebrow {
@@ -188,19 +188,21 @@
 
 .achievement-toast__close {
   position: absolute;
-  top: 0.55rem;
-  right: 0.6rem;
+  top: 0.85rem;
+  right: 0.85rem;
   z-index: 3;
   display: grid;
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
   place-items: center;
   border: 1px solid rgba(var(--toast-rgb), 0.95);
   background:
     linear-gradient(150deg, rgba(var(--toast-rgb), 0.34), rgba(8, 13, 24, 0.94));
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 800;
   line-height: 1;
   cursor: pointer;
@@ -577,6 +579,7 @@
 @media (max-width: 768px) {
   .achievement-toast-stack {
     top: 0.6rem;
+    bottom: auto;
     left: 0.6rem;
     right: 0.6rem;
     width: auto;
@@ -595,14 +598,14 @@
   }
 
   .achievement-toast__body {
-    padding-right: 1.65rem;
+    padding-right: 2.4rem;
   }
 
   .achievement-toast__close {
-    top: 0.45rem;
-    right: 0.5rem;
-    width: 1.8rem;
-    height: 1.8rem;
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 1.75rem;
+    height: 1.75rem;
     font-size: 0.85rem;
   }
 

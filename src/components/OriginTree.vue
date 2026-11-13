@@ -107,7 +107,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closeOnEscape))
             <div>
               <p class="origin-tree__core-title">ORIGIN // 纪元起点</p>
               <p class="origin-tree__core-sub">
-                起源树是唯一跨越 [ 重启纪元 ] 保留的永久系统 | 每枚起源代码来自一次完整纪元表现结算
+                起源树是唯一跨越 [ 重启纪元 ] 保留的永久系统 每枚起源代码来自一次完整纪元表现结算
               </p>
             </div>
           </div>

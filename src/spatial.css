@@ -700,10 +700,10 @@
 .spatial-rail {
   position: fixed;
   top: 5.5rem;
-  right: clamp(0.8rem, 1.5vw, 1.4rem);
-  z-index: 65;
+  right: calc(58px + 20px);
+  z-index: 60;
   display: flex;
-  width: min(348px, calc(100vw - 1.6rem));
+  width: min(348px, calc(100vw - 78px - 1rem));
   flex-direction: column;
   gap: 0.55rem;
 }
@@ -1023,9 +1023,9 @@
   width: 100%;
   background:
     radial-gradient(circle at 12% 0%, rgba(34, 211, 238, 0.08), transparent 57%),
-    linear-gradient(160deg, rgba(4, 18, 28, 0.95), rgba(2, 8, 14, 0.96));
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+    linear-gradient(160deg, #04121c, #02080e);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   box-shadow:
     0 16px 40px rgba(0, 0, 0, 0.45),
     0 0 24px rgba(34, 211, 238, 0.12),
@@ -2386,7 +2386,7 @@
     width: 100%;
     max-width: 1680px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 calc(58px + 20px + 1rem);
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
     align-items: start;
   }
@@ -2403,6 +2403,33 @@
 @media (min-width: 769px) and (max-width: 1024px) {
   .spatial-rail {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* 中窄屏 | 自动化终端并入左侧舱道 | 避让顶部飞升条 */
+@media (min-width: 769px) and (max-width: 1279px) {
+  .spatial-dock-btn--top-left {
+    left: 0;
+    width: 58px;
+    flex-direction: column;
+    gap: 0.45rem;
+    border-radius: 0 2px 2px 0;
+    padding: 0.75rem 0.4rem;
+  }
+
+  .spatial-dock-btn--top-left .spatial-dock-btn__copy {
+    align-items: center;
+  }
+
+  .spatial-dock-btn--top-left .spatial-dock-btn__label {
+    writing-mode: vertical-rl;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    line-height: 1.15;
+  }
+
+  .spatial-dock-btn--top-left .spatial-dock-btn__meta {
+    display: none;
   }
 }
 

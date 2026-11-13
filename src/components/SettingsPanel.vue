@@ -96,7 +96,7 @@ onBeforeUnmount(unbindKeys)
             <div class="settings-row">
               <div class="settings-row__copy">
                 <p class="settings-row__name">数字格式</p>
-                <p class="settings-row__desc">切换全局数值显示方式 | 所有面板即时生效</p>
+                <p class="settings-row__desc">切换全局数值显示方式 所有面板即时生效</p>
               </div>
               <div class="settings-segment" role="radiogroup" aria-label="数字格式">
                 <button
@@ -144,7 +144,7 @@ onBeforeUnmount(unbindKeys)
             >
               <span class="settings-row__copy">
                 <span class="settings-row__name">静音模式</span>
-                <span class="settings-row__desc">关闭全部音效 | 点击 / 购买 / 转生反馈静默</span>
+                <span class="settings-row__desc">关闭全部音效 点击 / 购买 / 转生反馈静默</span>
               </span>
               <span class="settings-switch" :class="{ 'settings-switch--on': audioMuted }" aria-hidden="true">
                 <span class="settings-switch__knob"></span>
@@ -160,7 +160,7 @@ onBeforeUnmount(unbindKeys)
             >
               <span class="settings-row__copy">
                 <span class="settings-row__name">减少动态效果</span>
-                <span class="settings-row__desc">关闭屏幕震动与多余粒子特效 | 提升低端机性能</span>
+                <span class="settings-row__desc">关闭屏幕震动与多余粒子特效 提升低端机性能</span>
               </span>
               <span class="settings-switch" :class="{ 'settings-switch--on': reducedMotion }" aria-hidden="true">
                 <span class="settings-switch__knob"></span>
@@ -177,7 +177,7 @@ onBeforeUnmount(unbindKeys)
               <span class="settings-row__copy">
                 <span class="settings-row__name">显示确认弹窗</span>
                 <span class="settings-row__desc">
-                  开启时转生需二次确认 | 关闭后一键直接转生 | 适合后期老手
+                  开启时转生需二次确认 关闭后一键直接转生 适合后期老手
                 </span>
               </span>
               <span

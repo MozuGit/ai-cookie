@@ -150,7 +150,7 @@ function phaseTitle(phase) {
 
             <div v-else :key="'complete'" class="main-quest__content main-quest__content--done">
               <p class="main-quest__objective">
-                {{ total }} 项主线指令全部执行完毕 | 核心网络进入自治巡航
+                {{ total }} 项主线指令全部执行完毕 核心网络进入自治巡航
               </p>
 
               <div

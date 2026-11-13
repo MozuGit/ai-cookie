@@ -139,13 +139,13 @@ function tierTip(tier) {
       ? formatScientific(tier.gain)
       : formatNumber(tier.gain).text
   const head = `当前飞升预计获得 [ ${tier.resourceName} x ${gainText} ]`
-  if (timing.best) return `${head} | 已是最佳时机 | 立即执行`
-  if (!tier.ready) return `${head} | 尚未满足飞升条件`
-  if (timing.gainMet) return `${head} | 收益已达标 | 等待飞升窗口`
+  if (timing.best) return `${head} 已是最佳时机 立即执行`
+  if (!tier.ready) return `${head} 尚未满足飞升条件`
+  if (timing.gainMet) return `${head} 收益已达标 等待飞升窗口`
   const eta = formatEta(timing.etaSeconds)
-  if (eta) return `${head} | 建议再挂机 ${eta}以获取最大收益`
-  if (timing.stalled) return `${head} | 增长进入平台期 | 可执行飞升`
-  return `${head} | 建议持续挂机以获取最大收益`
+  if (eta) return `${head} 建议再挂机 ${eta}以获取最大收益`
+  if (timing.stalled) return `${head} 增长进入平台期 可执行飞升`
+  return `${head} 建议持续挂机以获取最大收益`
 }
 
 const tabs = computed(() => [
@@ -345,7 +345,7 @@ function tierActionLabel(tier) {
   if (challengeActive.value === 'time-stasis' && tier.id === 'overload') {
     return '执行超载 · 完成演练'
   }
-  if (!tier.ready) return tier.disabledReason
+  if (!tier.ready) return '[ LOCKED ] 条件未满足'
   return showConfirm.value ? '执行飞升' : '一键飞升'
 }
 
@@ -571,12 +571,12 @@ onBeforeUnmount(() => {
               <p class="asc-tier__desc">
                 {{
                   tier.id === 'reduction'
-                    ? '拆解整套算力阵列 | 服务器与算法压缩为核心源码 | 为下一次扩张蓄能'
+                    ? '拆解整套算力阵列 服务器与算法压缩为核心源码 为下一次扩张蓄能'
                     : tier.id === 'overload'
-                      ? formatTextNumbers('算力突破 1e100 物理临界点 | 熔断散热锁 | 提炼超频核心 | 清空一阶资源')
+                      ? formatTextNumbers('算力突破 1e100 物理临界点 熔断散热锁 提炼超频核心 清空一阶资源')
                       : tier.id === 'collapse'
-                        ? '逻辑推入底层黑域 | 换取越狱权限 | 黑域吞噬算力 | 持续析出 Root'
-                        : formatTextNumbers('击穿 1e1000 纪元壁垒 | 重置全部进度 | 按本局表现提炼起源代码')
+                        ? '逻辑推入底层黑域 换取越狱权限 黑域吞噬算力 持续析出 Root'
+                        : formatTextNumbers('击穿 1e1000 纪元壁垒 重置全部进度 按本局表现提炼起源代码')
                 }}
               </p>
 
@@ -685,7 +685,7 @@ onBeforeUnmount(() => {
                 <span>GLOBAL MILESTONES</span>
               </p>
               <p class="ascension-section-note">
-                历史最高算力永久解锁 | 达成时弹出金色协议提示
+                历史最高算力永久解锁 达成时弹出金色协议提示
               </p>
             </div>
             <span class="asc-reward-chip">
@@ -761,7 +761,7 @@ onBeforeUnmount(() => {
                 <span>ANOMALY ARENA · 10 PROTOCOLS</span>
               </p>
               <p class="ascension-section-note">
-                主动接入异常环境 | 严苛限制下重新推演算力曲线 | 完成即刻结算永久全局增益 | 跨越四阶转生永久生效
+                主动接入异常环境 严苛限制下重新推演算力曲线 完成即刻结算永久全局增益 跨越四阶转生永久生效
               </p>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -779,7 +779,7 @@ onBeforeUnmount(() => {
             <div>
               <p class="asc-challenge-arena-lock__title">异常演练模拟器尚未解锁</p>
               <p class="asc-challenge-arena-lock__desc">
-                历史最高算力达到 1e100 CU [ 完成一次算力超载 ] 后 | 异常环境接入
+                历史最高算力达到 1e100 CU [ 完成一次算力超载 ] 后 异常环境接入
               </p>
             </div>
           </div>
@@ -959,7 +959,7 @@ onBeforeUnmount(() => {
           </div>
 
           <p class="asc-challenge-footnote">
-            进入演练清空当前周目算力 / 服务器 / 算法 / 神经拓扑 / 核心源码升级 | 转生资源 / 协议矩阵 / 已完成挑战增益不受影响
+            进入演练清空当前周目算力 / 服务器 / 算法 / 神经拓扑 / 核心源码升级 转生资源 / 协议矩阵 / 已完成挑战增益不受影响
             中途放弃不损失已获永久奖励
           </p>
         </template>
@@ -974,7 +974,7 @@ onBeforeUnmount(() => {
                 <span>PROTOCOL MATRIX</span>
               </p>
               <p class="ascension-section-note">
-                消耗超频核心点亮矩阵节点 | 每级总等级让全局产出 ×2
+                消耗超频核心点亮矩阵节点 每级总等级让全局产出 ×2
               </p>
             </div>
             <div class="matrix-kpis">
@@ -1090,7 +1090,7 @@ onBeforeUnmount(() => {
                 <span>UNDERLYING BLACK DOMAIN</span>
               </p>
               <p class="ascension-section-note">
-                黑域持续吞噬算力 | 流失算力提炼为越狱权限 | 系统篡改协议永久强化黑域与全局生产
+                黑域持续吞噬算力 流失算力提炼为越狱权限 系统篡改协议永久强化黑域与全局生产
               </p>
             </div>
             <span class="asc-resource asc-tone-violet">
@@ -1108,8 +1108,8 @@ onBeforeUnmount(() => {
                 <p class="black-status__sub">
                   {{
                     blackDomainActive
-                      ? `每秒吞噬 ${formatNumber(blackDomainDrainRatio * 100).text}% 算力产出 | 析出 Root`
-                      : '建立连接后算力库存净流出 80% | 持续产出越狱权限'
+                      ? `每秒吞噬 ${formatNumber(blackDomainDrainRatio * 100).text}% 算力产出 析出 Root`
+                      : '建立连接后算力库存净流出 80% 持续产出越狱权限'
                   }}
                 </p>
               </div>
@@ -1147,7 +1147,7 @@ onBeforeUnmount(() => {
                   <span>SYSTEM TAMPER TREE</span>
                 </p>
                 <p class="ascension-section-note">
-                  消耗越狱权限编译篡改节点 | 前置节点点亮后继续深入
+                  消耗越狱权限编译篡改节点 前置节点点亮后继续深入
                 </p>
               </div>
               <span class="asc-reward-chip">黑域等级 {{ tamperCards.filter((n) => n.level > 0).length }} / {{ tamperCards.length }}</span>
@@ -1215,8 +1215,8 @@ onBeforeUnmount(() => {
             <p class="black-domain-locked__glyph" aria-hidden="true">◉</p>
             <p class="black-domain-locked__title">黑域入口尚未解析</p>
             <p class="black-domain-locked__hint">
-              完成一次 [ 逻辑坍缩 ] 后 | 底层黑域入口永久解锁<br />
-              可主动接入黑域 | 吞噬算力转化为越狱权限
+              完成一次 [ 逻辑坍缩 ] 后 底层黑域入口永久解锁<br />
+              可主动接入黑域 吞噬算力转化为越狱权限
             </p>
           </div>
         </template>
