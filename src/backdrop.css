@@ -25,3 +25,155 @@
       radial-gradient(ellipse 120% 86% at 50% 46%, #05110d 0%, #020b08 48%, #010504 100%);
   }
 }
+
+/* ============================================================
+   急速模式背景特效 // SPEEDRUN BACKDROP FX
+   四阶段叠加层 | 与画布同层 z-index -1 | pointer-events none
+   ============================================================ */
+
+.speedrun-fx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.speedrun-fx > span {
+  position: absolute;
+  visibility: hidden;
+}
+
+/* P1 点火与对齐 | 边缘青色呼吸光晕 */
+.speedrun-fx--p1 .speedrun-fx__halo {
+  visibility: visible;
+  box-shadow:
+    inset 0 0 130px rgba(34, 211, 238, 0.13),
+    inset 0 0 42px rgba(103, 232, 249, 0.08);
+  animation: speedrun-fx-breathe 3.4s ease-in-out infinite;
+}
+
+/* P2 神经网络与协议 | 极细横向扫描线偶发掠过 */
+.speedrun-fx--p2 .speedrun-fx__scan {
+  visibility: visible;
+  top: -3vh;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 4%,
+    rgba(103, 232, 249, 0.05) 30%,
+    rgba(148, 233, 255, 0.42) 50%,
+    rgba(103, 232, 249, 0.05) 70%,
+    transparent 96%
+  );
+  animation: speedrun-fx-scan 7.5s linear infinite;
+}
+
+/* P3 黑域与越狱 | 暗紫红边缘 + 每 10 秒边缘故障闪烁 */
+.speedrun-fx--p3 .speedrun-fx__edge {
+  visibility: visible;
+  box-shadow:
+    inset 0 0 150px rgba(190, 24, 93, 0.16),
+    inset 0 0 60px rgba(88, 28, 135, 0.12);
+  animation: speedrun-fx-breathe 5.2s ease-in-out infinite;
+}
+
+.speedrun-fx--p3 .speedrun-fx__glitch {
+  visibility: visible;
+  box-shadow:
+    inset 0 0 70px rgba(244, 63, 94, 0.22),
+    inset 0 0 24px rgba(192, 132, 252, 0.18);
+  animation: speedrun-fx-glitch 10s linear infinite;
+}
+
+/* P4 创世与起源 | 全屏偶发极微弱白光爆发 */
+.speedrun-fx--p4 .speedrun-fx__burst {
+  visibility: visible;
+  background: radial-gradient(
+    circle at 50% 44%,
+    rgba(236, 254, 255, 0.14),
+    transparent 62%
+  );
+  animation: speedrun-fx-burst 6.5s ease-in-out infinite;
+}
+
+@keyframes speedrun-fx-breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes speedrun-fx-scan {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  2% {
+    opacity: 0.9;
+  }
+  13% {
+    opacity: 0;
+    transform: translateY(106vh);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(106vh);
+  }
+}
+
+@keyframes speedrun-fx-glitch {
+  0%,
+  95.8% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  96.2% {
+    opacity: 0.85;
+    transform: translateX(-3px);
+  }
+  96.6% {
+    opacity: 0.2;
+    transform: translateX(2px);
+  }
+  97% {
+    opacity: 0.7;
+    transform: translateX(-2px);
+  }
+  97.4%,
+  100% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+}
+
+@keyframes speedrun-fx-burst {
+  0%,
+  70% {
+    opacity: 0;
+  }
+  73% {
+    opacity: 0.6;
+  }
+  77% {
+    opacity: 0.14;
+  }
+  81% {
+    opacity: 0.42;
+  }
+  88%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speedrun-fx {
+    display: none;
+  }
+}

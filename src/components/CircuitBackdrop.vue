@@ -1,9 +1,32 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { subscribeBassVisualizer } from '../audio'
 import { particlesEnabled, reducedMotion } from '../composables/useSettings'
 
+const props = defineProps({
+  speedrun: { type: Boolean, default: false },
+  phase: { type: Number, default: 0 },
+})
+
 const canvasEl = ref(null)
+const systemReduce = ref(false)
+const mobileUi = ref(false)
+
+// 急速模式 | 光点流速与拖尾按阶段递增 P4 达到极致
+const SPEEDRUN_FLOW = { 1: 2, 2: 2.3, 3: 2.6, 4: 3 }
+const SPEEDRUN_TRAIL = { 1: 1.7, 2: 1.9, 3: 2.2, 4: 2.6 }
+
+const fxActive = computed(
+  () =>
+    props.speedrun &&
+    props.phase >= 1 &&
+    props.phase <= 4 &&
+    !reducedMotion.value &&
+    !systemReduce.value &&
+    !mobileUi.value &&
+    particlesEnabled.value,
+)
+const fxPhase = computed(() => (fxActive.value ? props.phase : 0))
 
 const TAU = Math.PI * 2
 const DESKTOP_MAX_DPR = 1.5
@@ -42,7 +65,8 @@ let lastAnchorRefreshAt = 0
 let unsubscribeBass = null
 let motionQuery = null
 let motionListener = null
-let systemReduce = false
+let mobileQuery = null
+let mobileListener = null
 let chipEl = null
 let chipObserver = null
 let canvasObserver = null
@@ -55,6 +79,8 @@ let linkPackets = []
 let scrollFrame = 0
 let watchdogTimer = 0
 let contextLost = false
+let speedFlow = 1
+let speedTrail = 1
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -65,7 +91,7 @@ function rand(min, max) {
 }
 
 function staticMode() {
-  return reducedMotion.value || systemReduce || !particlesEnabled.value
+  return reducedMotion.value || systemReduce.value || !particlesEnabled.value
 }
 
 function randomDirection() {
@@ -521,7 +547,7 @@ function drawPacket(packet, dt, flow, offsetX, offsetY) {
   const head = sampleTrace(packet.trace, packet.dist)
   const tail = sampleTrace(
     packet.trace,
-    Math.max(0, packet.dist - packet.tail * (1 + kick * 0.9)),
+    Math.max(0, packet.dist - packet.tail * speedTrail * (1 + kick * 0.9)),
   )
   const tone = PACKET_TONES[packet.tone]
   const headX = head.x + offsetX
@@ -638,7 +664,7 @@ function drawScene(dt, staticFrame) {
   drawLinks(staticFrame)
 
   if (!staticFrame && dt > 0) {
-    drawPackets(dt, 1 + kick * 2.4 + bass * 0.7)
+    drawPackets(dt, (1 + kick * 2.4 + bass * 0.7) * speedFlow)
   }
 
   ctx.globalAlpha = 1
@@ -657,6 +683,9 @@ function updateDebug() {
   canvas.dataset.bass = bass.toFixed(3)
   canvas.dataset.kick = kick.toFixed(3)
   canvas.dataset.flow = (1 + kick * 2.4 + bass * 0.7).toFixed(2)
+  canvas.dataset.speedPhase = String(props.phase)
+  canvas.dataset.speedFlow = speedFlow.toFixed(2)
+  canvas.dataset.speedTrail = speedTrail.toFixed(2)
   canvas.dataset.links = String(linkTraces.length)
   canvas.dataset.dpr = dpr.toFixed(2)
   canvas.dataset.canvasWidth = String(width)
@@ -858,9 +887,9 @@ function handleContextRestored() {
 function syncSystemMotion() {
   if (typeof window.matchMedia !== 'function') return
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-  systemReduce = motionQuery.matches
+  systemReduce.value = motionQuery.matches
   motionListener = (event) => {
-    systemReduce = event.matches
+    systemReduce.value = event.matches
     applyMode()
   }
   if (typeof motionQuery.addEventListener === 'function') {
@@ -870,11 +899,35 @@ function syncSystemMotion() {
   }
 }
 
+function syncMobileUi() {
+  if (typeof window.matchMedia !== 'function') return
+  mobileQuery = window.matchMedia('(max-width: 768px)')
+  mobileUi.value = mobileQuery.matches
+  mobileListener = (event) => {
+    mobileUi.value = event.matches
+  }
+  if (typeof mobileQuery.addEventListener === 'function') {
+    mobileQuery.addEventListener('change', mobileListener)
+  } else if (typeof mobileQuery.addListener === 'function') {
+    mobileQuery.addListener(mobileListener)
+  }
+}
+
+function syncSpeedrun() {
+  const active = fxActive.value
+  speedFlow = active ? SPEEDRUN_FLOW[props.phase] ?? 1 : 1
+  speedTrail = active ? SPEEDRUN_TRAIL[props.phase] ?? 1 : 1
+  updateDebug()
+}
+
+watch(fxPhase, syncSpeedrun, { immediate: true })
 watch(reducedMotion, () => applyMode())
 watch(particlesEnabled, () => applyMode())
 
 onMounted(() => {
   syncSystemMotion()
+  syncMobileUi()
+  syncSpeedrun()
   syncCanvas()
   if (!staticMode()) startLoop()
   window.addEventListener('resize', handleResize)
@@ -938,6 +991,13 @@ onBeforeUnmount(() => {
       motionQuery.removeListener(motionListener)
     }
   }
+  if (mobileQuery && mobileListener) {
+    if (typeof mobileQuery.removeEventListener === 'function') {
+      mobileQuery.removeEventListener('change', mobileListener)
+    } else if (typeof mobileQuery.removeListener === 'function') {
+      mobileQuery.removeListener(mobileListener)
+    }
+  }
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('scroll', handleViewportScroll)
   window.removeEventListener('focus', handleWake)
@@ -960,4 +1020,16 @@ onBeforeUnmount(() => {
 
 <template>
   <canvas ref="canvasEl" class="cyber-backdrop" aria-hidden="true"></canvas>
+  <div
+    v-if="fxPhase"
+    class="speedrun-fx"
+    :class="`speedrun-fx--p${fxPhase}`"
+    aria-hidden="true"
+  >
+    <span class="speedrun-fx__halo"></span>
+    <span class="speedrun-fx__scan"></span>
+    <span class="speedrun-fx__edge"></span>
+    <span class="speedrun-fx__glitch"></span>
+    <span class="speedrun-fx__burst"></span>
+  </div>
 </template>

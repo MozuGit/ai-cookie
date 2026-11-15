@@ -2084,7 +2084,7 @@ onBeforeUnmount(() => {
   <div
     class="app-shell relative flex min-h-screen flex-col overflow-x-clip text-slate-300"
   >
-    <CircuitBackdrop />
+    <CircuitBackdrop :speedrun="isSpeedrunMode" :phase="speedrunPhase" />
     <MobileCompatNotice />
     <div class="bass-frame pointer-events-none fixed inset-0 z-[2]" aria-hidden="true"></div>
     <div ref="bassDebugEl" class="bass-debug" aria-hidden="true">Bass: 0.00</div>
