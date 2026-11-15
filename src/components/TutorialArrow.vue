@@ -14,14 +14,16 @@ const focusStyle = ref({ transform: 'translate3d(-9999px, -9999px, 0)' })
 const pill = ref(null)
 
 let measureTimer = null
-let rafId = 0
+let rafEvalId = 0
+let rafValidateId = 0
 let retryTimers = []
 let domObserver = null
-let guideChangedAt = 0
+let lastGuideKey = 'none'
 let lastFoundAt = 0
+let invalidSince = 0
+let placedBox = null
 let highlightedEl = null
 let highlightedTone = ''
-const GUIDE_SWITCH_GRACE_MS = 700
 const GUIDE_TONES = ['gold', 'cyan', 'amber', 'red', 'violet']
 const GAP = 16
 const PAD = 12
@@ -29,6 +31,14 @@ const TARGET_MARGIN = 6
 const TOAST_MARGIN = 10
 const SHEET_MARGIN = 8
 const CORE_MARGIN = 10
+// 底部控制带 | 极速模式按钮 + 四向舱门 | 悬浮框与其保持 50px 安全间距
+const BAND_CLEARANCE = 50
+const BAND_SELECTOR =
+  '.speedrun-launch, [data-guide="servers-dock"], [data-guide="protocol-dock"], [data-guide="anomaly-dock"], [data-guide="automation-dock"]'
+// 位移阈值 | 低于此值视为抖动 | 不触发重定位
+const MOVE_THRESHOLD = 4
+// 防闪烁锁存 | 目标持续不可见超过该时长才允许退场
+const FLICKER_LOCK_MS = 1000
 
 const focusTone = computed(() =>
   GUIDE_TONES.includes(props.guide?.tone) ? props.guide.tone : 'gold',
@@ -155,14 +165,39 @@ function drawerScene(el, raw) {
   }
 }
 
-function hideUnlessSwitchGrace() {
+// 稳定键位 | 目标与文案均未变化时视为同一引导 | 忽略对象换新
+function guideKeyOf(guide) {
+  if (!guide) return 'none'
+  return [guide.id ?? '', guide.target, guide.title ?? '', guide.text ?? '', guide.hint ?? '', guide.tone ?? ''].join('|')
+}
+
+// 防闪烁锁存 | 目标短暂不可见时保持现状 | 持续超过 1s 才退场
+function markInvalid() {
+  if (!found.value) return
+  const now = window.performance.now()
+  if (!invalidSince) invalidSince = now
+  if (now - invalidSince >= FLICKER_LOCK_MS) hideNow()
+}
+
+// 已显示状态下的定位失败 | 1s 内不退场
+function softHide() {
   if (
+    found.value &&
     lastFoundAt > 0 &&
-    window.performance.now() - guideChangedAt < GUIDE_SWITCH_GRACE_MS
+    window.performance.now() - lastFoundAt < FLICKER_LOCK_MS
   ) {
     return
   }
+  hideNow()
+}
+
+function hideNow() {
+  clearTargetHighlight()
+  resetFocusRing()
   found.value = false
+  lastFoundAt = 0
+  invalidSince = 0
+  placedBox = null
 }
 
 function clampToViewport(x, y, pillW, pillH, viewportW, viewportH) {
@@ -172,11 +207,9 @@ function clampToViewport(x, y, pillW, pillH, viewportW, viewportH) {
   }
 }
 
-function measure() {
+function evaluate() {
   if (!props.guide) {
-    clearTargetHighlight()
-    resetFocusRing()
-    found.value = false
+    hideNow()
     return
   }
 
@@ -184,7 +217,7 @@ function measure() {
   if (!el) {
     clearTargetHighlight()
     resetFocusRing()
-    hideUnlessSwitchGrace()
+    softHide()
     return
   }
 
@@ -199,7 +232,7 @@ function measure() {
   if (!inViewport || !isVisible(el, clipped)) {
     clearTargetHighlight()
     resetFocusRing()
-    hideUnlessSwitchGrace()
+    softHide()
     return
   }
 
@@ -238,6 +271,17 @@ function measure() {
   const centerX = (box.left + box.right) / 2
   const centerY = (box.top + box.bottom) / 2
 
+  // 主界面底部控制带 | 极速模式按钮 + 底部横条内的舱门 | 方向舱门在侧边与顶部时不纳入
+  const band = scene
+    ? null
+    : unionBounds(
+        Array.from(document.querySelectorAll(BAND_SELECTOR)).filter((el) => {
+          const rect = el.getBoundingClientRect()
+          return rect.width >= 2 && rect.height >= 2 && rect.top > viewportH * 0.55
+        }),
+      )
+  const targetInBand = Boolean(band && rectsOverlap(raw, band, 0))
+
   // 候选方位按场景排序 | 中部目标优先侧边 | 底部目标优先正上方 | 全部不合适时自动翻转
   let kinds
   if (scene) {
@@ -250,6 +294,9 @@ function measure() {
     if (box.bottom + GAP + pillH <= p.bottom - 8) kinds.push('bottom')
     if (viewportW - p.right >= pillW + GAP + PAD) kinds.push('panel-right')
     if (p.left >= pillW + GAP + PAD) kinds.push('panel-left')
+  } else if (band && targetInBand) {
+    // 控制带内目标 | 固定于底部控制带上方 50px | 正中央优先 | 偏左备选
+    kinds = ['top', 'top-left']
   } else {
     const bottomZone = box.top > viewportH * 0.62 || box.bottom > viewportH - 150
     kinds = (
@@ -262,6 +309,11 @@ function measure() {
     })
   }
 
+  // 方位迟滞 | 目标位移后仍优先沿用原方位 | 抑制左右翻转跳动
+  if (side.value && kinds.includes(side.value)) {
+    kinds = [side.value, ...kinds.filter((kind) => kind !== side.value)]
+  }
+
   const place = (kind) => {
     switch (kind) {
       case 'right':
@@ -269,7 +321,23 @@ function measure() {
       case 'left':
         return { side: 'left', x: box.left - GAP - pillW, y: centerY - pillH / 2 }
       case 'top':
-        return { side: 'top', x: centerX - pillW / 2, y: box.top - GAP - pillH }
+        return {
+          side: 'top',
+          x: centerX - pillW / 2,
+          y:
+            band && targetInBand
+              ? band.top - BAND_CLEARANCE - pillH
+              : box.top - GAP - pillH,
+        }
+      case 'top-left':
+        return {
+          side: 'top',
+          x: PAD,
+          y:
+            band && targetInBand
+              ? band.top - BAND_CLEARANCE - pillH
+              : box.top - GAP - pillH,
+        }
       case 'bottom':
         return { side: 'bottom', x: centerX - pillW / 2, y: box.bottom + GAP }
       case 'panel-right':
@@ -285,6 +353,7 @@ function measure() {
   const obstacles = [{ rect: box, margin: TARGET_MARGIN }]
   if (toast) obstacles.push({ rect: toast, margin: TOAST_MARGIN })
   if (sheet) obstacles.push({ rect: sheet, margin: SHEET_MARGIN })
+  if (band) obstacles.push({ rect: band, margin: BAND_CLEARANCE })
   // 中央核心区 | 目标本身位于核心区时不再重复避让
   if (core && !rectsOverlap(raw, core, 0)) {
     obstacles.push({ rect: core, margin: CORE_MARGIN })
@@ -311,7 +380,7 @@ function measure() {
     }
   }
   if (!chosen) {
-    hideUnlessSwitchGrace()
+    softHide()
     return
   }
 
@@ -322,6 +391,48 @@ function measure() {
   }
   found.value = true
   lastFoundAt = window.performance.now()
+  invalidSince = 0
+  placedBox = box
+}
+
+// 轻量校验 | DOM 变更与轮询只检查目标存活性与位移 | 位置冻结不重算
+function validate() {
+  if (!props.guide) return
+  const el = readTarget()
+  if (!el) {
+    markInvalid()
+    return
+  }
+  const raw = el.getBoundingClientRect()
+  const inViewport =
+    raw.bottom > 0 &&
+    raw.top < window.innerHeight &&
+    raw.right > 0 &&
+    raw.left < window.innerWidth
+  if (!inViewport || !isVisible(el, clippedRect(el, raw))) {
+    markInvalid()
+    return
+  }
+  invalidSince = 0
+  if (!found.value) {
+    scheduleEvaluate()
+    return
+  }
+  const box = {
+    left: Math.max(raw.left, 0),
+    top: Math.max(raw.top, 0),
+    right: Math.min(raw.right, window.innerWidth),
+    bottom: Math.min(raw.bottom, window.innerHeight),
+  }
+  if (
+    !placedBox ||
+    Math.abs(box.left - placedBox.left) > MOVE_THRESHOLD ||
+    Math.abs(box.top - placedBox.top) > MOVE_THRESHOLD ||
+    Math.abs(box.right - placedBox.right) > MOVE_THRESHOLD ||
+    Math.abs(box.bottom - placedBox.bottom) > MOVE_THRESHOLD
+  ) {
+    scheduleEvaluate()
+  }
 }
 
 function clearRetries() {
@@ -329,62 +440,76 @@ function clearRetries() {
   retryTimers = []
 }
 
-function scheduleMeasure() {
-  if (rafId) return
-  rafId = window.requestAnimationFrame(() => {
-    rafId = 0
-    measure()
+function scheduleEvaluate() {
+  if (rafEvalId) return
+  rafEvalId = window.requestAnimationFrame(() => {
+    rafEvalId = 0
+    evaluate()
+  })
+}
+
+function scheduleValidate() {
+  if (rafValidateId) return
+  rafValidateId = window.requestAnimationFrame(() => {
+    rafValidateId = 0
+    validate()
   })
 }
 
 function handleViewportChange() {
-  scheduleMeasure()
+  scheduleEvaluate()
 }
 
+// 仅在目标真正变化时重建定位 | 同键位对象换新 | 状态扰动一律忽略
 watch(
   () => props.guide,
   async (guide) => {
+    const key = guideKeyOf(guide)
+    if (key === lastGuideKey) return
+    lastGuideKey = key
     clearRetries()
+    invalidSince = 0
     if (!guide) {
-      clearTargetHighlight()
-      resetFocusRing()
-      found.value = false
+      hideNow()
       return
     }
-    guideChangedAt = window.performance.now()
     await nextTick()
-    measure()
+    evaluate()
     // Layout shifts (auto-expanded panels, accordions) settle after the guide
     // change; a few retries keep the pointer latched onto the final position.
     const delays = reducedMotion.value ? [120, 360, 700] : [220, 560, 1000]
-    retryTimers = delays.map((delay) => window.setTimeout(measure, delay))
+    retryTimers = delays.map((delay) => window.setTimeout(evaluate, delay))
   },
   { immediate: true },
 )
 
+// 紧凑模式切换会改变悬浮框尺寸 | 重新定位一次
+watch(compact, () => scheduleEvaluate())
+
 onMounted(() => {
   window.addEventListener('resize', handleViewportChange, { passive: true })
-  window.addEventListener('scroll', scheduleMeasure, { passive: true, capture: true })
+  window.addEventListener('scroll', scheduleEvaluate, { passive: true, capture: true })
   window.addEventListener('orientationchange', handleViewportChange, { passive: true })
-  // DOM 结构变化 | Tab 切换 | 弹窗内容更新 | 即时重定位
-  domObserver = new MutationObserver(scheduleMeasure)
+  // DOM 结构变化 | Tab 切换 | 弹窗内容更新 | 轻量校验
+  domObserver = new MutationObserver(scheduleValidate)
   domObserver.observe(document.body, { childList: true, subtree: true })
   measureTimer = window.setInterval(() => {
-    if (!document.hidden) measure()
+    if (!document.hidden) validate()
   }, 260)
-  measure()
+  evaluate()
 })
 
 onBeforeUnmount(() => {
   clearTargetHighlight()
   window.removeEventListener('resize', handleViewportChange)
-  window.removeEventListener('scroll', scheduleMeasure, true)
+  window.removeEventListener('scroll', scheduleEvaluate, true)
   window.removeEventListener('orientationchange', handleViewportChange)
   domObserver?.disconnect()
   domObserver = null
   window.clearInterval(measureTimer)
   clearRetries()
-  if (rafId) window.cancelAnimationFrame(rafId)
+  if (rafEvalId) window.cancelAnimationFrame(rafEvalId)
+  if (rafValidateId) window.cancelAnimationFrame(rafValidateId)
 })
 </script>
 
