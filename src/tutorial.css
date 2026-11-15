@@ -139,14 +139,17 @@
   max-width: min(430px, calc(100vw - 24px));
   padding: 12px 18px 12px 12px;
   color: var(--ta-gold-pale);
+  /* 半透明底 + 背景模糊 | 悬浮框下方的按钮仍可辨认 */
   background:
-    radial-gradient(circle at 0% 50%, rgba(250, 204, 21, 0.18), transparent 62%),
-    linear-gradient(140deg, rgba(26, 21, 4, 0.97), rgba(7, 12, 20, 0.97));
+    radial-gradient(circle at 0% 50%, rgba(250, 204, 21, 0.16), transparent 62%),
+    linear-gradient(140deg, rgba(26, 21, 4, 0.86), rgba(7, 12, 20, 0.9));
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   border: 1px solid rgba(250, 204, 21, 0.72);
   box-shadow:
     0 0 0 1px rgba(250, 204, 21, 0.14),
     0 0 24px rgba(250, 204, 21, 0.38),
-    0 16px 38px rgba(0, 0, 0, 0.58);
+    0 18px 44px rgba(0, 0, 0, 0.66);
   clip-path: polygon(
     0 8px,
     8px 0,
@@ -177,6 +180,45 @@
   gap: 8px;
   padding: 13px 18px 15px;
   text-align: center;
+}
+
+/* 弹窗内紧凑模式 | 缩小占位 | 悬浮在按钮旁边而不挤压面板 */
+.tutorial-arrow--compact .tutorial-arrow__pill {
+  gap: 9px;
+  max-width: min(300px, calc(100vw - 24px));
+  padding: 9px 13px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__beacon {
+  width: 32px;
+  height: 32px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__beacon::after {
+  inset: -4px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__beacon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__eyebrow {
+  font-size: 9px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__title {
+  max-width: 226px;
+  font-size: 13px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__text {
+  max-width: 226px;
+  font-size: 11px;
+}
+
+.tutorial-arrow--compact .tutorial-arrow__hint {
+  max-width: 226px;
 }
 
 .tutorial-arrow__beacon {

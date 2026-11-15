@@ -8,6 +8,7 @@ const props = defineProps({
 
 const found = ref(false)
 const side = ref('right')
+const compact = ref(false)
 const rigStyle = ref({ transform: 'translate3d(-9999px, -9999px, 0)' })
 const focusStyle = ref({ transform: 'translate3d(-9999px, -9999px, 0)' })
 const pill = ref(null)
@@ -15,12 +16,19 @@ const pill = ref(null)
 let measureTimer = null
 let rafId = 0
 let retryTimers = []
+let domObserver = null
 let guideChangedAt = 0
 let lastFoundAt = 0
 let highlightedEl = null
 let highlightedTone = ''
 const GUIDE_SWITCH_GRACE_MS = 700
 const GUIDE_TONES = ['gold', 'cyan', 'amber', 'red', 'violet']
+const GAP = 16
+const PAD = 12
+const TARGET_MARGIN = 6
+const TOAST_MARGIN = 10
+const SHEET_MARGIN = 8
+const CORE_MARGIN = 10
 
 const focusTone = computed(() =>
   GUIDE_TONES.includes(props.guide?.tone) ? props.guide.tone : 'gold',
@@ -94,15 +102,22 @@ function isVisible(el, rect) {
   return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0'
 }
 
-// 成就 Toast 占据顶部左侧 | 指针定位时主动让位
-function toastBounds() {
-  const cards = document.querySelectorAll('.achievement-toast')
+function rectsOverlap(box, obstacle, margin) {
+  return (
+    box.left < obstacle.right + margin &&
+    box.right > obstacle.left - margin &&
+    box.top < obstacle.bottom + margin &&
+    box.bottom > obstacle.top - margin
+  )
+}
+
+function unionBounds(nodes) {
   let left = Infinity
   let top = Infinity
   let right = -Infinity
   let bottom = -Infinity
-  for (const card of cards) {
-    const rect = card.getBoundingClientRect()
+  for (const node of nodes) {
+    const rect = node.getBoundingClientRect()
     if (rect.width < 2 || rect.height < 2) continue
     left = Math.min(left, rect.left)
     top = Math.min(top, rect.top)
@@ -113,7 +128,11 @@ function toastBounds() {
   return { left, top, right, bottom }
 }
 
-// 移动端主线面板固定于底部 | 引导框向上避让
+function boundsOf(selector) {
+  return unionBounds(document.querySelectorAll(selector))
+}
+
+// 移动端主线面板固定于底部 | 作为障碍物避让
 function questSheetBounds() {
   const el = document.querySelector('.spatial-rail .main-quest--compact')
   if (!el) return null
@@ -123,82 +142,17 @@ function questSheetBounds() {
   return rect
 }
 
-// 中央核心区 | 算力数字 + 芯片圆盘 | 引导框绝不遮挡
-function coreStageBounds() {
-  const parts = document.querySelectorAll('.core-stage__value, .core-stage__disc')
-  let left = Infinity
-  let top = Infinity
-  let right = -Infinity
-  let bottom = -Infinity
-  for (const part of parts) {
-    const rect = part.getBoundingClientRect()
-    if (rect.width < 2 || rect.height < 2) continue
-    left = Math.min(left, rect.left)
-    top = Math.min(top, rect.top)
-    right = Math.max(right, rect.right)
-    bottom = Math.max(bottom, rect.bottom)
+// 弹窗场景 | 目标位于抽屉面板内 | 面板与头部作为定位参照
+function drawerScene(el, raw) {
+  const panel = el.closest('.holo-shell__panel')
+  if (!panel) return null
+  const headEl = panel.querySelector('.holo-shell__head')
+  const headRect = headEl ? headEl.getBoundingClientRect() : null
+  return {
+    panel: panel.getBoundingClientRect(),
+    head: headRect,
+    targetInHead: headRect ? rectsOverlap(raw, headRect, 0) : false,
   }
-  if (!Number.isFinite(left)) return null
-  return { left, top, right, bottom }
-}
-
-function hitsToast(x, y, width, height, toast, margin = 10) {
-  if (!toast) return false
-  return (
-    x < toast.right + margin &&
-    x + width > toast.left - margin &&
-    y < toast.bottom + margin &&
-    y + height > toast.top - margin
-  )
-}
-
-function avoidToast(x, y, pillW, pillH, viewportW, viewportH, gap, pad) {
-  const toast = toastBounds()
-  if (!toast || !hitsToast(x, y, pillW, pillH, toast)) return { x, y }
-
-  const clampX = (value) =>
-    Math.min(Math.max(value, pad), Math.max(pad, viewportW - pillW - pad))
-  const clampY = (value) =>
-    Math.min(Math.max(value, pad), Math.max(pad, viewportH - pillH - pad))
-  const attempts = [
-    { x: clampX(toast.right + gap), y },
-    { x: clampX(toast.left - gap - pillW), y },
-    { x, y: clampY(toast.bottom + gap) },
-  ]
-
-  for (const attempt of attempts) {
-    if (!hitsToast(attempt.x, attempt.y, pillW, pillH, toast)) return attempt
-  }
-  return { x, y }
-}
-
-// 中央核心区避让 | 优先移到核心区正下方 | 其次右侧 | 再左侧
-function avoidCoreZone(x, y, pillW, pillH, viewportW, viewportH, gap, pad) {
-  const zone = coreStageBounds()
-  if (!zone || !hitsToast(x, y, pillW, pillH, zone, 10)) return { x, y }
-
-  const clampX = (value) =>
-    Math.min(Math.max(value, pad), Math.max(pad, viewportW - pillW - pad))
-  const clampY = (value) =>
-    Math.min(Math.max(value, pad), Math.max(pad, viewportH - pillH - pad))
-  const centerX = (zone.left + zone.right) / 2
-  const centerY = (zone.top + zone.bottom) / 2
-  const sheet = questSheetBounds()
-  const toast = toastBounds()
-  const clear = (cx, cy) =>
-    !hitsToast(cx, cy, pillW, pillH, zone, 10) &&
-    !(sheet && hitsToast(cx, cy, pillW, pillH, sheet, 8)) &&
-    !(toast && hitsToast(cx, cy, pillW, pillH, toast))
-  const attempts = [
-    { x: clampX(centerX - pillW / 2), y: clampY(zone.bottom + gap) },
-    { x: clampX(zone.right + gap), y: clampY(centerY - pillH / 2) },
-    { x: clampX(zone.left - gap - pillW), y: clampY(centerY - pillH / 2) },
-    { x: clampX(centerX - pillW / 2), y: clampY(zone.top - gap - pillH) },
-  ]
-  for (const attempt of attempts) {
-    if (clear(attempt.x, attempt.y)) return attempt
-  }
-  return { x: attempts[0].x, y: attempts[0].y }
 }
 
 function hideUnlessSwitchGrace() {
@@ -209,6 +163,13 @@ function hideUnlessSwitchGrace() {
     return
   }
   found.value = false
+}
+
+function clampToViewport(x, y, pillW, pillH, viewportW, viewportH) {
+  return {
+    x: Math.min(Math.max(x, PAD), Math.max(PAD, viewportW - pillW - PAD)),
+    y: Math.min(Math.max(y, PAD), Math.max(PAD, viewportH - pillH - PAD)),
+  }
 }
 
 function measure() {
@@ -248,10 +209,9 @@ function measure() {
   const viewportH = window.innerHeight
   const pillW = Math.max(150, pill.value?.offsetWidth || 300)
   const pillH = Math.max(36, pill.value?.offsetHeight || 52)
-  const gap = 16
-  const pad = 12
+
   // Anchor to the element's true bounds (clamped to the viewport) so the
-  // pointer clears decorative glows instead of stopping at a clipped edge.
+  // focus ring clears decorative glows instead of stopping at a clipped edge.
   const box = {
     left: Math.max(raw.left, 0),
     top: Math.max(raw.top, 0),
@@ -272,58 +232,94 @@ function measure() {
       height: `${focusHeight}px`,
     }
   }
+
+  const scene = drawerScene(el, raw)
+  if (compact.value !== Boolean(scene)) compact.value = Boolean(scene)
   const centerX = (box.left + box.right) / 2
   const centerY = (box.top + box.bottom) / 2
 
-  let nextSide
-  let x
-  let y
-  // Bottom docks have horizontal room around them, but a side pill would
-  // cover the neighbouring buttons on narrow screens; prefer "above" there.
-  const nearBottom = box.bottom > viewportH - 96
-  const canTop = box.top >= pillH + gap + pad
-  if (nearBottom && canTop) {
-    nextSide = 'top'
-    x = centerX - pillW / 2
-    y = box.top - gap - pillH
-  } else if (viewportW - box.right >= pillW + gap + pad) {
-    nextSide = 'right'
-    x = box.right + gap
-    y = centerY - pillH / 2
-  } else if (box.left >= pillW + gap + pad) {
-    nextSide = 'left'
-    x = box.left - gap - pillW
-    y = centerY - pillH / 2
-  } else if (viewportH - box.bottom >= pillH + gap + pad) {
-    nextSide = 'bottom'
-    x = centerX - pillW / 2
-    y = box.bottom + gap
+  // 候选方位按场景排序 | 中部目标优先侧边 | 底部目标优先正上方 | 全部不合适时自动翻转
+  let kinds
+  if (scene) {
+    const p = scene.panel
+    const headFloor = scene.head && !scene.targetInHead ? scene.head.bottom : p.top
+    kinds = []
+    if (box.right + GAP + pillW <= p.right - 8) kinds.push('right')
+    if (box.left - GAP - pillW >= p.left + 8) kinds.push('left')
+    if (box.top - GAP - pillH >= headFloor + 8) kinds.push('top')
+    if (box.bottom + GAP + pillH <= p.bottom - 8) kinds.push('bottom')
+    if (viewportW - p.right >= pillW + GAP + PAD) kinds.push('panel-right')
+    if (p.left >= pillW + GAP + PAD) kinds.push('panel-left')
   } else {
-    nextSide = 'top'
-    x = centerX - pillW / 2
-    y = box.top - gap - pillH
+    const bottomZone = box.top > viewportH * 0.62 || box.bottom > viewportH - 150
+    kinds = (
+      bottomZone ? ['top', 'right', 'left', 'bottom'] : ['right', 'left', 'top', 'bottom']
+    ).filter((kind) => {
+      if (kind === 'right') return viewportW - box.right >= pillW + GAP + PAD
+      if (kind === 'left') return box.left >= pillW + GAP + PAD
+      if (kind === 'top') return box.top >= pillH + GAP + PAD
+      return viewportH - box.bottom >= pillH + GAP + PAD
+    })
   }
 
-  x = Math.min(Math.max(x, pad), Math.max(pad, viewportW - pillW - pad))
-  y = Math.min(Math.max(y, pad), Math.max(pad, viewportH - pillH - pad))
-  const safe = avoidToast(x, y, pillW, pillH, viewportW, viewportH, gap, pad)
-  x = safe.x
-  y = safe.y
-
-  const questSheet = questSheetBounds()
-  if (questSheet && hitsToast(x, y, pillW, pillH, questSheet, 8)) {
-    y = Math.max(pad, questSheet.top - gap - pillH)
+  const place = (kind) => {
+    switch (kind) {
+      case 'right':
+        return { side: 'right', x: box.right + GAP, y: centerY - pillH / 2 }
+      case 'left':
+        return { side: 'left', x: box.left - GAP - pillW, y: centerY - pillH / 2 }
+      case 'top':
+        return { side: 'top', x: centerX - pillW / 2, y: box.top - GAP - pillH }
+      case 'bottom':
+        return { side: 'bottom', x: centerX - pillW / 2, y: box.bottom + GAP }
+      case 'panel-right':
+        return { side: 'right', x: scene.panel.right + GAP, y: centerY - pillH / 2 }
+      default:
+        return { side: 'left', x: scene.panel.left - GAP - pillW, y: centerY - pillH / 2 }
+    }
   }
 
-  const coreSafe = avoidCoreZone(x, y, pillW, pillH, viewportW, viewportH, gap, pad)
-  x = coreSafe.x
-  y = coreSafe.y
+  const toast = boundsOf('.achievement-toast')
+  const sheet = questSheetBounds()
+  const core = scene ? null : boundsOf('.core-stage__value, .core-stage__disc')
+  const obstacles = [{ rect: box, margin: TARGET_MARGIN }]
+  if (toast) obstacles.push({ rect: toast, margin: TOAST_MARGIN })
+  if (sheet) obstacles.push({ rect: sheet, margin: SHEET_MARGIN })
+  // 中央核心区 | 目标本身位于核心区时不再重复避让
+  if (core && !rectsOverlap(raw, core, 0)) {
+    obstacles.push({ rect: core, margin: CORE_MARGIN })
+  }
+  if (scene?.head && !scene.targetInHead) {
+    obstacles.push({ rect: scene.head, margin: TARGET_MARGIN })
+  }
 
-  const transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+  let chosen = null
+  let fallback = null
+  for (const kind of kinds) {
+    const candidate = place(kind)
+    if (!fallback) fallback = candidate
+    const { x, y } = clampToViewport(candidate.x, candidate.y, pillW, pillH, viewportW, viewportH)
+    const rect = { left: x, top: y, right: x + pillW, bottom: y + pillH }
+    if (obstacles.some((o) => rectsOverlap(rect, o.rect, o.margin))) continue
+    chosen = { side: candidate.side, x, y }
+    break
+  }
+  if (!chosen && fallback) {
+    chosen = {
+      side: fallback.side,
+      ...clampToViewport(fallback.x, fallback.y, pillW, pillH, viewportW, viewportH),
+    }
+  }
+  if (!chosen) {
+    hideUnlessSwitchGrace()
+    return
+  }
+
+  if (side.value !== chosen.side) side.value = chosen.side
+  const transform = `translate3d(${Math.round(chosen.x)}px, ${Math.round(chosen.y)}px, 0)`
   if (rigStyle.value.transform !== transform) {
     rigStyle.value = { transform }
   }
-  if (side.value !== nextSide) side.value = nextSide
   found.value = true
   lastFoundAt = window.performance.now()
 }
@@ -370,6 +366,9 @@ onMounted(() => {
   window.addEventListener('resize', handleViewportChange, { passive: true })
   window.addEventListener('scroll', scheduleMeasure, { passive: true, capture: true })
   window.addEventListener('orientationchange', handleViewportChange, { passive: true })
+  // DOM 结构变化 | Tab 切换 | 弹窗内容更新 | 即时重定位
+  domObserver = new MutationObserver(scheduleMeasure)
+  domObserver.observe(document.body, { childList: true, subtree: true })
   measureTimer = window.setInterval(() => {
     if (!document.hidden) measure()
   }, 260)
@@ -381,6 +380,8 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleViewportChange)
   window.removeEventListener('scroll', scheduleMeasure, true)
   window.removeEventListener('orientationchange', handleViewportChange)
+  domObserver?.disconnect()
+  domObserver = null
   window.clearInterval(measureTimer)
   clearRetries()
   if (rafId) window.cancelAnimationFrame(rafId)
@@ -392,7 +393,10 @@ onBeforeUnmount(() => {
     <div
       v-if="guide"
       class="tutorial-arrow"
-      :class="[`tutorial-arrow--side-${side}`, { 'is-visible': found }]"
+      :class="[
+        `tutorial-arrow--side-${side}`,
+        { 'is-visible': found, 'tutorial-arrow--compact': compact },
+      ]"
       data-tutorial-arrow
       :data-tutorial-target="guide.target"
       :data-tutorial-side="side"
