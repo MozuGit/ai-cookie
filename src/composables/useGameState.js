@@ -1268,6 +1268,7 @@ export function useGameState() {
   const matrixNodeLit = (id) => topologyLit.value.includes(id)
 
   const matrixAutomationTierLimit = computed(() => {
+    if (matrixNodeLit('auto-5')) return 8
     if (matrixNodeLit('auto-3')) return 7
     if (matrixNodeLit('auto-2')) return 5
     if (matrixNodeLit('auto-1')) return 3
@@ -2809,7 +2810,8 @@ export function useGameState() {
   function isBuildingUnlockedAt(index) {
     const building = buildings[index]
     if (!building) return false
-    if (index === 7) return false
+    // 08 号服务器 | 全局里程碑 gm-1e78 集群残响 解锁购买权限 | 前置仍需 07 号部署
+    if (index === 7 && !globalMilestones['gm-1e78']) return false
     const gate = BUILDING_NEURAL_GATES[index]
     if (gate && !matrixNodeLit(gate.id)) return false
     if (index <= 0) return true
@@ -2822,7 +2824,7 @@ export function useGameState() {
       const plan = resolveBuildingPurchase(building)
       const challengeLocked =
         index + 1 > (challengeRestrictions.value?.maxBuildingIndex ?? 99)
-      const futureLocked = index === 7
+      const milestoneLocked = index === 7 && !globalMilestones['gm-1e78']
       const gate = BUILDING_NEURAL_GATES[index]
       const gateLocked = Boolean(gate && !matrixNodeLit(gate.id))
       const unlocked = isBuildingUnlockedAt(index)
@@ -2832,9 +2834,9 @@ export function useGameState() {
       const unitBaseCps = buildingBaseCps(building)
       let lockTag = '节点锁定'
       let unlockHint = ''
-      if (futureLocked) {
-        lockTag = '未来版本'
-        unlockHint = '08 号服务器将在后续版本开放'
+      if (milestoneLocked) {
+        lockTag = '里程碑锁定'
+        unlockHint = '需达成全局里程碑 [ 1e78 集群残响 ] 解锁'
       } else if (gateLocked) {
         lockTag = '矩阵锁定'
         unlockHint = `需点亮神经矩阵 [ ${gate.label} ] 节点`

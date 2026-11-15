@@ -152,8 +152,8 @@ export const GLOBAL_MILESTONES = [
     thresholdLabel: '1e78',
     name: '集群残响',
     glyph: '⬡',
-    effect: '架构降维保留 10% 服务器',
-    description: '降维后保留每种服务器 10% 数量',
+    effect: '架构降维保留 10% 服务器 · 解锁 08 号服务器',
+    description: '降维后保留每种服务器 10% 数量 · 永久解锁 08 号服务器 [ 聚变反应堆 ] 购买权限',
   },
   {
     id: 'gm-1e110',
