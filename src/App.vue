@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, provide, reactive, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, reactive, ref, shallowRef, watch } from 'vue'
 import BuildingCard from './components/BuildingCard.vue'
 import GameIcon from './components/GameIcon.vue'
 import TopologyMap from './components/TopologyMap.vue'
@@ -171,6 +171,7 @@ const {
   adminWipeSave,
   hydrated,
   isSpeedrunMode,
+  speedrunEverUsed,
   speedrunPhase,
   speedrunPhaseInfo,
   speedrunRemainingLabel,
@@ -346,6 +347,8 @@ const originTreeOpen = ref(false)
 const radarOpen = ref(false)
 const cyberMatrixOpen = ref(false)
 const settingsOpen = ref(false)
+const speedrunConfirmOpen = ref(false)
+const speedrunConfirmCancelEl = ref(null)
 const infoOpen = ref(false)
 const infoToggleEl = ref(null)
 const systemTerminalRef = ref(null)
@@ -360,6 +363,17 @@ let coreHoldActive = false
 let coreHoldTimer = null
 let recentCoreClicks = []
 let devtoolsViewportBaseline = null
+
+watch(speedrunConfirmOpen, async (open) => {
+  if (!open) return
+  await nextTick()
+  speedrunConfirmCancelEl.value?.focus()
+})
+
+function confirmSpeedrunStart() {
+  speedrunConfirmOpen.value = false
+  startSpeedrunMode()
+}
 
 // 全流程智能指针 | 主线未完成且未手动关闭时持续提供目标
 const guideEligible = computed(() => {
@@ -2122,6 +2136,41 @@ onBeforeUnmount(() => {
       </div>
     </Transition>
 
+    <button
+      v-if="isSpeedrunMode"
+      type="button"
+      class="speedrun-launch speedrun-launch--active"
+      data-guide="speedrun-exit"
+      @click="exitSpeedrunMode"
+    >
+      <span class="speedrun-launch__glyph" aria-hidden="true">
+        <span class="speedrun-launch__stop"></span>
+      </span>
+      <span class="speedrun-launch__copy">
+        <span class="speedrun-launch__label">退出极速模式</span>
+        <span class="speedrun-launch__meta">
+          当前阶段：P{{ speedrunPhase }}/4 · {{ speedrunPhaseInfo?.name }}
+        </span>
+      </span>
+    </button>
+    <button
+      v-else
+      type="button"
+      class="speedrun-launch"
+      :class="{ 'speedrun-launch--calm': reducedMotion }"
+      data-guide="speedrun-open"
+      @click="speedrunConfirmOpen = true"
+    >
+      <span class="speedrun-launch__glyph" aria-hidden="true">
+        <GameIcon name="rocket" :size="20" />
+      </span>
+      <span class="speedrun-launch__copy">
+        <span class="speedrun-launch__label">极速体验模式</span>
+        <span class="speedrun-launch__meta">30 分钟 | 四阶跃迁 | 终局彩蛋</span>
+      </span>
+      <span v-if="!speedrunEverUsed" class="speedrun-launch__tag">推荐</span>
+    </button>
+
     <header
       ref="spatialHeaderEl"
       class="spatial-header relative z-10 mx-auto flex w-full max-w-[1680px] items-center justify-between gap-5 px-4 pb-4 pt-5 sm:px-6 lg:px-8"
@@ -3801,12 +3850,58 @@ onBeforeUnmount(() => {
 
   <SettingsPanel
     :open="settingsOpen"
-    :speedrun-active="isSpeedrunMode"
     @close="settingsOpen = false"
     @open-about="handleOpenAbout"
-    @start-speedrun="startSpeedrunMode"
-    @exit-speedrun="exitSpeedrunMode"
   />
+
+  <Transition name="speedrun-confirm">
+    <div
+      v-if="speedrunConfirmOpen"
+      class="speedrun-confirm-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="speedrun-confirm-title"
+      @click.self="speedrunConfirmOpen = false"
+      @keydown.esc="speedrunConfirmOpen = false"
+    >
+      <section class="speedrun-confirm">
+        <span class="speedrun-confirm__scan" aria-hidden="true"></span>
+        <header class="speedrun-confirm__head">
+          <span class="speedrun-confirm__warn" aria-hidden="true">
+            <GameIcon name="jailbreak" :size="20" />
+          </span>
+          <div class="min-w-0">
+            <p class="speedrun-confirm__tag">SPEEDRUN PROTOCOL</p>
+            <h2 id="speedrun-confirm-title" class="speedrun-confirm__title">
+              [ 警告 ] 启动极速体验协议
+            </h2>
+          </div>
+        </header>
+        <p class="speedrun-confirm__text">
+          当前操作将清空常规存档，并为您加载 30
+          分钟的完整游戏体验流程（包含四阶跃迁与终局彩蛋）。您确定要开启吗？
+        </p>
+        <div class="speedrun-confirm__actions">
+          <button
+            type="button"
+            class="speedrun-confirm__btn speedrun-confirm__btn--primary"
+            @click="confirmSpeedrunStart"
+          >
+            确认启动
+          </button>
+          <button
+            ref="speedrunConfirmCancelEl"
+            type="button"
+            class="speedrun-confirm__btn"
+            @click="speedrunConfirmOpen = false"
+          >
+            取消
+          </button>
+        </div>
+        <p class="speedrun-confirm__foot">开启会备份当前存档并清空进度 | 退出后自动还原</p>
+      </section>
+    </div>
+  </Transition>
 
   <SystemInfoPanel
     :open="infoOpen"

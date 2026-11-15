@@ -33,6 +33,8 @@ import {
   formatSpeedrunClock,
   getSpeedrunPhaseId,
   getSpeedrunPhaseInfo,
+  markSpeedrunEverUsed,
+  readSpeedrunEverUsed,
   readSpeedrunState,
   writeSpeedrunState,
 } from './speedrunData'
@@ -957,6 +959,7 @@ export function useGameState() {
   const buildings = reactive(BUILDING_BLUEPRINTS.map((building) => ({ ...building })))
   const bootSpeedrunState = readSpeedrunState()
   const isSpeedrunMode = ref(bootSpeedrunState.active)
+  const speedrunEverUsed = ref(readSpeedrunEverUsed())
   const speedrunStartedAt = ref(
     bootSpeedrunState.startedAt > 0 ? bootSpeedrunState.startedAt : Date.now(),
   )
@@ -5354,6 +5357,8 @@ export function useGameState() {
         originGift: false,
         injections: 0,
       })
+      markSpeedrunEverUsed()
+      speedrunEverUsed.value = true
       window.localStorage.removeItem(STORAGE_KEY)
       window.localStorage.removeItem(MILESTONE_STORAGE_KEY)
     } catch (error) {
@@ -7054,6 +7059,7 @@ export function useGameState() {
   return {
     buildings,
     isSpeedrunMode,
+    speedrunEverUsed,
     speedrunStartedAt,
     speedrunElapsedMs,
     speedrunPhase,

@@ -1,4 +1,5 @@
 export const SPEEDRUN_STORAGE_KEY = 'ai-cookie.speedrun.v1'
+export const SPEEDRUN_EVER_USED_KEY = 'ai-cookie.speedrun.everused.v1'
 export const SPEEDRUN_BACKUP_SAVE_KEY = 'ai-cookie.speedrun.backup.save.v1'
 export const SPEEDRUN_BACKUP_MILESTONES_KEY = 'ai-cookie.speedrun.backup.milestones.v1'
 
@@ -113,6 +114,24 @@ export function writeSpeedrunState(state) {
     return true
   } catch {
     return false
+  }
+}
+
+export function readSpeedrunEverUsed() {
+  if (typeof window === 'undefined') return false
+  try {
+    return window.localStorage.getItem(SPEEDRUN_EVER_USED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function markSpeedrunEverUsed() {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SPEEDRUN_EVER_USED_KEY, '1')
+  } catch {
+    /* ignore */
   }
 }
 
