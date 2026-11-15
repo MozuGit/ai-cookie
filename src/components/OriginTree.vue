@@ -203,7 +203,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', closeOnEscape))
           起源代码结算 = 峰值纪元 + 矩阵等级 + 累计越狱权限 + 重启次数 // 终焉分支可让产出彻底失控
         </span>
         <button type="button" class="asc-btn asc-tone-gold" @click="emit('close')">
-          返回飞升终端
+          返回重构终端
         </button>
       </footer>
     </div>

@@ -18,7 +18,7 @@ let restoreFocusOnClose = false
 const features = [
   {
     icon: 'ascension',
-    name: '赛博四阶飞升',
+    name: '赛博四阶跃迁',
     desc: '架构降维 > 算力超载 > 逻辑坍缩 > 重启纪元',
   },
   {

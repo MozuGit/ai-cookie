@@ -27,7 +27,7 @@ export const CYBER_MATRIX_BRANCHES = [
     name: '维度跃迁模块',
     code: 'DIMENSION_SHIFT',
     tone: 'violet',
-    description: '自动执行四阶飞升 时间线自行坍缩与重启',
+    description: '自动执行四阶跃迁 时间线自行坍缩与重启',
   },
 ]
 

@@ -478,7 +478,7 @@ const coachingGuideLive = computed(() => {
         'hub-close',
         'red',
         '关闭终端并稳定总线',
-        '退出飞升终端 回到负载平衡仪表盘',
+        '退出重构终端 回到负载平衡仪表盘',
         '左右微调指针 · 保持在绿色安全区',
       )
     }
@@ -502,7 +502,7 @@ const coachingGuideLive = computed(() => {
         'amber',
         `切换模块 // ${label}`,
         `点击顶部高亮 [ ${label} ] 进入对应协议模块`,
-        '模块标签位于飞升终端顶部',
+        '模块标签位于重构终端顶部',
       )
 
     if (questId === 'rebuild1' || questId === 'rebuild3') {
@@ -867,7 +867,7 @@ const coachingGuideLive = computed(() => {
       'open-reduction',
       'gold',
       '执行第 1 次架构降维',
-      '点击右侧 [ 四阶飞升 ] 面板的 [ 架构降维 ]',
+      '点击右侧 [ 四阶跃迁 ] 面板的 [ 架构降维 ]',
       '架构降维重置本轮服务器 / 算法 / 算力',
     )
   }
@@ -910,7 +910,7 @@ const coachingGuideLive = computed(() => {
       'open-reduction',
       'gold',
       '完成第三次架构降维',
-      '点击右侧 [ 四阶飞升 ] 面板的 [ 架构降维 ]',
+      '点击右侧 [ 四阶跃迁 ] 面板的 [ 架构降维 ]',
       `已降维 ${totalRebuilds.value}/3 次 · 历史峰值 ${formatScientific(highestCompute.value)}`,
     )
   }
@@ -962,8 +962,8 @@ const coachingGuideLive = computed(() => {
       'overload-open',
       'open-ascension',
       'cyan',
-      '进入飞升终端',
-      '点击高亮飞升入口 触发第一次算力超载',
+      '进入重构终端',
+      '点击高亮跃迁入口 触发第一次算力超载',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e100').text} CU`,
     )
   }
@@ -1007,7 +1007,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'violet',
       '撕开底层黑域',
-      '点击高亮飞升入口 四阶转生页执行逻辑坍缩',
+      '点击高亮跃迁入口 四阶转生页执行逻辑坍缩',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU · 坍缩后解锁黑域`,
     )
   }
@@ -1019,7 +1019,7 @@ const coachingGuideLive = computed(() => {
         'open-ascension',
         'violet',
         '先解锁底层黑域',
-        '逻辑坍缩后黑域开启 进入飞升终端完成坍缩',
+        '逻辑坍缩后黑域开启 进入重构终端完成坍缩',
         `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
       )
     }
@@ -1028,7 +1028,7 @@ const coachingGuideLive = computed(() => {
       'open-ascension',
       'violet',
       '打开系统篡改协议',
-      '点击高亮飞升入口 底层黑域页编译 1 个篡改节点',
+      '点击高亮跃迁入口 底层黑域页编译 1 个篡改节点',
       `越狱权限 ${formatNumber(rootAccess.value).text} · 下级 ${formatNumber(firstTamper?.nextCost ?? 5).text} Root`,
     )
   }
@@ -1059,8 +1059,8 @@ const coachingGuideLive = computed(() => {
       'collapse-open',
       'open-ascension',
       'violet',
-      '进入飞升终端',
-      '点击高亮飞升入口 执行第一次逻辑坍缩',
+      '进入重构终端',
+      '点击高亮跃迁入口 执行第一次逻辑坍缩',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e350').text} CU`,
     )
   }
@@ -1080,8 +1080,8 @@ const coachingGuideLive = computed(() => {
       'restart-open',
       'open-ascension',
       'gold',
-      '进入飞升终端',
-      '点击高亮飞升入口 执行第一次重启纪元',
+      '进入重构终端',
+      '点击高亮跃迁入口 执行第一次重启纪元',
       `本局峰值 ${formatScientific(peakAlignedCompute.value)} / ${formatNumber('1e1000').text} CU`,
     )
   }
@@ -1213,8 +1213,8 @@ const GUIDE_TARGET_DRAWERS = {
 
 const GUIDE_DIRECT_LABELS = {
   '[data-guide="core"]': '对齐核心',
-  '[data-guide="open-ascension"]': '飞升终端',
-  '[data-guide="open-reduction"]': '四阶飞升 · 架构降维',
+  '[data-guide="open-ascension"]': '重构终端',
+  '[data-guide="open-reduction"]': '四阶跃迁 · 架构降维',
 }
 
 const GUIDE_DRAWER_DOCKS = {
@@ -3295,7 +3295,7 @@ onBeforeUnmount(() => {
             class="drill-hub-link"
             @click="openAscensionHub('challenges')"
           >
-            飞升终端 // 异常演练
+            重构终端 // 异常演练
           </button>
         </div>
       </div>
@@ -3713,7 +3713,7 @@ onBeforeUnmount(() => {
           role="status"
           aria-live="polite"
         >
-          [ {{ ascensionComplete.name }} ] 飞升完成
+          [ {{ ascensionComplete.name }} ] 重构完成
         </div>
       </Transition>
 

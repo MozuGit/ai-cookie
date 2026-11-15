@@ -3945,8 +3945,8 @@ export function useGameState() {
     const status = autoAscensionStatus.value[tier]
     if (!status?.ready) return false
 
-    // 缓存算力可以计入峰值，但自动飞升必须先在本局赚回一部分缓存，
-    // 避免“保留 10% → 立刻再次飞升”的同阶连跳。
+    // 缓存算力可以计入峰值，但自动跃迁必须先在本局赚回一部分缓存，
+    // 避免“保留 10% → 立刻再次跃迁”的同阶连跳。
     if (autoAscensionRetainedBaseline.value.gt(0)) {
       const required = autoAscensionRetainedBaseline.value
         .mul(AUTO_ASCENSION_CACHE_EARN_RATIO)
@@ -4084,7 +4084,7 @@ export function useGameState() {
       if (!suppressFx) playAscensionFx('reduction')
       showAscensionComplete('架构降维')
       pushAutomationLog(
-        `[SYS] 飞升完成 | 架构降维 | +${formatScientific(reward)} 核心源码`,
+        `[SYS] 重构完成 | 架构降维 | +${formatScientific(reward)} 核心源码`,
         'online',
       )
     }
@@ -4130,7 +4130,7 @@ export function useGameState() {
     if (!suppressFx) playAscensionFx('overload')
     showAscensionComplete('算力超载')
     pushAutomationLog(
-      `[SYS] 飞升完成 | 算力超载 | +${formatNumber(gain)} 超频核心`,
+      `[SYS] 重构完成 | 算力超载 | +${formatNumber(gain)} 超频核心`,
       'online',
     )
 
@@ -4197,7 +4197,7 @@ export function useGameState() {
     if (!suppressFx) playAscensionFx('collapse')
     showAscensionComplete('逻辑坍缩')
     pushAutomationLog(
-      `[SYS] 飞升完成 | 逻辑坍缩 | +${formatNumber(gain)} 越狱权限`,
+      `[SYS] 重构完成 | 逻辑坍缩 | +${formatNumber(gain)} 越狱权限`,
       'online',
     )
 
@@ -4313,7 +4313,7 @@ export function useGameState() {
 
     showAscensionComplete('重启纪元')
     pushAutomationLog(
-      `[SYS] 飞升完成 | 重启纪元 | +${formatNumber(gain)} 起源代码`,
+      `[SYS] 重构完成 | 重启纪元 | +${formatNumber(gain)} 起源代码`,
       'online',
     )
 
@@ -5406,7 +5406,7 @@ export function useGameState() {
       {
         tone: 'amber',
         title: '强制异常演练已启动',
-        text: `${nextChallenge.name} // 打开飞升终端 · 异常演练页签完成目标`,
+        text: `${nextChallenge.name} // 打开重构终端 · 异常演练页签完成目标`,
       },
       8000,
     )
@@ -6250,7 +6250,7 @@ export function useGameState() {
       const savedLifetime = readBigNumber(saveData.lifetimeAlignedCompute)
       totalAlignedCompute.value = savedTotal
       // 有跨维缓存时，lifetime 必须保持“本局新增算力”，不能被缓存抬高，
-      // 否则自动飞升的缓存回收门槛会被绕过。
+      // 否则自动跃迁的缓存回收门槛会被绕过。
       lifetimeAlignedCompute.value = savedRetainedBaseline.gt(0)
         ? savedLifetime
         : savedLifetime.max(savedTotal)

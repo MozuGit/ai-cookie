@@ -75,9 +75,9 @@ const baseActions = computed(() => [
     id: 'unlock-all',
     code: 'UNLOCK_ALL_SYSTEMS',
     label: '一键解锁全部系统',
-    detail: '历史最高算力 1e1200 // 四阶飞升 · 全部服务器 · 自动飞升保护 10 分钟',
+    detail: '历史最高算力 1e1200 // 四阶跃迁 · 全部服务器 · 自动跃迁保护 10 分钟',
     event: 'unlock-all',
-    feedback: '全部系统已解锁 · 自动飞升保护 10 分钟',
+    feedback: '全部系统已解锁 · 自动跃迁保护 10 分钟',
     tone: 'omega',
   },
   {

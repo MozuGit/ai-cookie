@@ -47,7 +47,7 @@ const SFX_SAMPLE_URLS = {
   ascend: '/sfx/ascend.mp3',
 }
 
-// 外部样本基础音量 | 高频点击必须克制 | 飞升作为最强反馈保留更大动态
+// 外部样本基础音量 | 高频点击必须克制 | 跃迁作为最强反馈保留更大动态
 const SFX_SAMPLE_GAIN = {
   click: 0.3,
   buy: 0.5,
@@ -556,7 +556,7 @@ export function restoreEpochAudio() {
   if (!audioMuted.value && unlocked) startBgm()
 }
 
-/* ---------- 三阶飞升演出 | 每阶独立声场 | 结束恢复 BGM ---------- */
+/* ---------- 三阶跃迁演出 | 每阶独立声场 | 结束恢复 BGM ---------- */
 
 function scheduleCollapseWhispers(duration, state) {
   if (typeof window === 'undefined') return

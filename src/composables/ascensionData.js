@@ -11,7 +11,7 @@ export const ASCENSION_TIER_LOG10 = {
   restart: 1000,
 }
 
-// 跨维缓存：飞升重置时保留的当前算力比例。
+// 跨维缓存：跃迁重置时保留的当前算力比例。
 export const ASCENSION_COMPUTE_RETENTION = 0.1
 
 export const AUTO_ASCENSION_STRATEGIES = [
@@ -28,7 +28,7 @@ export const AUTO_ASCENSION_STRATEGIES = [
   {
     id: 'immediate',
     label: '立即',
-    hint: '满足飞升条件立即执行；仍遵守最高阶优先锁定',
+    hint: '满足跃迁条件立即执行；仍遵守最高阶优先锁定',
   },
 ]
 
@@ -39,7 +39,7 @@ export const AUTO_ASCENSION_STRATEGY_IDS = AUTO_ASCENSION_STRATEGIES.map(
 export const AUTO_ASCENSION_INCREMENTAL_RATIO = 0.1
 export const AUTO_ASCENSION_CLOSE_LOG10 = 12
 export const AUTO_ASCENSION_CLOSE_ETA_SECONDS = 30 * 60
-// 自动飞升必须先在本局赚回缓存算力的一定比例，避免保留算力导致同阶连跳。
+// 自动跃迁必须先在本局赚回缓存算力的一定比例，避免保留算力导致同阶连跳。
 export const AUTO_ASCENSION_CACHE_EARN_RATIO = 0.1
 
 export const AUTO_ASCENSION_TIER_BY_AUTOMATION = {
@@ -116,8 +116,8 @@ export const GLOBAL_MILESTONES = [
     thresholdLabel: '1e20',
     name: '跨维缓存',
     glyph: '▣',
-    effect: '飞升保留 10% 算力',
-    description: '架构降维 / 算力超载 / 逻辑坍缩重置前 把当前算力的 10% 写入跨维缓存 重置后归还 自动飞升需先在本局赚回缓存的 10%',
+    effect: '跃迁保留 10% 算力',
+    description: '架构降维 / 算力超载 / 逻辑坍缩重置前 把当前算力的 10% 写入跨维缓存 重置后归还 自动跃迁需先在本局赚回缓存的 10%',
   },
   {
     id: 'gm-1e40',

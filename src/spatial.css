@@ -714,7 +714,7 @@
   animation: dock-badge-pulse 1.8s ease-in-out infinite;
 }
 
-/* ---------- 顶部右侧 | 飞升进度 + 紧凑主线 ---------- */
+/* ---------- 顶部右侧 | 跃迁进度 + 紧凑主线 ---------- */
 .spatial-rail {
   position: fixed;
   top: var(--rail-top, 5.5rem);
@@ -726,7 +726,7 @@
   gap: 0.55rem;
 }
 
-/* 飞升极简进度条 */
+/* 跃迁极简进度条 */
 .asc-rail {
   position: relative;
   overflow: hidden;
@@ -2481,7 +2481,7 @@
   }
 }
 
-/* 中窄屏 | 自动化终端并入左侧舱道 | 避让顶部飞升条 */
+/* 中窄屏 | 自动化终端并入左侧舱道 | 避让顶部跃迁条 */
 @media (min-width: 769px) and (max-width: 1279px) {
   .spatial-dock-btn--top-left {
     left: 0;

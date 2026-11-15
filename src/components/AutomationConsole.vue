@@ -133,7 +133,7 @@ const latestLog = computed(() => props.logs[props.logs.length - 1] || null)
                 v-if="option.strategyTier"
                 class="automation-strategy"
                 role="group"
-                :aria-label="`${option.label}飞升策略`"
+                :aria-label="`${option.label}跃迁策略`"
               >
                 <span class="automation-strategy__label">策略</span>
                 <button

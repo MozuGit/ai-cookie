@@ -138,20 +138,20 @@ function tierTip(tier) {
     tier.id === 'reduction'
       ? formatScientific(tier.gain)
       : formatNumber(tier.gain).text
-  const head = `当前飞升预计获得 [ ${tier.resourceName} x ${gainText} ]`
+  const head = `当前跃迁预计获得 [ ${tier.resourceName} x ${gainText} ]`
   if (timing.best) return `${head} 已是最佳时机 立即执行`
-  if (!tier.ready) return `${head} 尚未满足飞升条件`
-  if (timing.gainMet) return `${head} 收益已达标 等待飞升窗口`
+  if (!tier.ready) return `${head} 尚未满足跃迁条件`
+  if (timing.gainMet) return `${head} 收益已达标 等待跃迁窗口`
   const eta = formatEta(timing.etaSeconds)
   if (eta) return `${head} 建议再挂机 ${eta}以获取最大收益`
-  if (timing.stalled) return `${head} 增长进入平台期 可执行飞升`
+  if (timing.stalled) return `${head} 增长进入平台期 可执行跃迁`
   return `${head} 建议持续挂机以获取最大收益`
 }
 
 const tabs = computed(() => [
   {
     id: 'tiers',
-    label: '飞升阶梯',
+    label: '算力演替链',
     icon: 'ascension',
     locked: false,
     badge:
@@ -352,7 +352,7 @@ function tierActionLabel(tier) {
     return '执行超载 · 完成演练'
   }
   if (!tier.ready) return '[ LOCKED ] 条件未满足'
-  return showConfirm.value ? '执行飞升' : '一键飞升'
+  return showConfirm.value ? '执行跃迁' : '一键跃迁'
 }
 
 function requestTier(tier) {
@@ -424,7 +424,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="ascension-hub" role="dialog" aria-modal="true" aria-label="赛博四阶飞升终端">
+  <div class="ascension-hub" role="dialog" aria-modal="true" aria-label="赛博四阶跃迁终端">
     <div class="ascension-hub__backdrop" @click="emit('close')"></div>
 
     <div class="ascension-hub__frame">
@@ -433,7 +433,7 @@ onBeforeUnmount(() => {
           <span class="ascension-hub__sigil" aria-hidden="true">∞</span>
           <div class="min-w-0">
             <p class="ascension-hub__eyebrow">CYBER ASCENSION // 四阶转生协议</p>
-            <h2 class="ascension-hub__title">赛博四阶飞升终端</h2>
+            <h2 class="ascension-hub__title">赛博四阶跃迁终端</h2>
           </div>
         </div>
 
@@ -469,7 +469,7 @@ onBeforeUnmount(() => {
             type="button"
             class="ascension-hub__close"
             data-guide="hub-close"
-            aria-label="关闭飞升终端"
+            aria-label="关闭重构终端"
             @click="emit('close')"
           >
             ×
@@ -477,7 +477,7 @@ onBeforeUnmount(() => {
         </div>
       </header>
 
-      <nav class="ascension-hub__nav" role="tablist" aria-label="飞升模块">
+      <nav class="ascension-hub__nav" role="tablist" aria-label="跃迁模块">
         <button
           v-for="tab in tabs"
           :key="tab.id"
@@ -508,7 +508,7 @@ onBeforeUnmount(() => {
       </nav>
 
       <div class="ascension-hub__body">
-        <!-- ============ 飞升阶梯 ============ -->
+        <!-- ============ 算力演替链 ============ -->
         <template v-if="activeTab === 'tiers'">
           <div class="ascension-section-head">
             <div>
@@ -735,7 +735,7 @@ onBeforeUnmount(() => {
             class="asc-challenge-live mt-3"
           >
             <div class="asc-challenge-live__head">
-              <span>⚠ 飞升协议暂时锁定</span>
+              <span>⚠ 跃迁协议暂时锁定</span>
               <span>
                 {{
                   challengeActive

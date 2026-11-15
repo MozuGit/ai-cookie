@@ -7508,7 +7508,7 @@
   }
 
   /* ---------- 2. 去毛玻璃 / 去大面积发光 ---------- */
-  /* 飞升全屏演出期间保留动画 | 结束后恢复移动端降级 */
+  /* 跃迁全屏演出期间保留动画 | 结束后恢复移动端降级 */
   body:not(.asc-cine-active) *,
   body:not(.asc-cine-active) *::before,
   body:not(.asc-cine-active) *::after {

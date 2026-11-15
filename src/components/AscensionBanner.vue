@@ -76,7 +76,7 @@ function stepState(tier) {
         <p class="asc-rail__tag">
           <span v-if="variant === 'challenge'">异常挑战 // LIVE</span>
           <span v-else-if="variant === 'blackdomain'">底层黑域 // CONNECTED</span>
-          <span v-else>赛博四阶飞升 // 转生协议</span>
+          <span v-else>赛博四阶跃迁 // 转生协议</span>
         </p>
         <p class="asc-rail__title">
           <template v-if="variant === 'challenge'">
@@ -84,7 +84,7 @@ function stepState(tier) {
           </template>
           <template v-else-if="variant === 'blackdomain'">黑域吞噬算力中</template>
           <template v-else>
-            四阶飞升
+            四阶跃迁
             <span class="asc-rail__ready" :class="{ 'asc-rail__ready--best': bestCount > 0 }">
               {{
                 bestCount > 0
@@ -108,7 +108,7 @@ function stepState(tier) {
     </div>
 
     <div v-if="variant === 'normal'" class="asc-rail__row asc-rail__row--tiers">
-      <div class="asc-rail__steps" aria-label="飞升阶梯状态">
+      <div class="asc-rail__steps" aria-label="算力演替链状态">
         <span
           v-for="tier in ascensionTiers"
           :key="tier.id"
@@ -135,7 +135,7 @@ function stepState(tier) {
         :data-guide="reduceQuestActive ? 'open-reduction' : 'open-ascension'"
         @click="emit('open')"
       >
-        {{ bestCount > 0 ? '⭐ 最佳时机' : reduceQuestActive ? '架构降维' : '飞升终端' }}
+        {{ bestCount > 0 ? '⭐ 最佳时机' : reduceQuestActive ? '架构降维' : '重构终端' }}
       </button>
     </div>
 

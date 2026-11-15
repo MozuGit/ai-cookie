@@ -63,7 +63,7 @@ const progressLabel = computed(() => {
   <div class="asc-summary">
     <div class="asc-summary__hero">
       <p class="asc-summary__eyebrow">
-        <span>四阶飞升 // ASCENSION</span>
+        <span>四阶跃迁 // ASCENSION</span>
         <span>{{ Math.max(globalMilestonesUnlocked, challengesCompletedCount) }} PROTOCOLS</span>
       </p>
       <p class="asc-summary__peak">
@@ -164,7 +164,7 @@ const progressLabel = computed(() => {
         class="asc-btn asc-btn--primary asc-tone-gold"
         @click="emit('open-hub', 'tiers')"
       >
-        飞升终端
+        重构终端
       </button>
       <button
         v-if="originTreeUnlocked"

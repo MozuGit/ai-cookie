@@ -482,7 +482,7 @@ onBeforeUnmount(() => {
               神经矩阵尚未解密
             </p>
             <p class="text-[10px] tracking-[0.06em] text-slate-400">
-              需完成首次飞升以解密
+              需完成首次跃迁以解密
             </p>
           </div>
         </div>

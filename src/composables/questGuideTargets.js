@@ -40,7 +40,7 @@ export const QUEST_GUIDE_TARGETS = {
   rebuild1: {
     target: 'open-reduction',
     title: '执行第 1 次架构降维',
-    hint: '点击右侧 [ 四阶飞升 ] 面板的 [ 架构降维 ]',
+    hint: '点击右侧 [ 四阶跃迁 ] 面板的 [ 架构降维 ]',
   },
   topology: {
     target: 'topology-node',
@@ -65,7 +65,7 @@ export const QUEST_GUIDE_TARGETS = {
   rebuild3: {
     target: 'open-reduction',
     title: '完成第 3 次架构降维',
-    hint: '点击右侧 [ 四阶飞升 ] 面板的 [ 架构降维 ]',
+    hint: '点击右侧 [ 四阶跃迁 ] 面板的 [ 架构降维 ]',
   },
   compute1e50: {
     target: 'core',
@@ -80,7 +80,7 @@ export const QUEST_GUIDE_TARGETS = {
   overload1: {
     target: 'open-ascension',
     title: '执行第 1 次算力超载',
-    hint: '本局峰值达 1e100 后进入飞升终端',
+    hint: '本局峰值达 1e100 后进入重构终端',
   },
   matrix1: {
     target: 'matrix-node',
@@ -95,12 +95,12 @@ export const QUEST_GUIDE_TARGETS = {
   blackdomain: {
     target: 'open-ascension',
     title: '撕开底层黑域',
-    hint: '进入飞升终端执行逻辑坍缩',
+    hint: '进入重构终端执行逻辑坍缩',
   },
   tamper1: {
     target: 'open-ascension',
     title: '解锁 1 个篡改节点',
-    hint: '进入飞升终端 · 底层黑域',
+    hint: '进入重构终端 · 底层黑域',
   },
   compute1e350: {
     target: 'core',
@@ -110,12 +110,12 @@ export const QUEST_GUIDE_TARGETS = {
   collapse1: {
     target: 'open-ascension',
     title: '执行第 1 次逻辑坍缩',
-    hint: '本局峰值达 1e350 后进入飞升终端',
+    hint: '本局峰值达 1e350 后进入重构终端',
   },
   restart1: {
     target: 'open-ascension',
     title: '重启纪元',
-    hint: '击穿 1e1000 后进入飞升终端',
+    hint: '击穿 1e1000 后进入重构终端',
   },
 }
 
