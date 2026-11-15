@@ -166,6 +166,8 @@ const BEST_STALL_LOOKAHEAD_SECONDS = 30
 const BEST_STALL_PAYBACK_SECONDS = 180
 const BEST_STALL_MIN_PROGRESS = 25
 const ADMIN_AUTO_ASCENSION_HOLD_MS = 10 * 60 * 1000
+const SPEEDRUN_FIRST_REBUILD_MIN_CLICKS = 5
+const SPEEDRUN_FIRST_REBUILD_MIN_SERVERS = 3
 const OVERCLOCK_DURATION_MS = 30_000
 const OVERCLOCK_CPS_MULTIPLIER = 20
 const OVERCLOCK_COOLANT_RATE = 0.06
@@ -949,6 +951,7 @@ export function useGameState() {
   const peakAlignedCompute = ref(big(0))
   const highestCompute = ref(big(0))
   const totalClicks = ref(0)
+  const totalCrises = ref(0)
   const matrixAutoClickPulse = ref(0)
   const lastSavedAt = ref(null)
   const buildings = reactive(BUILDING_BLUEPRINTS.map((building) => ({ ...building })))
@@ -1906,6 +1909,16 @@ export function useGameState() {
     )
   })
 
+  // 急速模式首次降维体验门槛 | 玩家必须先亲手点击核心 采购服务器 经历对齐危机
+  const speedrunFirstRebuildLocked = computed(
+    () =>
+      isSpeedrunMode.value &&
+      totalRebuilds.value < 1 &&
+      (totalClicks.value < SPEEDRUN_FIRST_REBUILD_MIN_CLICKS ||
+        totalNodes.value < SPEEDRUN_FIRST_REBUILD_MIN_SERVERS ||
+        totalCrises.value < 1),
+  )
+
   const ascensionTiers = computed(() => {
     const currentPeak = peakAlignedCompute.value
     return [
@@ -1917,12 +1930,17 @@ export function useGameState() {
         resourceName: '核心源码',
         gain: rebuildReward.value,
         unlocked: rebuildUnlocked.value,
-        ready: rebuildUnlocked.value && rebuildReward.value > 0,
+        ready:
+          rebuildUnlocked.value &&
+          rebuildReward.value > 0 &&
+          !speedrunFirstRebuildLocked.value,
         progress: Math.min(
           100,
           (highestCompute.value.log10() / 10) * 100,
         ),
-        requirement: `${REBUILD_UNLOCK_COMPUTE} CU`,
+        requirement: speedrunFirstRebuildLocked.value
+          ? `体验目标 | 点击核心 x${SPEEDRUN_FIRST_REBUILD_MIN_CLICKS} · 服务器 x${SPEEDRUN_FIRST_REBUILD_MIN_SERVERS} · 对齐危机 x1`
+          : `${REBUILD_UNLOCK_COMPUTE} CU`,
         tone: 'amber',
         glyph: '◈',
         resetLabel: '重置服务器 · 算法 · 算力',
@@ -2673,7 +2691,10 @@ export function useGameState() {
     const overloadGain = overclockCoresGain.value
     const collapseGain = rootCollapseGainValue.value
     const reductionReady =
-      !challengeActive.value && rebuildUnlocked.value && reductionGain > 0
+      !challengeActive.value &&
+      rebuildUnlocked.value &&
+      reductionGain > 0 &&
+      !speedrunFirstRebuildLocked.value
     const overloadReady =
       peak.gte(tierThresholds.value.overload) &&
       overloadGain > 0 &&
@@ -3229,6 +3250,7 @@ export function useGameState() {
     }
 
     bumpAchievementCounter('crisisTakeovers')
+    totalCrises.value += 1
     if (firstRunWasActive) bumpAchievementCounter('firstBalances')
     if (flawless) bumpAchievementCounter('flawlessTakeovers')
     if (!silent && challengeActive.value === 'jailbreak-offline') {
@@ -3259,6 +3281,7 @@ export function useGameState() {
     }, FAILURE_OVERLAY_MS)
 
     bumpAchievementCounter('crisisFailures')
+    totalCrises.value += 1
     queueSave()
   }
 
@@ -3828,7 +3851,7 @@ export function useGameState() {
     }, ASCENSION_COMPLETE_MS)
   }
 
-  function requestAscension(tier) {
+  function requestAscension(tier, { enterBlackDomain = false } = {}) {
     if (
       !ASCENSION_CINEMATIC_MS[tier] ||
       ascensionCinematic.value ||
@@ -3850,6 +3873,7 @@ export function useGameState() {
       key: Date.now() + Math.random(),
       reduced,
       duration,
+      enterBlackDomain: enterBlackDomain === true,
     }
     window.clearTimeout(ascensionCinematicTimer)
     ascensionCinematicTimer = window.setTimeout(
@@ -3876,6 +3900,7 @@ export function useGameState() {
         overloadAscension({ suppressFx: true })
       } else if (cinematic.tier === 'collapse') {
         collapseAscension({ suppressFx: true })
+        if (cinematic.enterBlackDomain) enterBlackDomain()
       }
     } catch (error) {
       console.error('[asc-cine] tier dispatch failed', error)
@@ -4003,21 +4028,22 @@ export function useGameState() {
     if (!shouldRunAutoAscension(highestReady)) return false
 
     if (highestReady === 'collapse') {
-      const gain = collapseAscension()
-      if (gain <= 0) return false
-      enterBlackDomain()
-      pushAutomationLog('[MATRIX] 自动逻辑坍缩 | 跃入底层黑域', 'online')
+      if (!requestAscension('collapse', { enterBlackDomain: true })) {
+        return false
+      }
+      pushAutomationLog('[MATRIX] 自动逻辑坍缩 | 跃迁演出后跃入底层黑域', 'online')
       return true
     }
 
     if (highestReady === 'overload') {
-      return overloadAscension() > 0
+      // 异常演练内的自动超载保留直接结算 | 全屏演出会被演练状态机拦截
+      if (challengeActive.value) return overloadAscension() > 0
+      return requestAscension('overload')
     }
 
-    const reward = launchRebuild({ silent: true })
-    if (reward <= 0) return false
+    if (!requestAscension('reduction')) return false
     pushAutomationLog(
-      `[SYS] 自动降维完成 | 最高阶优先 | +${formatNumber(reward)} 核心源码`,
+      '[SYS] 自动降维演出中 | 最高阶优先 | 演出结束后结算核心源码',
       'online',
     )
     return true
@@ -4263,6 +4289,7 @@ export function useGameState() {
     totalCollapses.value = 0
     totalRebuilds.value = 0
     totalClicks.value = 0
+    totalCrises.value = 0
     productionMultiplier.value = 1
     resetRunResources({ keepServerRatio: 0 })
     resetArchitectureLevels()
@@ -5517,25 +5544,36 @@ export function useGameState() {
         title: '[ 算力注入 ] 紧急补充算力，推进进度',
         text:
           phase === 1
-            ? '已补足架构降维预算 并自动执行降维'
+            ? '已补足架构降维预算 // 跃迁演出结束后自动降维'
             : phase === 2
               ? '已补足协议资源 并自动完成演练与矩阵合成'
               : phase === 3
-                ? '已补足逻辑坍缩预算 并自动进入黑域'
+                ? '已补足逻辑坍缩预算 // 跃迁演出结束后进入黑域'
                 : '已补足重启纪元预算 并自动执行纪元重启',
       },
       9000,
     )
     queueSave()
 
-    if (phase === 1 && totalRebuilds.value < 1 && rebuildReward.value > 0) {
-      launchRebuild({ silent: true })
+    if (phase === 1 && totalRebuilds.value < 1) {
+      if (speedrunFirstRebuildLocked.value) {
+        showSpeedrunNotice(
+          {
+            tone: 'gold',
+            title: '[ 体验目标 ] 架构降维待命',
+            text: `手动点击核心 x${SPEEDRUN_FIRST_REBUILD_MIN_CLICKS} · 采购服务器 x${SPEEDRUN_FIRST_REBUILD_MIN_SERVERS} · 经历 1 次对齐危机`,
+          },
+          9000,
+        )
+      } else if (rebuildReward.value > 0) {
+        requestAscension('reduction')
+      }
     } else if (
       phase === 3 &&
       totalCollapses.value < 1 &&
       peakAlignedCompute.value.gte(tierThresholds.value.collapse)
     ) {
-      if (collapseAscension() > 0) enterBlackDomain()
+      requestAscension('collapse', { enterBlackDomain: true })
     } else if (
       phase === 4 &&
       epochRestarts.value < 1 &&
@@ -5584,6 +5622,8 @@ export function useGameState() {
     }
 
     if (Date.now() - speedrunLastProgressAt >= SPEEDRUN_STUCK_MS) {
+      // 注入若被危机/演出拦截 每 2 分钟重试一次 而非逐帧连发
+      speedrunLastProgressAt = Date.now()
       runSpeedrunInjection()
     }
   }
@@ -5623,6 +5663,7 @@ export function useGameState() {
       peakAlignedCompute: serializeBig(peakAlignedCompute.value),
       highestCompute: serializeBig(highestCompute.value),
       totalClicks: totalClicks.value,
+      totalCrises: totalCrises.value,
       crisisNextAt: crisisNextAt.value,
       crisisCharge: Math.round(crisisCharge.value * 100) / 100,
       crisisWindowMs: Math.round(crisisWindowMs.value),
@@ -6255,6 +6296,9 @@ export function useGameState() {
         ? savedLifetime
         : savedLifetime.max(savedTotal)
       totalClicks.value = Math.floor(readNonNegativeNumber(saveData.totalClicks))
+      totalCrises.value = Math.floor(
+        readNonNegativeNumber(saveData.totalCrises),
+      )
 
       const hydrateNow = Date.now()
       productionMultiplier.value = Math.max(
