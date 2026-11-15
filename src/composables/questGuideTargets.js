@@ -44,7 +44,7 @@ export const QUEST_GUIDE_TARGETS = {
   },
   topology: {
     target: 'topology-node',
-    title: '点亮 1 个神经星树节点',
+    title: '点亮 1 个神经矩阵节点',
     hint: '打开 [ 自动化终端 ] 点击节点查看详情 再次点击点亮',
   },
   compute1m: {

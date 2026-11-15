@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const CODE_KEYS = [
   'ALIGN_VECTOR',
-  'GRAVITY_MATRIX',
+  'LOAD_MATRIX',
   'TORQUE_BUS',
   'PIVOT_KERNEL',
   'DRIFT_SIGNAL',
@@ -49,7 +49,7 @@ onBeforeUnmount(() => {
     <div class="qte-fail__panel">
       <p class="qte-fail__tag">CRITICAL FAILURE // 0xDEAD_ALIGN</p>
       <h2 class="qte-fail__title" data-text="对齐协议崩溃">对齐协议崩溃</h2>
-      <p class="qte-fail__sub">[ 重力失衡突破容差 ] // 控制权丢失</p>
+      <p class="qte-fail__sub">[ 负载失衡突破容差 ] // 控制权丢失</p>
 
       <div class="qte-fail__codes" aria-hidden="true">
         <span v-for="(line, index) in codeLines" :key="index" class="qte-fail__code">
@@ -60,7 +60,7 @@ onBeforeUnmount(() => {
       <p class="qte-fail__reset">
         系统重置中<span class="qte-fail__dots">...</span>
       </p>
-      <p class="qte-fail__trace">回收调度权 // 重建重力基准 // 对齐度归零</p>
+      <p class="qte-fail__trace">回收调度权 // 重建负载基准 // 对齐度归零</p>
     </div>
   </div>
 </template>

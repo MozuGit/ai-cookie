@@ -68,15 +68,22 @@
   position: relative;
   z-index: 10;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.3rem 1rem;
   width: min(1680px, 100%);
   margin: 0 auto;
   padding: 0 1.25rem 0.75rem;
   color: #475569;
   font-size: 9px;
+  line-height: 1.5;
   letter-spacing: 0.16em;
+}
+
+.spatial-foot > span {
+  min-width: 0;
+  text-wrap: pretty;
 }
 
 /* ---------- 中央核心舞台 ---------- */
@@ -442,6 +449,7 @@
 
 .core-stage__save {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 0.7rem;
@@ -451,6 +459,16 @@
   color: #475569;
   font-size: 8.5px;
   letter-spacing: 0.12em;
+}
+
+.core-stage__save > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.core-stage__save > span:last-child {
+  flex: none;
 }
 
 /* ---------- 四向全息 dock ---------- */
@@ -699,7 +717,7 @@
 /* ---------- 顶部右侧 | 飞升进度 + 紧凑主线 ---------- */
 .spatial-rail {
   position: fixed;
-  top: 5.5rem;
+  top: var(--rail-top, 5.5rem);
   right: calc(58px + 20px);
   z-index: 60;
   display: flex;
@@ -1916,6 +1934,33 @@
   cursor: pointer;
 }
 
+.radar-perfect-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  background: rgba(45, 31, 6, 0.32);
+  padding: 0.45rem 0.55rem;
+}
+
+.radar-perfect-line p {
+  color: #fde68a;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+
+.radar-perfect-line button {
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  background: rgba(120, 53, 15, 0.35);
+  padding: 0.3rem 0.5rem;
+  color: #fde68a;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
 .radar-summary__cta {
   display: flex;
   align-items: center;
@@ -2233,8 +2278,8 @@
   flex: 1 1 auto;
 }
 
-.automation-drawer__topology .star-map {
-  min-height: 350px;
+.automation-drawer__topology .neural-map {
+  min-height: clamp(220px, 36vh, 350px);
   flex: 1 1 auto;
 }
 
@@ -2378,7 +2423,37 @@
   }
 }
 
-/* ---------- 中等宽度 | 右侧轨道回到文档流 ---------- */
+/* ---------- 1280-1535 | header 紧凑档 | 保证单行不换行 ---------- */
+@media (min-width: 1024px) and (max-width: 1535px) {
+  .spatial-header {
+    gap: 0.75rem;
+  }
+
+  .spatial-header > div:first-child {
+    gap: 0.6rem;
+  }
+
+  .spatial-header .game-title {
+    font-size: 15px;
+  }
+
+  .status-strip__cell--uplink {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1439px) {
+  .spatial-header .status-strip {
+    display: none;
+  }
+
+  .source-chip__count,
+  .oc-chip__count {
+    display: none;
+  }
+}
+
+/* ---------- 中等宽度 | 右侧收纳舱回到文档流 ---------- */
 @media (max-width: 1279px) {
   .spatial-rail {
     position: static;
@@ -2781,8 +2856,8 @@
   }
 
   .automation-drawer__topology .topology-map,
-  .automation-drawer__topology .star-map {
-    min-height: 360px;
+  .automation-drawer__topology .neural-map {
+    min-height: clamp(220px, 44vh, 360px);
   }
 
   .drill-row {

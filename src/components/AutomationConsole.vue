@@ -15,7 +15,7 @@ const props = defineProps({
   embedded: { type: Boolean, default: false },
 })
 
-defineEmits(['toggle', 'toggle-all', 'open-matrix'])
+defineEmits(['toggle', 'toggle-all', 'open-matrix', 'strategy'])
 
 const collapsed = ref(false)
 
@@ -129,6 +129,26 @@ const latestLog = computed(() => props.logs[props.logs.length - 1] || null)
             <div class="automation-option__copy">
               <p class="automation-option__name">{{ option.label }}</p>
               <p class="automation-option__desc">{{ option.description }}</p>
+              <div
+                v-if="option.strategyTier"
+                class="automation-strategy"
+                role="group"
+                :aria-label="`${option.label}飞升策略`"
+              >
+                <span class="automation-strategy__label">策略</span>
+                <button
+                  v-for="strategy in option.strategyOptions"
+                  :key="strategy.id"
+                  type="button"
+                  class="automation-strategy__btn"
+                  :class="{ 'is-active': option.strategy === strategy.id }"
+                  :title="strategy.hint"
+                  :aria-pressed="option.strategy === strategy.id ? 'true' : 'false'"
+                  @click.stop="$emit('strategy', option.strategyTier, strategy.id)"
+                >
+                  {{ strategy.label }}
+                </button>
+              </div>
             </div>
             <button
               type="button"

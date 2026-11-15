@@ -13,7 +13,7 @@ export const ACHIEVEMENT_TIERS = [
     id: 2,
     roman: 'II',
     label: 'Tier II',
-    title: '初入正轨',
+    title: '协议上线',
     tone: 'emerald',
     accent: '#34d399',
     code: 'STABLE_PROTOCOL',
@@ -47,7 +47,7 @@ export const ACHIEVEMENT_TIERS = [
     tone: 'void',
     accent: '#e879f9',
     code: 'FINAL_ASCENSION',
-    description: '终极幻想展开 你就是这个宇宙的源代码',
+    description: '终极幻想展开 你就是这层系统的源代码',
   },
   {
     id: 6,

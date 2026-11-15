@@ -19,7 +19,7 @@ let ctx = null
 let width = 0
 let height = 0
 let mobile = false
-let stars = []
+let packets = []
 let glowSprite = null
 let rafId = 0
 let running = false
@@ -39,7 +39,7 @@ function staticMode() {
   return reducedMotion.value || systemReduce
 }
 
-function createStar(initial) {
+function createPacket(initial) {
   const roll = Math.random()
   const tone = roll < 0.42 ? 0 : roll < 0.72 ? 1 : roll < 0.92 ? 2 : 3
   const bright = Math.random() < 0.06
@@ -58,31 +58,31 @@ function createStar(initial) {
     alpha: bright
       ? 0.5 + Math.random() * 0.28
       : 0.16 + Math.random() * 0.4,
-    flare: bright && Math.random() < 0.45,
+    spark: bright && Math.random() < 0.45,
     trail: Math.random() < 0.16 ? 4 + Math.random() * 9 : 0,
     depth: 0.35 + Math.random() * 1.05,
     phase: Math.random() * TAU,
-    twinkleSpeed: 0.35 + Math.random() * 0.85,
+    pulseSpeed: 0.35 + Math.random() * 0.85,
     wobbleAmp: 0.0015 + Math.random() * 0.005,
     wobbleSpeed: 0.12 + Math.random() * 0.3,
   }
 }
 
-function buildStars() {
+function buildPackets() {
   const area = width * height
   const base = Math.min(680, Math.max(280, Math.round(area / 3000)))
   const count = mobile ? Math.round(base * 0.5) : base
-  stars = Array.from({ length: count }, () => createStar(true))
-  stars.sort((a, b) => a.tone - b.tone)
+  packets = Array.from({ length: count }, () => createPacket(true))
+  packets.sort((a, b) => a.tone - b.tone)
 }
 
-function respawn(star) {
-  star.angle = Math.random() * TAU
-  star.dist = 0.015 + Math.random() * 0.06
-  star.limit = 1.04 + Math.random() * 0.18
-  star.speed = 0.0045 + Math.random() * 0.011
-  star.spin = (Math.random() - 0.5) * 0.012
-  star.phase = Math.random() * TAU
+function respawn(packet) {
+  packet.angle = Math.random() * TAU
+  packet.dist = 0.015 + Math.random() * 0.06
+  packet.limit = 1.04 + Math.random() * 0.18
+  packet.speed = 0.0045 + Math.random() * 0.011
+  packet.spin = (Math.random() - 0.5) * 0.012
+  packet.phase = Math.random() * TAU
 }
 
 function buildGlowSprite() {
@@ -116,7 +116,7 @@ function updateDebug() {
   if (!import.meta.env.DEV) return
   const canvas = canvasEl.value
   if (!canvas) return
-  canvas.dataset.stars = String(stars.length)
+  canvas.dataset.packets = String(packets.length)
   canvas.dataset.mode = staticMode() ? 'static' : 'motion'
   canvas.dataset.mobile = mobile ? '1' : '0'
   canvas.dataset.bass = bass.toFixed(3)
@@ -140,7 +140,7 @@ function syncCanvas() {
   if (!context) return
   ctx = context
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  buildStars()
+  buildPackets()
   buildGlowSprite()
   if (staticMode()) {
     drawStatic()
@@ -177,63 +177,63 @@ function drawGlow(beat, staticFrame) {
   )
 }
 
-function drawStars(dt, beat, staticFrame) {
+function drawPackets(dt, beat, staticFrame) {
   const centerX = width * 0.5
   const centerY = height * GLOW_Y_RATIO
   const maxDist = Math.hypot(width, height) * 0.5
   let tone = -1
 
   ctx.globalCompositeOperation = 'lighter'
-  for (const star of stars) {
+  for (const packet of packets) {
     if (!staticFrame && dt > 0) {
-      star.angle += star.spin * dt
-      star.dist += star.speed * dt * (1 + beat * 0.35)
-      if (star.dist > star.limit) respawn(star)
+      packet.angle += packet.spin * dt
+      packet.dist += packet.speed * dt * (1 + beat * 0.35)
+      if (packet.dist > packet.limit) respawn(packet)
     }
 
-    const distPx = star.dist * maxDist * (1 + beat * 0.045 * star.depth)
+    const distPx = packet.dist * maxDist * (1 + beat * 0.045 * packet.depth)
     const wobble = staticFrame
       ? 0
-      : Math.sin(elapsed * star.wobbleSpeed + star.phase) * star.wobbleAmp
-    const angle = star.angle + wobble
+      : Math.sin(elapsed * packet.wobbleSpeed + packet.phase) * packet.wobbleAmp
+    const angle = packet.angle + wobble
     const cos = Math.cos(angle)
     const sin = Math.sin(angle)
     const x = centerX + cos * distPx
     const y = centerY + sin * distPx
-    const fadeIn = Math.min(1, star.dist / 0.06)
-    const twinkle = staticFrame
+    const fadeIn = Math.min(1, packet.dist / 0.06)
+    const pulse = staticFrame
       ? 1
       : 0.76 +
-        0.24 * Math.sin(elapsed * star.twinkleSpeed + star.phase * 1.7)
-    const alpha = star.alpha * fadeIn * twinkle * (1 + beat * 0.9)
+        0.24 * Math.sin(elapsed * packet.pulseSpeed + packet.phase * 1.7)
+    const alpha = packet.alpha * fadeIn * pulse * (1 + beat * 0.9)
     if (alpha <= 0.004) continue
 
-    if (star.tone !== tone) {
-      tone = star.tone
+    if (packet.tone !== tone) {
+      tone = packet.tone
       ctx.fillStyle = TONE_COLORS[tone]
       ctx.strokeStyle = TONE_COLORS[tone]
     }
 
-    if (star.trail && !staticFrame) {
+    if (packet.trail && !staticFrame) {
       const trailLength =
-        star.trail * (1 + beat * 2.4) * (0.6 + star.depth * 0.8)
+        packet.trail * (1 + beat * 2.4) * (0.6 + packet.depth * 0.8)
       ctx.globalAlpha = Math.min(1, alpha * 0.34)
-      ctx.lineWidth = Math.max(0.5, star.size * 0.6)
+      ctx.lineWidth = Math.max(0.5, packet.size * 0.6)
       ctx.beginPath()
       ctx.moveTo(x - cos * trailLength, y - sin * trailLength)
       ctx.lineTo(x, y)
       ctx.stroke()
     }
 
-    if (star.flare) {
-      const flareRadius = star.size * (2.2 + beat * 1.2)
+    if (packet.spark) {
+      const sparkRadius = packet.size * (2.2 + beat * 1.2)
       ctx.globalAlpha = Math.min(1, alpha * 0.35)
       ctx.lineWidth = 0.6
       ctx.beginPath()
-      ctx.moveTo(x - flareRadius, y)
-      ctx.lineTo(x + flareRadius, y)
-      ctx.moveTo(x, y - flareRadius)
-      ctx.lineTo(x, y + flareRadius)
+      ctx.moveTo(x - sparkRadius, y)
+      ctx.lineTo(x + sparkRadius, y)
+      ctx.moveTo(x, y - sparkRadius)
+      ctx.lineTo(x, y + sparkRadius)
       ctx.stroke()
     }
 
@@ -242,7 +242,7 @@ function drawStars(dt, beat, staticFrame) {
     ctx.arc(
       x,
       y,
-      Math.min(3.4, star.size * (1 + beat * 0.55)),
+      Math.min(3.4, packet.size * (1 + beat * 0.55)),
       0,
       TAU,
     )
@@ -257,7 +257,7 @@ function drawScene(dt, staticFrame) {
     ? 0
     : Math.min(1.4, kick + bass * 0.22)
   drawGlow(beat, staticFrame)
-  drawStars(dt, beat, staticFrame)
+  drawPackets(dt, beat, staticFrame)
   ctx.globalAlpha = 1
   ctx.globalCompositeOperation = 'source-over'
 }

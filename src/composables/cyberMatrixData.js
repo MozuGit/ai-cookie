@@ -168,7 +168,7 @@ export const CYBER_MATRIX_NODES = [
       id: 'autoRebuild',
       label: '自动架构降维',
       code: 'AUTO_REDUCTION',
-      description: '仅在最佳降维时机自动执行 收益达标或增长停滞',
+      description: '按所选策略自动执行架构降维 最高阶优先 避免低阶截断',
     },
     description:
       '跃迁模块监视源码收益与增长曲线 仅在最佳降维时机自动架构降维',
@@ -189,7 +189,7 @@ export const CYBER_MATRIX_NODES = [
       id: 'autoOverload',
       label: '自动算力超载',
       code: 'AUTO_OVERLOAD',
-      description: '仅在最佳超载时机自动执行 超频核心收益达标或增长停滞',
+      description: '按所选策略自动执行算力超载 最高阶优先 避免低阶截断',
     },
     description:
       '峰值算力触及 1e100 临界点后 仅在最佳超载时机熔断硬件并提炼超频核心',
@@ -210,7 +210,7 @@ export const CYBER_MATRIX_NODES = [
       id: 'autoCollapse',
       label: '自动逻辑坍缩',
       code: 'AUTO_COLLAPSE',
-      description: '自动逻辑坍缩 进入底层黑域 采购篡改协议',
+      description: '按所选策略自动执行逻辑坍缩 跃入底层黑域 采购篡改协议',
     },
     description:
       '峰值 1e350 自动坍缩逻辑 跃入底层黑域 越狱权限持续采购篡改协议',

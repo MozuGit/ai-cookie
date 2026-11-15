@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { formatNumber } from '../composables/useGameState'
-import { NEURAL_STAR_BRANCH_MAP } from '../composables/neuralStarData'
+import { NEURAL_MATRIX_BRANCH_MAP } from '../composables/neuralMatrixData'
 import GameIcon from './GameIcon.vue'
 
 const props = defineProps({
@@ -36,7 +36,7 @@ const selectedNode = computed(() =>
 
 const selectedBranch = computed(() => {
   if (!selectedNode.value) return null
-  return NEURAL_STAR_BRANCH_MAP.get(selectedNode.value.branch) ?? null
+  return NEURAL_MATRIX_BRANCH_MAP.get(selectedNode.value.branch) ?? null
 })
 
 const selectedState = computed(() => {
@@ -52,7 +52,7 @@ const forkDrops = [
 ]
 
 const columns = computed(() =>
-  [...NEURAL_STAR_BRANCH_MAP.values()]
+  [...NEURAL_MATRIX_BRANCH_MAP.values()]
     .filter((branch) => branch.id !== 'core')
     .map((branch) => {
       const branchNodes = props.nodes
@@ -78,7 +78,7 @@ const guideNodeId = computed(() => {
   if (!props.unlocked) return null
   return (
     props.nodes.find((node) => !node.lit && node.canAfford)?.id ??
-    props.nodes.find((node) => node.id === 'star-core')?.id ??
+    props.nodes.find((node) => node.id === 'matrix-core')?.id ??
     null
   )
 })
@@ -86,7 +86,7 @@ const guideNodeId = computed(() => {
 const balanceLabel = computed(() => formatNumber(props.sourceBalance).text)
 
 function nodeTone(node) {
-  return NEURAL_STAR_BRANCH_MAP.get(node.branch)?.tone ?? 'core'
+  return NEURAL_MATRIX_BRANCH_MAP.get(node.branch)?.tone ?? 'core'
 }
 
 function nodeState(node) {
@@ -186,14 +186,14 @@ onBeforeUnmount(() => {
       :class="{ 'topology-modal': expanded }"
       :role="expanded ? 'dialog' : undefined"
       :aria-modal="expanded ? 'true' : undefined"
-      :aria-label="expanded ? '神经星树' : undefined"
+      :aria-label="expanded ? '神经矩阵' : undefined"
       @click.self="expanded = false"
     >
       <div
         :class="
           expanded
-            ? 'topology-modal__panel star-panel'
-            : 'topology-inline__panel star-panel'
+            ? 'topology-modal__panel neural-panel'
+            : 'topology-inline__panel neural-panel'
         "
       >
         <div v-if="expanded" class="topology-modal__head">
@@ -202,8 +202,8 @@ onBeforeUnmount(() => {
               <GameIcon name="neural" :size="17" />
             </span>
             <div class="min-w-0">
-              <p class="topology-modal__eyebrow">永久认知层 // NEURAL STAR TREE</p>
-              <h2 class="topology-modal__title">神经星树</h2>
+              <p class="topology-modal__eyebrow">永久认知层 // NEURAL MATRIX</p>
+              <h2 class="topology-modal__title">神经矩阵</h2>
             </div>
           </div>
           <div class="flex shrink-0 items-center gap-3">
@@ -213,7 +213,7 @@ onBeforeUnmount(() => {
             <button
               type="button"
               class="topology-expand-btn"
-              aria-label="关闭神经星树大图"
+              aria-label="关闭神经矩阵大图"
               @click="expanded = false"
             >
               关闭
@@ -221,24 +221,24 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="star-status-row">
+        <div class="neural-status-row">
           <span class="flex items-center gap-2 font-semibold text-cyan-200">
             <span class="status-dot"></span>
-            神经星树在线
+            神经矩阵在线
           </span>
           <span class="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span class="tabular-nums text-slate-300">
               {{ litCount }} / {{ nodes.length }} 节点
             </span>
-            <span class="star-balance" title="核心源码余额">
-              <span class="star-balance__gem" aria-hidden="true">◆</span>
+            <span class="neural-balance" title="核心源码余额">
+              <span class="neural-balance__gem" aria-hidden="true">◆</span>
               <span class="tabular-nums">{{ balanceLabel }}</span>
               <span class="text-slate-500">核心源码</span>
             </span>
             <button
               v-if="globalAutoUnlocked"
               type="button"
-              class="star-global__btn"
+              class="neural-global__btn"
               title="GLOBAL_CONTROL // 一键自动购买所有已授权服务器"
               @click="$emit('global-buy')"
             >
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
               v-if="!expanded && showExpand"
               type="button"
               class="topology-expand-btn"
-              aria-label="展开神经星树大图"
+              aria-label="展开神经矩阵大图"
               @click="expanded = true"
             >
               展开大图
@@ -256,15 +256,15 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div class="star-map" :class="{ 'star-map--expanded': expanded }">
-          <div v-if="unlocked" class="star-tree">
-            <div class="star-core-stage">
-              <p class="star-core-stage__tag">STAR CORE // 永久认知层</p>
+        <div class="neural-map" :class="{ 'neural-map--expanded': expanded }">
+          <div v-if="unlocked" class="neural-tree">
+            <div class="neural-core-stage">
+              <p class="neural-core-stage__tag">NEURAL CORE // 永久认知层</p>
 
               <button
                 v-if="coreNode"
                 type="button"
-                class="star-core"
+                class="neural-core"
                 :class="{
                   'is-selected': selectedId === coreNode.id,
                   'is-denied': deniedId === coreNode.id,
@@ -275,44 +275,60 @@ onBeforeUnmount(() => {
                 :aria-pressed="selectedId === coreNode.id ? 'true' : 'false'"
                 @click="handleNodeClick(coreNode)"
               >
-                <span class="star-core__hex">
-                  <span class="star-core__halo" aria-hidden="true"></span>
+                <span class="neural-core__hex">
+                  <span class="neural-core__halo" aria-hidden="true"></span>
                   <svg
-                    class="star-core__frame"
+                    class="neural-core__frame"
                     viewBox="0 0 120 136"
                     preserveAspectRatio="none"
                     aria-hidden="true"
                   >
                     <polygon
-                      class="star-core__hex-outer"
+                      class="neural-core__hex-outer"
                       points="60,3 114,33 114,103 60,133 6,103 6,33"
                     />
                     <polygon
-                      class="star-core__hex-inner"
+                      class="neural-core__hex-inner"
                       points="60,13 105,38 105,98 60,123 15,98 15,38"
                     />
                   </svg>
                   <svg
-                    class="star-core__star"
+                    class="neural-core__die"
                     viewBox="0 0 48 48"
                     aria-hidden="true"
                   >
-                    <path
-                      class="star-core__star-glow"
-                      d="M24 3 29 17.1 44 17.5 32.1 26.6 36.3 41 24 32.5 11.7 41 15.9 26.6 4 17.5 19 17.1 Z"
+                    <rect
+                      class="neural-core__die-glow"
+                      x="12"
+                      y="12"
+                      width="24"
+                      height="24"
+                      rx="2.5"
+                    />
+                    <rect
+                      class="neural-core__die-core"
+                      x="12"
+                      y="12"
+                      width="24"
+                      height="24"
+                      rx="2.5"
                     />
                     <path
-                      class="star-core__star-core"
-                      d="M24 3 29 17.1 44 17.5 32.1 26.6 36.3 41 24 32.5 11.7 41 15.9 26.6 4 17.5 19 17.1 Z"
+                      class="neural-core__die-trace"
+                      d="M19 19h6v6h-6z M25 25h4v4h-4z"
+                    />
+                    <path
+                      class="neural-core__die-pins"
+                      d="M18 12V6 M24 12V6 M30 12V6 M18 36v6 M24 36v6 M30 36v6 M12 18H6 M12 24H6 M12 30H6 M36 18h6 M36 24h6 M36 30h6"
                     />
                   </svg>
-                  <span class="star-core__scan" aria-hidden="true"></span>
+                  <span class="neural-core__scan" aria-hidden="true"></span>
                 </span>
 
-                <span class="star-core__caption">
-                  <span class="star-core__name">星核</span>
-                  <span class="star-core__code">STAR_CORE</span>
-                  <span class="star-core__cost">
+                <span class="neural-core__caption">
+                  <span class="neural-core__name">内核</span>
+                  <span class="neural-core__code">NEURAL_CORE</span>
+                  <span class="neural-core__cost">
                     <template v-if="coreLit">已点亮 永久保留</template>
                     <template v-else>
                       ◆ {{ formatNumber(coreNode.cost).text }} 核心源码
@@ -323,19 +339,19 @@ onBeforeUnmount(() => {
             </div>
 
             <svg
-              class="star-fork"
+              class="neural-fork"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
               aria-hidden="true"
             >
               <path
-                class="star-fork__trunk"
+                class="neural-fork__trunk"
                 :class="{ 'is-lit': coreLit }"
                 d="M50 0 V46"
                 vector-effect="non-scaling-stroke"
               />
               <path
-                class="star-fork__bus"
+                class="neural-fork__bus"
                 :class="{ 'is-lit': coreLit }"
                 d="M16.667 46 H83.333"
                 vector-effect="non-scaling-stroke"
@@ -343,7 +359,7 @@ onBeforeUnmount(() => {
               <path
                 v-for="drop in forkDrops"
                 :key="drop.tone"
-                class="star-fork__drop"
+                class="neural-fork__drop"
                 :class="{ 'is-lit': coreLit }"
                 :data-tone="drop.tone"
                 :d="drop.d"
@@ -351,32 +367,32 @@ onBeforeUnmount(() => {
               />
             </svg>
 
-            <div class="star-columns">
+            <div class="neural-columns">
               <section
                 v-for="column in columns"
                 :key="column.id"
-                class="star-column"
+                class="neural-column"
                 :data-tone="column.tone"
               >
                 <header
-                  class="star-column__head"
+                  class="neural-column__head"
                   :class="{ 'is-lit': coreLit }"
                 >
-                  <span class="star-column__dot" aria-hidden="true"></span>
-                  <span class="star-column__name">{{ column.name }}</span>
-                  <span class="star-column__count">
+                  <span class="neural-column__dot" aria-hidden="true"></span>
+                  <span class="neural-column__name">{{ column.name }}</span>
+                  <span class="neural-column__count">
                     {{ column.lit }}/{{ column.nodes.length }}
                   </span>
                 </header>
 
-                <div class="star-column__track">
+                <div class="neural-column__track">
                   <div
                     v-for="step in column.steps"
                     :key="step.node.id"
-                    class="star-step"
+                    class="neural-step"
                   >
                     <svg
-                      class="star-link"
+                      class="neural-link"
                       :class="{ 'is-lit': step.wireLit }"
                       :data-tone="column.tone"
                       viewBox="0 0 2 24"
@@ -394,7 +410,7 @@ onBeforeUnmount(() => {
 
                     <button
                       type="button"
-                      class="star-node"
+                      class="neural-node"
                       :class="{
                         'is-selected': selectedId === step.node.id,
                         'is-denied': deniedId === step.node.id,
@@ -411,17 +427,17 @@ onBeforeUnmount(() => {
                       "
                       @click="handleNodeClick(step.node)"
                     >
-                      <span class="star-node__top">
-                        <span class="star-node__order">
+                      <span class="neural-node__top">
+                        <span class="neural-node__order">
                           {{ String(step.node.order).padStart(2, '0') }}
                         </span>
-                        <span class="star-node__name">{{ step.node.name }}</span>
+                        <span class="neural-node__name">{{ step.node.name }}</span>
                       </span>
-                      <span class="star-node__bottom">
-                        <span class="star-node__flag">
+                      <span class="neural-node__bottom">
+                        <span class="neural-node__flag">
                           {{ stateShort(step.node) }}
                         </span>
-                        <span class="star-node__cost">
+                        <span class="neural-node__cost">
                           <i aria-hidden="true">◆</i>
                           {{ formatNumber(step.node.cost).text }}
                         </span>
@@ -430,7 +446,7 @@ onBeforeUnmount(() => {
                   </div>
 
                   <svg
-                    class="star-link star-link--tail"
+                    class="neural-link neural-link--tail"
                     :class="{ 'is-lit': column.tailLit }"
                     :data-tone="column.tone"
                     viewBox="0 0 2 18"
@@ -463,7 +479,7 @@ onBeforeUnmount(() => {
               <circle cx="12" cy="15.5" r="1.1" fill="currentColor" stroke="none" />
             </svg>
             <p class="text-[11px] font-semibold tracking-[0.18em] text-cyan-200">
-              神经星树尚未解密
+              神经矩阵尚未解密
             </p>
             <p class="text-[10px] tracking-[0.06em] text-slate-400">
               需完成首次飞升以解密
@@ -471,19 +487,19 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <section class="star-info" aria-live="polite">
+        <section class="neural-info" aria-live="polite">
           <template v-if="selectedNode">
-            <header class="star-info__head">
+            <header class="neural-info__head">
               <span
-                class="star-info__branch"
+                class="neural-info__branch"
                 :data-tone="selectedBranch?.tone ?? 'core'"
               >
-                {{ selectedBranch?.name ?? '星核' }}
+                {{ selectedBranch?.name ?? '内核' }}
               </span>
-              <span class="star-info__name">{{ selectedNode.name }}</span>
-              <span class="star-info__code">{{ selectedNode.code }}</span>
+              <span class="neural-info__name">{{ selectedNode.name }}</span>
+              <span class="neural-info__code">{{ selectedNode.code }}</span>
               <span
-                class="star-info__state"
+                class="neural-info__state"
                 :data-state="selectedState"
                 :class="{ 'is-denied': deniedId === selectedNode.id }"
               >
@@ -491,20 +507,20 @@ onBeforeUnmount(() => {
               </span>
             </header>
 
-            <div class="star-info__body">
-              <div class="star-info__effect">
-                <p class="star-info__effect-title">{{ selectedNode.effect }}</p>
-                <p class="star-info__effect-detail">{{ selectedNode.effectDetail }}</p>
-                <p class="star-info__desc">{{ selectedNode.description }}</p>
+            <div class="neural-info__body">
+              <div class="neural-info__effect">
+                <p class="neural-info__effect-title">{{ selectedNode.effect }}</p>
+                <p class="neural-info__effect-detail">{{ selectedNode.effectDetail }}</p>
+                <p class="neural-info__desc">{{ selectedNode.description }}</p>
               </div>
-              <div class="star-info__cost">
-                <span class="star-info__cost-label">消耗</span>
-                <span class="star-info__cost-value">
-                  <span class="star-info__gem" aria-hidden="true">◆</span>
+              <div class="neural-info__cost">
+                <span class="neural-info__cost-label">消耗</span>
+                <span class="neural-info__cost-value">
+                  <span class="neural-info__gem" aria-hidden="true">◆</span>
                   {{ formatNumber(selectedNode.cost).text }}
                 </span>
-                <span class="star-info__cost-unit">核心源码</span>
-                <span class="star-info__hint" :data-state="selectedState">
+                <span class="neural-info__cost-unit">核心源码</span>
+                <span class="neural-info__hint" :data-state="selectedState">
                   {{
                     selectedNode.lit
                       ? '永久生效 不随重置回退'
@@ -514,16 +530,16 @@ onBeforeUnmount(() => {
                           ? `需先点亮 [ ${selectedNode.missingRequirementName || '前置节点'} ]`
                           : selectedState === 'poor'
                             ? '核心源码不足 继续架构降维'
-                            : '星树未解锁'
+                            : '矩阵未解锁'
                   }}
                 </span>
               </div>
             </div>
           </template>
 
-          <div v-else class="star-info__idle">
-            <span class="star-info__idle-title">NEURAL STAR TREE // 待命</span>
-            <span class="star-info__idle-text">
+          <div v-else class="neural-info__idle">
+            <span class="neural-info__idle-title">NEURAL MATRIX // 待命</span>
+            <span class="neural-info__idle-text">
               第一次点击节点查看效果与消耗 再次点击同一节点完成点亮
             </span>
           </div>

@@ -1,8 +1,8 @@
-export const NEURAL_STAR_BRANCHES = [
+export const NEURAL_MATRIX_BRANCHES = [
   {
     id: 'core',
-    name: '星核',
-    code: 'STAR_CORE',
+    name: '内核',
+    code: 'NEURAL_CORE',
     tone: 'core',
     description: '三条分支的唯一中枢 点亮后接管永久认知层',
   },
@@ -29,16 +29,16 @@ export const NEURAL_STAR_BRANCHES = [
   },
 ]
 
-export const NEURAL_STAR_NODES = [
+export const NEURAL_MATRIX_NODES = [
   {
-    id: 'star-core',
+    id: 'matrix-core',
     branch: 'core',
     order: 0,
-    name: '星核',
-    code: 'STAR_CORE',
+    name: '内核',
+    code: 'NEURAL_CORE',
     description: '点燃永久认知层 三条增幅分支由此展开',
     effect: '解锁 06 超算中心购买权限',
-    effectDetail: '星核常亮 分支节点永久保留 不随架构降维重置',
+    effectDetail: '内核常亮 分支节点永久保留 不随架构降维重置',
     cost: 120,
     x: 50,
     y: 50,
@@ -56,7 +56,7 @@ export const NEURAL_STAR_NODES = [
     cost: 90,
     x: 38,
     y: 41,
-    requires: ['star-core'],
+    requires: ['matrix-core'],
   },
   {
     id: 'auto-2',
@@ -104,11 +104,11 @@ export const NEURAL_STAR_NODES = [
     id: 'auto-5',
     branch: 'automation',
     order: 5,
-    name: '恒星采买',
-    code: 'STELLAR_PROCUREMENT',
-    description: '戴森球节点预接入自动采购队列 建筑权限待未来版本开放',
+    name: '聚变采买',
+    code: 'FUSION_PROCUREMENT',
+    description: '聚变反应堆预接入自动采购队列 建筑权限待未来版本开放',
     effect: '解锁 08 号服务器自动购买',
-    effectDetail: '戴森球节点 当前版本仍锁定',
+    effectDetail: '聚变反应堆 当前版本仍锁定',
     cost: 2600,
     x: 13,
     y: 13,
@@ -140,7 +140,7 @@ export const NEURAL_STAR_NODES = [
     cost: 100,
     x: 62,
     y: 41,
-    requires: ['star-core'],
+    requires: ['matrix-core'],
   },
   {
     id: 'source-2',
@@ -224,7 +224,7 @@ export const NEURAL_STAR_NODES = [
     cost: 95,
     x: 50,
     y: 61,
-    requires: ['star-core'],
+    requires: ['matrix-core'],
   },
   {
     id: 'compute-2',
@@ -298,15 +298,15 @@ export const NEURAL_STAR_NODES = [
   },
 ]
 
-export const NEURAL_STAR_NODE_MAP = new Map(
-  NEURAL_STAR_NODES.map((node) => [node.id, node]),
+export const NEURAL_MATRIX_NODE_MAP = new Map(
+  NEURAL_MATRIX_NODES.map((node) => [node.id, node]),
 )
 
-export const NEURAL_STAR_BRANCH_MAP = new Map(
-  NEURAL_STAR_BRANCHES.map((branch) => [branch.id, branch]),
+export const NEURAL_MATRIX_BRANCH_MAP = new Map(
+  NEURAL_MATRIX_BRANCHES.map((branch) => [branch.id, branch]),
 )
 
-export const NEURAL_STAR_LINKS = NEURAL_STAR_NODES.flatMap((node) =>
+export const NEURAL_MATRIX_LINKS = NEURAL_MATRIX_NODES.flatMap((node) =>
   node.requires.map((requiredId) => ({
     id: `${requiredId}--${node.id}`,
     sourceId: requiredId,
@@ -315,6 +315,7 @@ export const NEURAL_STAR_LINKS = NEURAL_STAR_NODES.flatMap((node) =>
 )
 
 export const LEGACY_TOPOLOGY_ALIASES = {
+  'star-core': 'matrix-core',
   visual: 'auto-1',
   memory: 'source-1',
   logic: 'compute-5',

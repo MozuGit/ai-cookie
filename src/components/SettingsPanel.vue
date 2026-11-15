@@ -12,9 +12,15 @@ import {
 
 const props = defineProps({
   open: { type: Boolean, default: false },
+  speedrunActive: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['close', 'open-about'])
+const emit = defineEmits([
+  'close',
+  'open-about',
+  'start-speedrun',
+  'exit-speedrun',
+])
 
 const closeButton = ref(null)
 
@@ -93,6 +99,50 @@ onBeforeUnmount(unbindKeys)
           </header>
 
           <div class="settings-panel__body">
+            <section
+              class="settings-speedrun"
+              :class="{ 'settings-speedrun--active': speedrunActive }"
+            >
+              <div class="settings-speedrun__head">
+                <span class="settings-speedrun__tag">急速体验 // SPEEDRUN</span>
+                <span class="settings-speedrun__time">30 MIN</span>
+              </div>
+              <p class="settings-speedrun__title">
+                {{ speedrunActive ? '急速模式进行中' : '30 分钟体验全部核心内容' }}
+              </p>
+              <p class="settings-speedrun__desc">
+                {{
+                  speedrunActive
+                    ? '当前为独立体验存档。退出后会恢复开启前的正式存档与正常数值。'
+                    : '分四阶段推进 服务器降价 源码与超频核心加速 飞升门槛下调 并赠送起源代码。'
+                }}
+              </p>
+              <button
+                v-if="!speedrunActive"
+                type="button"
+                class="settings-speedrun__btn"
+                @click="$emit('start-speedrun')"
+              >
+                <span aria-hidden="true">🚀</span>
+                开启急速体验模式
+              </button>
+              <button
+                v-else
+                type="button"
+                class="settings-speedrun__btn settings-speedrun__btn--exit"
+                @click="$emit('exit-speedrun')"
+              >
+                退出急速模式 恢复正式存档
+              </button>
+              <p class="settings-speedrun__warning">
+                {{
+                  speedrunActive
+                    ? '退出会丢弃本次急速进度 并还原正式存档'
+                    : '开启会备份当前存档并清空进度 重新开局；退出后自动还原'
+                }}
+              </p>
+            </section>
+
             <div class="settings-row">
               <div class="settings-row__copy">
                 <p class="settings-row__name">数字格式</p>

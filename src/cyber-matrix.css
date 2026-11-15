@@ -388,6 +388,54 @@
   overflow: hidden;
 }
 
+.automation-strategy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.24rem;
+}
+
+.automation-strategy__label {
+  font-size: 6px;
+  letter-spacing: 0.14em;
+  color: rgba(148, 197, 174, 0.45);
+}
+
+.automation-strategy__btn {
+  padding: 0.1rem 0.28rem;
+  border: 1px solid rgba(74, 222, 128, 0.24);
+  background: rgba(16, 185, 129, 0.05);
+  color: rgba(167, 243, 208, 0.62);
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.automation-strategy__btn:hover {
+  border-color: rgba(74, 222, 128, 0.55);
+  color: #d1fae5;
+}
+
+.automation-strategy__btn.is-active {
+  border-color: rgba(74, 222, 128, 0.85);
+  background: rgba(34, 197, 94, 0.22);
+  color: #bbf7d0;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.28);
+}
+
+.automation-console.is-suppressed .automation-strategy {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
 .console-switch {
   flex: none;
   display: flex;

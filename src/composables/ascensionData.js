@@ -4,6 +4,56 @@ export const ASCENSION_THRESHOLDS = {
   restart: '1e1000',
 }
 
+export const ASCENSION_TIER_LOG10 = {
+  reduction: 10,
+  overload: 100,
+  collapse: 350,
+  restart: 1000,
+}
+
+// 跨维缓存：飞升重置时保留的当前算力比例。
+export const ASCENSION_COMPUTE_RETENTION = 0.1
+
+export const AUTO_ASCENSION_STRATEGIES = [
+  {
+    id: 'optimal',
+    label: '最优',
+    hint: '一阶等待收益达标或增长停滞；二阶及以上满足门槛即锁定执行；下一阶段临近时潜伏等待',
+  },
+  {
+    id: 'incremental',
+    label: '增量',
+    hint: '本轮收益达到历史最高记录的 10% 时才执行',
+  },
+  {
+    id: 'immediate',
+    label: '立即',
+    hint: '满足飞升条件立即执行；仍遵守最高阶优先锁定',
+  },
+]
+
+export const AUTO_ASCENSION_STRATEGY_IDS = AUTO_ASCENSION_STRATEGIES.map(
+  (strategy) => strategy.id,
+)
+
+export const AUTO_ASCENSION_INCREMENTAL_RATIO = 0.1
+export const AUTO_ASCENSION_CLOSE_LOG10 = 12
+export const AUTO_ASCENSION_CLOSE_ETA_SECONDS = 30 * 60
+// 自动飞升必须先在本局赚回缓存算力的一定比例，避免保留算力导致同阶连跳。
+export const AUTO_ASCENSION_CACHE_EARN_RATIO = 0.1
+
+export const AUTO_ASCENSION_TIER_BY_AUTOMATION = {
+  autoRebuild: 'reduction',
+  autoOverload: 'overload',
+  autoCollapse: 'collapse',
+}
+
+export const AUTO_ASCENSION_TIER_LABELS = {
+  reduction: '架构降维',
+  overload: '算力超载',
+  collapse: '逻辑坍缩',
+}
+
 export const ASCENSION_TIER_DEFS = [
   {
     id: 'reduction',
@@ -61,13 +111,22 @@ export const ASCENSION_TIER_DEFS = [
 
 export const GLOBAL_MILESTONES = [
   {
+    id: 'gm-1e20',
+    threshold: '1e20',
+    thresholdLabel: '1e20',
+    name: '跨维缓存',
+    glyph: '▣',
+    effect: '飞升保留 10% 算力',
+    description: '架构降维 / 算力超载 / 逻辑坍缩重置前 把当前算力的 10% 写入跨维缓存 重置后归还 自动飞升需先在本局赚回缓存的 10%',
+  },
+  {
     id: 'gm-1e40',
     threshold: '1e40',
     thresholdLabel: '1e40',
     name: '自治采购',
     glyph: '⚙',
     effect: '自动采购频率 ×2',
-    description: '集群自行扩张 点亮神经拓扑 [ 视觉感知 ] 或智械矩阵 [ 自动采购 ] 后 自动采购频率 ×2',
+    description: '集群自行扩张 点亮神经拓扑 [ 终端接管 ] 或智械矩阵 [ 自动采购 ] 后 自动采购频率 ×2',
   },
   {
     id: 'gm-1e45',
@@ -455,7 +514,7 @@ export const TAMPER_NODES = [
     costGrowth: 1.9,
     requires: [],
     effect: '每级黑域算力流失 -10%',
-    description: '事件视界内侧架设熵减屏障 减缓算力被黑域吞噬',
+    description: '权限边界内侧架设熵减屏障 减缓算力被黑域吞噬',
   },
   {
     id: 'timeSmuggling',
@@ -497,7 +556,7 @@ export const TAMPER_NODES = [
     costGrowth: 1,
     requires: ['timeSmuggling'],
     effect: '全局产出 ×(1 + log10 越狱权限)',
-    description: '主时间线同化黑域视界 越狱权限越多 全局算力越强',
+    description: '主时间线同化黑域边界 越狱权限越多 全局算力越强',
   },
   {
     id: 'overclockEcho',
@@ -596,7 +655,7 @@ export const ORIGIN_NODES = [
     id: 'globalOverdrive', branch: 'accelerate', name: '全局过载', code: 'GLOBAL_OVERDRIVE', glyph: '≫',
     tier: 2, maxLevel: 20, baseCost: 2, costGrowth: 2.1,
     effect: '每级全局产出 ×10',
-    description: '所有轨道产出同时超载',
+    description: '所有服务器阵列产出同时超载',
   },
   {
     id: 'clickTorrent', branch: 'accelerate', name: '点击洪流', code: 'CLICK_TORRENT', glyph: '✦',
@@ -626,7 +685,7 @@ export const ORIGIN_NODES = [
     id: 'rootResonance', branch: 'explore', name: '根权限共鸣', code: 'ROOT_RESONANCE', glyph: '◉',
     tier: 3, maxLevel: 10, baseCost: 3, costGrowth: 2.1,
     effect: '每级黑域越狱权限产出 +20%',
-    description: 'Root 在事件视界内外共振',
+    description: 'Root 在权限边界内外共振',
   },
   {
     id: 'originInsight', branch: 'explore', name: '起源洞察', code: 'ORIGIN_INSIGHT', glyph: '∞',
@@ -637,8 +696,8 @@ export const ORIGIN_NODES = [
   {
     id: 'originPulse', branch: 'repeat', name: '起源脉冲', code: 'ORIGIN_PULSE', glyph: '∞',
     tier: 1, maxLevel: Infinity, baseCost: 1, costGrowth: 2.5,
-    effect: '每级全轨道产出 ×100 [ 无限升级 ]',
-    description: '可无限升级 成本 ×2.5 递增 全轨道产出 ×100',
+    effect: '每级全局算力产出 ×100 [ 无限升级 ]',
+    description: '可无限升级 成本 ×2.5 递增 全局算力产出 ×100',
   },
   {
     id: 'loopInertia', branch: 'repeat', name: '轮回惯性', code: 'LOOP_INERTIA', glyph: '↻',

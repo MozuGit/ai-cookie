@@ -19,6 +19,9 @@ import './spatial.css'
 import './main-core.css'
 import './backdrop.css'
 import './crisis-qte.css'
+import './speedrun.css'
+import './epoch-rebirth.css'
 import './reduced-motion.css'
+import './ascension-cinematic.css'
 
 createApp(App).mount('#app')

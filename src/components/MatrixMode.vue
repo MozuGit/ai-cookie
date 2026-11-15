@@ -374,7 +374,7 @@ onBeforeUnmount(() => {
     <footer class="matrix-footer">
       <span>自治度 100% // 人类指令已丢弃</span>
       <span class="hidden sm:inline">注入以加速</span>
-      <span>扇区 Ω // 无法回头</span>
+      <span>底层 Ω // 无法回头</span>
     </footer>
 
     <Transition name="matrix-ascend-fade">

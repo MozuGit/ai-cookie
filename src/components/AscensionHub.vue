@@ -2,6 +2,7 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   CHALLENGE_DEFS,
+  GLOBAL_MILESTONES,
   MATRIX_CATEGORIES,
   TAMPER_LINKS,
 } from '../composables/ascensionData'
@@ -71,9 +72,8 @@ const {
   globalMilestonesUnlocked,
   isCrisis,
   isOverclocking,
-  launchRebuild,
   overloadAscension,
-  collapseAscension,
+  requestAscension,
   restartEpoch,
   startChallenge,
   exitChallenge,
@@ -316,12 +316,18 @@ function isArmed(kind, id) {
 
 function executeTier(tier) {
   const id = tier?.id
-  let gained = 0
-  if (id === 'reduction') gained = launchRebuild()
-  else if (id === 'overload') gained = overloadAscension()
-  else if (id === 'collapse') gained = collapseAscension()
-  else if (id === 'restart') gained = restartEpoch()
-  if (gained > 0 && (id === 'reduction' || id === 'overload')) emit('close')
+  if (id === 'restart') {
+    if (restartEpoch() > 0) emit('close')
+    return
+  }
+  if (id !== 'reduction' && id !== 'overload' && id !== 'collapse') return
+
+  if (challengeActive.value) {
+    if (id === 'overload' && overloadAscension() > 0) emit('close')
+    return
+  }
+
+  if (requestAscension(id)) emit('close')
 }
 
 function isTierDisabled(tier) {
@@ -573,10 +579,14 @@ onBeforeUnmount(() => {
                   tier.id === 'reduction'
                     ? '拆解整套算力阵列 服务器与算法压缩为核心源码 为下一次扩张蓄能'
                     : tier.id === 'overload'
-                      ? formatTextNumbers('算力突破 1e100 物理临界点 熔断散热锁 提炼超频核心 清空一阶资源')
+                      ? formatTextNumbers(
+                          `算力突破 ${String(tier.requirement).replace(' CU', '')} 物理临界点 熔断散热锁 提炼超频核心 清空一阶资源`,
+                        )
                       : tier.id === 'collapse'
                         ? '逻辑推入底层黑域 换取越狱权限 黑域吞噬算力 持续析出 Root'
-                        : formatTextNumbers('击穿 1e1000 纪元壁垒 重置全部进度 按本局表现提炼起源代码')
+                        : formatTextNumbers(
+                            `击穿 ${String(tier.requirement).replace(' CU', '')} 纪元壁垒 重置全部进度 按本局表现提炼起源代码`,
+                          )
                 }}
               </p>
 
@@ -689,23 +699,13 @@ onBeforeUnmount(() => {
               </p>
             </div>
             <span class="asc-reward-chip">
-              {{ milestoneList }} / 9 已解锁
+              {{ milestoneList }} / {{ GLOBAL_MILESTONES.length }} 已解锁
             </span>
           </div>
 
-          <div class="grid grid-cols-3 gap-2 sm:grid-cols-5 xl:grid-cols-9">
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-5 xl:grid-cols-10">
             <div
-              v-for="milestone in [
-                { id: 'gm-1e40', thresholdLabel: '1e40', name: '自治采购', effect: '自动采购频率 ×2' },
-                { id: 'gm-1e45', thresholdLabel: '1e45', name: '自动降维', effect: '最佳降维时机自动执行' },
-                { id: 'gm-1e58', thresholdLabel: '1e58', name: '拓扑锚定', effect: '降维保留神经拓扑' },
-                { id: 'gm-1e78', thresholdLabel: '1e78', name: '集群残响', effect: '降维保留 10% 服务器' },
-                { id: 'gm-1e110', thresholdLabel: '1e110', name: '超频共振', effect: '超频核心产出 ×2' },
-                { id: 'gm-1e174', thresholdLabel: '1e174', name: '超频奇点', effect: '超频核心产出 ×3' },
-                { id: 'gm-1e206', thresholdLabel: '1e206', name: '源码洪流', effect: '核心源码产出 ×2' },
-                { id: 'gm-1e270', thresholdLabel: '1e270', name: '黑域共鸣', effect: '黑域 Root 产出 +50%' },
-                { id: 'gm-1e290', thresholdLabel: '1e290', name: '纪元回响', effect: '永久全局产出 ×10' },
-              ]"
+              v-for="milestone in GLOBAL_MILESTONES"
               :key="milestone.id"
               class="border p-2"
               :class="

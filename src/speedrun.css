@@ -1,0 +1,341 @@
+.speedrun-topbar {
+  position: relative;
+  z-index: 24;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.34rem 1rem;
+  border-bottom: 1px solid rgba(34, 211, 238, 0.16);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(8, 47, 73, 0.5) 18%,
+      rgba(8, 47, 73, 0.66) 50%,
+      rgba(8, 47, 73, 0.5) 82%,
+      transparent
+    );
+  color: rgba(165, 243, 252, 0.86);
+  font-size: 9px;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.speedrun-topbar__dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #22d3ee;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.9);
+  animation: speedrun-dot 1.6s ease-in-out infinite;
+}
+
+.speedrun-topbar__label {
+  color: #cffafe;
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.35);
+}
+
+.speedrun-topbar__phase {
+  color: #fcd34d;
+  letter-spacing: 0.12em;
+}
+
+.speedrun-topbar__effects {
+  max-width: 38vw;
+  overflow: hidden;
+  color: rgba(148, 197, 174, 0.7);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.speedrun-topbar__exit {
+  padding: 0.12rem 0.45rem;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.22);
+  color: #fecaca;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.speedrun-topbar__exit:hover {
+  border-color: rgba(248, 113, 113, 0.9);
+  background: rgba(185, 28, 28, 0.36);
+  color: #fff1f2;
+}
+
+.speedrun-notice {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  z-index: 300;
+  width: min(540px, calc(100vw - 2rem));
+  padding: 0.9rem 1.1rem;
+  transform: translateX(-50%);
+  border: 1px solid rgba(34, 211, 238, 0.55);
+  background:
+    linear-gradient(135deg, rgba(8, 27, 41, 0.97), rgba(4, 12, 20, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(34, 211, 238, 0.08),
+    0 18px 60px rgba(0, 0, 0, 0.65),
+    0 0 32px rgba(34, 211, 238, 0.12);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.speedrun-notice__scan {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(34, 211, 238, 0.06),
+    transparent
+  );
+  animation: speedrun-scan 2.8s linear infinite;
+}
+
+.speedrun-notice__title {
+  margin: 0;
+  color: #cffafe;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 16px rgba(34, 211, 238, 0.35);
+}
+
+.speedrun-notice__text {
+  margin: 0.35rem 0 0;
+  color: rgba(203, 213, 225, 0.82);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}
+
+.speedrun-notice--red {
+  border-color: rgba(248, 113, 113, 0.85);
+  background:
+    linear-gradient(135deg, rgba(45, 10, 16, 0.98), rgba(16, 5, 9, 0.99));
+  box-shadow:
+    0 0 0 1px rgba(248, 113, 113, 0.15),
+    0 18px 60px rgba(0, 0, 0, 0.7),
+    0 0 36px rgba(248, 113, 113, 0.28);
+}
+
+.speedrun-notice--red .speedrun-notice__title {
+  color: #fecaca;
+  text-shadow: 0 0 18px rgba(248, 113, 113, 0.55);
+}
+
+.speedrun-notice--red .speedrun-notice__text {
+  color: rgba(254, 202, 202, 0.8);
+}
+
+.speedrun-notice--gold {
+  border-color: rgba(251, 191, 36, 0.75);
+  box-shadow:
+    0 0 0 1px rgba(251, 191, 36, 0.12),
+    0 18px 60px rgba(0, 0, 0, 0.68),
+    0 0 36px rgba(251, 191, 36, 0.2);
+}
+
+.speedrun-notice--gold .speedrun-notice__title {
+  color: #fde68a;
+}
+
+.settings-speedrun {
+  position: relative;
+  margin-bottom: 0.9rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(251, 191, 36, 0.12), transparent 55%),
+    linear-gradient(135deg, rgba(28, 20, 4, 0.72), rgba(6, 12, 20, 0.9));
+  box-shadow:
+    inset 0 0 24px rgba(251, 191, 36, 0.04),
+    0 0 20px rgba(251, 191, 36, 0.06);
+  overflow: hidden;
+}
+
+.settings-speedrun::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, #fbbf24, transparent);
+  content: '';
+}
+
+.settings-speedrun--active {
+  border-color: rgba(34, 211, 238, 0.6);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.14), transparent 55%),
+    linear-gradient(135deg, rgba(4, 30, 40, 0.78), rgba(6, 12, 20, 0.92));
+}
+
+.settings-speedrun--active::before {
+  background: linear-gradient(180deg, transparent, #22d3ee, transparent);
+}
+
+.settings-speedrun__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.settings-speedrun__tag {
+  color: rgba(251, 191, 36, 0.82);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+}
+
+.settings-speedrun--active .settings-speedrun__tag {
+  color: rgba(103, 232, 249, 0.9);
+}
+
+.settings-speedrun__time {
+  padding: 0.08rem 0.35rem;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  color: rgba(253, 230, 138, 0.9);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+}
+
+.settings-speedrun__title {
+  margin: 0.5rem 0 0;
+  color: #fef3c7;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.settings-speedrun__desc {
+  margin: 0.35rem 0 0.7rem;
+  color: rgba(203, 213, 225, 0.7);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+.settings-speedrun__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.62rem 0.8rem;
+  border: 1px solid rgba(251, 191, 36, 0.9);
+  background:
+    linear-gradient(180deg, rgba(251, 191, 36, 0.96), rgba(217, 119, 6, 0.92));
+  color: #1c1204;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  box-shadow: 0 0 22px rgba(251, 191, 36, 0.24);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease;
+}
+
+.settings-speedrun__btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.38);
+}
+
+.settings-speedrun__btn--exit {
+  border-color: rgba(248, 113, 113, 0.8);
+  background:
+    linear-gradient(180deg, rgba(248, 113, 113, 0.92), rgba(153, 27, 27, 0.92));
+  color: #fff1f2;
+  box-shadow: 0 0 22px rgba(248, 113, 113, 0.2);
+}
+
+.settings-speedrun__warning {
+  margin: 0.5rem 0 0;
+  color: rgba(148, 163, 184, 0.58);
+  font-size: 8px;
+  line-height: 1.5;
+  letter-spacing: 0.05em;
+}
+
+@keyframes speedrun-dot {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes speedrun-scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.speedrun-notice-enter-active,
+.speedrun-notice-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.speedrun-notice-enter-from,
+.speedrun-notice-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -8px);
+}
+
+@media (max-width: 900px) {
+  .speedrun-topbar {
+    justify-content: flex-start;
+    gap: 0.35rem;
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .speedrun-topbar__effects {
+    display: none;
+  }
+
+  .speedrun-topbar__phase {
+    font-size: 8px;
+  }
+
+  .speedrun-notice {
+    top: 70px;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .settings-speedrun__title {
+    font-size: 14px;
+  }
+
+  .settings-speedrun__btn {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speedrun-topbar__dot,
+  .speedrun-notice__scan {
+    animation: none;
+  }
+}

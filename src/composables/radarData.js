@@ -1,13 +1,18 @@
-export const RADAR_SCAN_INTERVAL_MS = 10_000
-export const RADAR_BASE_SCAN_CHANCE = 0.12
+// 被动扫描：30 分钟一次，前期低概率，随图鉴进度缓慢提升。
+export const RADAR_SCAN_INTERVAL_MS = 30 * 60 * 1000
+export const RADAR_BASE_SCAN_CHANCE = 0.06
+export const RADAR_SCAN_CHANCE_PER_NODE = 0.007
+export const RADAR_MAX_SCAN_CHANCE = 0.32
+// 过载扫描：10 分钟 Buff 内提高判定频率与成功率。
+export const RADAR_OVERLOAD_SCAN_INTERVAL_MS = 90 * 1000
 export const RADAR_OVERLOAD_SCAN_MULTIPLIER = 4
 export const RADAR_OVERLOAD_SCAN_MS = 10 * 60 * 1000
+// 突发异常：不再定时闹钟，只有每次被动扫描时 2% 概率触发。
+export const RADAR_BURST_CHANCE = 0.02
 export const RADAR_BURST_WINDOW_MS = 3 * 60 * 1000
-export const RADAR_BURST_INTERVAL_MS = 90 * 60 * 1000
-export const RADAR_BURST_TEST_INTERVAL_MS = 30 * 1000
 export const RADAR_CATEGORY_MULTIPLIER = 2
 export const RADAR_FULL_REWARD_SECONDS = 90
-export const RADAR_TEST_MODE = true
+export const RADAR_OVERFLOW_REWARD_SECONDS = 3600
 
 export const RADAR_RARITIES = {
   common: { label: '常规', tone: 'cyan', weight: 1 },
@@ -292,7 +297,7 @@ export const RADAR_CATEGORIES = [
       },
       {
         id: 'blackdomain-02',
-        name: '无响应扇区',
+        name: '无响应机房',
         rarity: 'common',
         bonus: 1,
         description: '所有请求都被吞掉 连超时也不返回的存储深渊',

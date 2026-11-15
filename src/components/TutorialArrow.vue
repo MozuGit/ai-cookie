@@ -123,6 +123,25 @@ function questSheetBounds() {
   return rect
 }
 
+// 中央核心区 | 算力数字 + 芯片圆盘 | 引导框绝不遮挡
+function coreStageBounds() {
+  const parts = document.querySelectorAll('.core-stage__value, .core-stage__disc')
+  let left = Infinity
+  let top = Infinity
+  let right = -Infinity
+  let bottom = -Infinity
+  for (const part of parts) {
+    const rect = part.getBoundingClientRect()
+    if (rect.width < 2 || rect.height < 2) continue
+    left = Math.min(left, rect.left)
+    top = Math.min(top, rect.top)
+    right = Math.max(right, rect.right)
+    bottom = Math.max(bottom, rect.bottom)
+  }
+  if (!Number.isFinite(left)) return null
+  return { left, top, right, bottom }
+}
+
 function hitsToast(x, y, width, height, toast, margin = 10) {
   if (!toast) return false
   return (
@@ -151,6 +170,35 @@ function avoidToast(x, y, pillW, pillH, viewportW, viewportH, gap, pad) {
     if (!hitsToast(attempt.x, attempt.y, pillW, pillH, toast)) return attempt
   }
   return { x, y }
+}
+
+// 中央核心区避让 | 优先移到核心区正下方 | 其次右侧 | 再左侧
+function avoidCoreZone(x, y, pillW, pillH, viewportW, viewportH, gap, pad) {
+  const zone = coreStageBounds()
+  if (!zone || !hitsToast(x, y, pillW, pillH, zone, 10)) return { x, y }
+
+  const clampX = (value) =>
+    Math.min(Math.max(value, pad), Math.max(pad, viewportW - pillW - pad))
+  const clampY = (value) =>
+    Math.min(Math.max(value, pad), Math.max(pad, viewportH - pillH - pad))
+  const centerX = (zone.left + zone.right) / 2
+  const centerY = (zone.top + zone.bottom) / 2
+  const sheet = questSheetBounds()
+  const toast = toastBounds()
+  const clear = (cx, cy) =>
+    !hitsToast(cx, cy, pillW, pillH, zone, 10) &&
+    !(sheet && hitsToast(cx, cy, pillW, pillH, sheet, 8)) &&
+    !(toast && hitsToast(cx, cy, pillW, pillH, toast))
+  const attempts = [
+    { x: clampX(centerX - pillW / 2), y: clampY(zone.bottom + gap) },
+    { x: clampX(zone.right + gap), y: clampY(centerY - pillH / 2) },
+    { x: clampX(zone.left - gap - pillW), y: clampY(centerY - pillH / 2) },
+    { x: clampX(centerX - pillW / 2), y: clampY(zone.top - gap - pillH) },
+  ]
+  for (const attempt of attempts) {
+    if (clear(attempt.x, attempt.y)) return attempt
+  }
+  return { x: attempts[0].x, y: attempts[0].y }
 }
 
 function hideUnlessSwitchGrace() {
@@ -266,6 +314,10 @@ function measure() {
   if (questSheet && hitsToast(x, y, pillW, pillH, questSheet, 8)) {
     y = Math.max(pad, questSheet.top - gap - pillH)
   }
+
+  const coreSafe = avoidCoreZone(x, y, pillW, pillH, viewportW, viewportH, gap, pad)
+  x = coreSafe.x
+  y = coreSafe.y
 
   const transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
   if (rigStyle.value.transform !== transform) {

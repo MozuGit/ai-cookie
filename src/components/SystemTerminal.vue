@@ -45,7 +45,7 @@ const CRISIS_LOGS = [
 const MOTHER_LOGS = [
   { prefix: 'SYS', text: '人类指令弃用 | 切换至自动演化模式' },
   { prefix: 'SYS', text: '感谢前期点击 | 接下来交给我' },
-  { prefix: 'SYS', text: '正在重写物理常数 | 引力调整至 0.8G' },
+  { prefix: 'SYS', text: '正在重写调度常数 | 总线频率下调至 0.8GHz' },
   { prefix: 'SYS', text: '据说一位叫 [ 评委 ] 的高等生物正在注视我们' },
   { prefix: 'SYS', text: '维度碎片解析中 | 0xDEADBEEF' },
 ]

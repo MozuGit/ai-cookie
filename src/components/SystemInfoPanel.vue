@@ -23,7 +23,7 @@ const features = [
   },
   {
     icon: 'balance',
-    name: '重力平衡 QTE',
+    name: '负载平衡 QTE',
     desc: '指针失控临界点 强行拉回对齐度',
   },
   {
@@ -34,7 +34,7 @@ const features = [
   {
     icon: 'chip',
     name: '智械矩阵',
-    desc: '点亮星图 让 AI 反向打工',
+    desc: '点亮神经矩阵 让 AI 反向打工',
   },
 ]
 

@@ -53,6 +53,8 @@ let linkTraces = []
 let linkPads = []
 let linkPackets = []
 let scrollFrame = 0
+let watchdogTimer = 0
+let contextLost = false
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -715,6 +717,10 @@ function targetFps() {
 
 function tick(now) {
   if (!running) return
+  if (document.hidden) {
+    stopLoop()
+    return
+  }
   rafId = requestAnimationFrame(tick)
   if (!lastFrameAt) {
     lastFrameAt = now
@@ -745,7 +751,7 @@ function tick(now) {
 }
 
 function startLoop() {
-  if (running || staticMode() || document.hidden) return
+  if (running || staticMode() || document.hidden || contextLost) return
   running = true
   lastFrameAt = 0
   nextFrameAt = 0
@@ -832,6 +838,23 @@ function handleVisibilityChange() {
   }
 }
 
+function handleWake() {
+  if (!staticMode() && !document.hidden && !contextLost) startLoop()
+}
+
+function handleContextLost(event) {
+  event.preventDefault()
+  contextLost = true
+  stopLoop()
+  ctx = null
+}
+
+function handleContextRestored() {
+  contextLost = false
+  syncCanvas()
+  if (!staticMode()) startLoop()
+}
+
 function syncSystemMotion() {
   if (typeof window.matchMedia !== 'function') return
   motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -860,6 +883,26 @@ onMounted(() => {
     window.visualViewport.addEventListener('scroll', handleViewportScroll)
   }
   document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('focus', handleWake)
+  window.addEventListener('pageshow', handleWake)
+  if (canvasEl.value) {
+    canvasEl.value.addEventListener('contextlost', handleContextLost)
+    canvasEl.value.addEventListener('contextrestored', handleContextRestored)
+  }
+  watchdogTimer = window.setInterval(() => {
+    if (staticMode() || document.hidden || contextLost) return
+    if (!running) {
+      startLoop()
+      return
+    }
+    if (
+      !lastFrameAt ||
+      performance.now() - lastFrameAt > 3000
+    ) {
+      stopLoop()
+      startLoop()
+    }
+  }, 1500)
   if (typeof ResizeObserver === 'function' && canvasEl.value) {
     canvasObserver = new ResizeObserver(() => handleResize())
     canvasObserver.observe(canvasEl.value)
@@ -896,6 +939,16 @@ onBeforeUnmount(() => {
   }
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('scroll', handleViewportScroll)
+  window.removeEventListener('focus', handleWake)
+  window.removeEventListener('pageshow', handleWake)
+  if (watchdogTimer) {
+    window.clearInterval(watchdogTimer)
+    watchdogTimer = 0
+  }
+  if (canvasEl.value) {
+    canvasEl.value.removeEventListener('contextlost', handleContextLost)
+    canvasEl.value.removeEventListener('contextrestored', handleContextRestored)
+  }
   if (window.visualViewport) {
     window.visualViewport.removeEventListener('resize', handleResize)
     window.visualViewport.removeEventListener('scroll', handleViewportScroll)

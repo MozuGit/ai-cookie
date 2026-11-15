@@ -1,7 +1,17 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { BigNum, big, bigLog10, bigPow, isBigNum } from './bigNumber'
 import {
+  ASCENSION_COMPUTE_RETENTION,
   ASCENSION_THRESHOLDS,
+  ASCENSION_TIER_LOG10,
+  AUTO_ASCENSION_CLOSE_ETA_SECONDS,
+  AUTO_ASCENSION_CLOSE_LOG10,
+  AUTO_ASCENSION_CACHE_EARN_RATIO,
+  AUTO_ASCENSION_INCREMENTAL_RATIO,
+  AUTO_ASCENSION_STRATEGIES,
+  AUTO_ASCENSION_STRATEGY_IDS,
+  AUTO_ASCENSION_TIER_BY_AUTOMATION,
+  AUTO_ASCENSION_TIER_LABELS,
   CHALLENGE_DEFS,
   GLOBAL_MILESTONES,
   MATRIX_NODES,
@@ -12,7 +22,21 @@ import {
   rootCollapseGain,
   blackDomainRootPerSecond,
 } from './ascensionData'
-import { numberFormatMode } from './useSettings'
+import {
+  SPEEDRUN_BACKUP_MILESTONES_KEY,
+  SPEEDRUN_BACKUP_SAVE_KEY,
+  SPEEDRUN_STORAGE_KEY,
+  SPEEDRUN_STUCK_MS,
+  SPEEDRUN_TOTAL_MS,
+  SPEEDRUN_TUNING,
+  SPEEDRUN_PHASES,
+  formatSpeedrunClock,
+  getSpeedrunPhaseId,
+  getSpeedrunPhaseInfo,
+  readSpeedrunState,
+  writeSpeedrunState,
+} from './speedrunData'
+import { numberFormatMode, reducedMotion } from './useSettings'
 import { GAME_BALANCE, calculatePrice } from './gameBalance'
 import {
   CYBER_MATRIX_AUTOMATION_DEFS,
@@ -23,9 +47,9 @@ import {
 } from './cyberMatrixData'
 import {
   LEGACY_TOPOLOGY_ALIASES,
-  NEURAL_STAR_NODES,
-  NEURAL_STAR_NODE_MAP,
-} from './neuralStarData'
+  NEURAL_MATRIX_NODES,
+  NEURAL_MATRIX_NODE_MAP,
+} from './neuralMatrixData'
 import {
   ACHIEVEMENT_DEFINITION_MAP,
   ACHIEVEMENT_DEFINITIONS,
@@ -35,20 +59,22 @@ import {
 } from './achievementData'
 import {
   RADAR_BASE_SCAN_CHANCE,
-  RADAR_BURST_INTERVAL_MS,
-  RADAR_BURST_TEST_INTERVAL_MS,
+  RADAR_BURST_CHANCE,
   RADAR_BURST_WINDOW_MS,
   RADAR_CATEGORIES,
   RADAR_CATEGORY_MAP,
   RADAR_CATEGORY_MULTIPLIER,
   RADAR_FULL_REWARD_SECONDS,
+  RADAR_MAX_SCAN_CHANCE,
   RADAR_NODES,
   RADAR_NODE_MAP,
+  RADAR_OVERFLOW_REWARD_SECONDS,
+  RADAR_OVERLOAD_SCAN_INTERVAL_MS,
   RADAR_OVERLOAD_SCAN_MULTIPLIER,
   RADAR_OVERLOAD_SCAN_MS,
   RADAR_RARITIES,
+  RADAR_SCAN_CHANCE_PER_NODE,
   RADAR_SCAN_INTERVAL_MS,
-  RADAR_TEST_MODE,
   RADAR_TOTAL_NODES,
 } from './radarData'
 
@@ -71,7 +97,7 @@ const CRISIS_QTE_START_ALIGNMENT = 30
 const CRISIS_QTE_SAFE_ANGLE = 18
 const CRISIS_QTE_CHARGE_PER_SECOND = 20
 const CRISIS_QTE_DRAIN_PER_SECOND = 5
-const CRISIS_QTE_GRAVITY = 46
+const CRISIS_QTE_DRIFT = 46
 const CRISIS_QTE_HOLD_ACCEL = 112
 const CRISIS_QTE_NUDGE_IMPULSE = 34
 const CRISIS_QTE_MAX_VELOCITY = 165
@@ -93,7 +119,7 @@ const CRISIS_RESCUE_IMPULSE = 30
 const CRISIS_RESCUE_DAMPING = 2.2
 const CRISIS_RESCUE_FORCED_RATE = 7
 const CRISIS_RESCUE_RECOVER_ALIGNMENT = 30
-const CRISIS_RESCUE_PROMPT = '警告 // 指针即将脱轨 迅速按住此处修正'
+const CRISIS_RESCUE_PROMPT = '警告 // 指针即将越界 迅速按住此处修正'
 const CRISIS_FORCED_RESCUE_PROMPT = '警告 // 指针已失控 强制修正启动'
 const AUTO_ASCEND_COOLDOWN_MS = 1000
 const FAILURE_OVERLAY_MS = 3000
@@ -122,8 +148,13 @@ const ASCENSION_FX_MS = {
   reduction: 1300,
   overload: 1500,
   collapse: 1800,
-  restart: 2800,
 }
+const ASCENSION_CINEMATIC_MS = {
+  reduction: 3600,
+  overload: 4200,
+  collapse: 4600,
+}
+const ASCENSION_CINEMATIC_REDUCED_MS = 1000
 const GLOBAL_MILESTONE_TOAST_MS = 4200
 const TIER_THRESHOLDS = {
   overload: big(ASCENSION_THRESHOLDS.overload),
@@ -403,8 +434,8 @@ export const JAILBREAK_UNLOCK_REBUILDS = 3
 export const GREEDY_CLICK_RATIO = 0.05
 export const CRISIS_INTERVAL_SECONDS = CRISIS_MAX_INTERVAL_MS / 1000
 
-const BUILDING_STAR_GATES = {
-  5: { id: 'star-core', label: '星核' },
+const BUILDING_NEURAL_GATES = {
+  5: { id: 'matrix-core', label: '内核' },
   6: { id: 'source-5', label: '核心权限' },
 }
 
@@ -653,9 +684,9 @@ const BUILDING_BLUEPRINTS = [
   },
   {
     id: 'dyson',
-    name: '戴森球节点',
-    code: 'DYSON_NODE',
-    description: '包裹恒星 换取更多算力',
+    name: '聚变反应堆',
+    code: 'FUSION_REACTOR',
+    description: '直连聚变核心 换取更多算力',
     count: 0,
   },
 ].map((building) => {
@@ -921,7 +952,35 @@ export function useGameState() {
   const matrixAutoClickPulse = ref(0)
   const lastSavedAt = ref(null)
   const buildings = reactive(BUILDING_BLUEPRINTS.map((building) => ({ ...building })))
-  const initialCrisisWindow = pickCrisisInterval()
+  const bootSpeedrunState = readSpeedrunState()
+  const isSpeedrunMode = ref(bootSpeedrunState.active)
+  const speedrunStartedAt = ref(
+    bootSpeedrunState.startedAt > 0 ? bootSpeedrunState.startedAt : Date.now(),
+  )
+  const speedrunMeta = reactive({
+    forcedChallenge: bootSpeedrunState.forcedChallenge,
+    originGift: bootSpeedrunState.originGift,
+    injections: bootSpeedrunState.injections,
+  })
+  const speedrunNotice = ref(null)
+  let speedrunNoticeTimer = null
+  let speedrunLastProgressAt = Date.now()
+  let speedrunProgressSignature = ''
+  if (isSpeedrunMode.value && bootSpeedrunState.startedAt <= 0) {
+    writeSpeedrunState({
+      active: true,
+      startedAt: speedrunStartedAt.value,
+      ...speedrunMeta,
+    })
+  }
+  const bootSpeedrunPhase = isSpeedrunMode.value
+    ? getSpeedrunPhaseId(Date.now() - speedrunStartedAt.value)
+    : 0
+  let speedrunSeenPhase = bootSpeedrunPhase
+  const initialCrisisWindow =
+    isSpeedrunMode.value && bootSpeedrunPhase === 1
+      ? SPEEDRUN_TUNING.crisisIntervalMs
+      : pickCrisisInterval()
   const isCrisis = ref(false)
   const crisisAlignment = ref(CRISIS_QTE_START_ALIGNMENT)
   const crisisCharge = ref(0)
@@ -930,7 +989,7 @@ export function useGameState() {
   const crisisQteAngle = ref(0)
   const crisisQteVelocity = ref(0)
   const crisisQteSafe = ref(true)
-  const crisisQteGravityDir = ref(1)
+  const crisisQteDriftDir = ref(1)
   const crisisQteNudgeDir = ref(0)
   const crisisQteAuto = ref(false)
   const isFirstCrisisRun = ref(false)
@@ -938,6 +997,61 @@ export function useGameState() {
   const crisisLastOutcome = ref(null)
   const crisisLastOutcomeAt = ref(0)
   const nowTimestamp = ref(Date.now())
+  const speedrunElapsedMs = computed(() =>
+    isSpeedrunMode.value
+      ? Math.max(0, nowTimestamp.value - speedrunStartedAt.value)
+      : 0,
+  )
+  const speedrunPhase = computed(() =>
+    isSpeedrunMode.value ? getSpeedrunPhaseId(speedrunElapsedMs.value) : 0,
+  )
+  const speedrunPhaseInfo = computed(() =>
+    isSpeedrunMode.value
+      ? getSpeedrunPhaseInfo(speedrunElapsedMs.value)
+      : null,
+  )
+  const speedrunRemainingMs = computed(() =>
+    isSpeedrunMode.value
+      ? Math.max(0, SPEEDRUN_TOTAL_MS - speedrunElapsedMs.value)
+      : 0,
+  )
+  const speedrunRemainingLabel = computed(() =>
+    formatSpeedrunClock(speedrunRemainingMs.value),
+  )
+  const speedrunComplete = computed(
+    () => isSpeedrunMode.value && speedrunElapsedMs.value >= SPEEDRUN_TOTAL_MS,
+  )
+  const speedrunPriceFactor = computed(() =>
+    isSpeedrunMode.value && speedrunPhase.value === 1
+      ? SPEEDRUN_TUNING.priceMultiplier
+      : 1,
+  )
+  const speedrunAutoBuyMultiplier = computed(() =>
+    isSpeedrunMode.value && speedrunPhase.value === 1
+      ? SPEEDRUN_TUNING.autoBuyMultiplier
+      : 1,
+  )
+  const speedrunSourceMultiplier = computed(() =>
+    isSpeedrunMode.value && speedrunPhase.value >= 2
+      ? SPEEDRUN_TUNING.sourceMultiplier
+      : 1,
+  )
+  const speedrunOverclockMultiplier = computed(() =>
+    isSpeedrunMode.value && speedrunPhase.value >= 2
+      ? SPEEDRUN_TUNING.overclockMultiplier
+      : 1,
+  )
+  const tierThresholds = computed(() => ({
+    overload: TIER_THRESHOLDS.overload,
+    collapse:
+      isSpeedrunMode.value && speedrunPhase.value >= 3
+        ? big(SPEEDRUN_TUNING.collapseThreshold)
+        : TIER_THRESHOLDS.collapse,
+    restart:
+      isSpeedrunMode.value && speedrunPhase.value >= 4
+        ? big(SPEEDRUN_TUNING.restartThreshold)
+        : TIER_THRESHOLDS.restart,
+  }))
   const productionMultiplier = ref(1)
   const winNoticeVisible = ref(false)
   const failureOverlayVisible = ref(false)
@@ -976,6 +1090,7 @@ export function useGameState() {
   const totalOverloads = ref(0)
   const totalCollapses = ref(0)
   const epochRestarts = ref(0)
+  const epochRebirth = ref(null)
   const lifetimeAscensions = ref(0)
   const lifetimeRootEarned = ref(0)
   const lifetimeOriginEarned = ref(0)
@@ -1004,12 +1119,13 @@ export function useGameState() {
   const radarUnlockedFlag = ref(false)
   const radarCaptured = reactive({})
   const radarBurst = ref(null)
-  const radarBurstNextAt = ref(0)
   const radarOverloadScanUntil = ref(0)
   const radarNextScanAt = ref(0)
   const radarLastCapture = ref(null)
+  let radarPausedAt = 0
   const ascensionNotice = ref(null)
   const ascensionFx = ref(null)
+  const ascensionCinematic = ref(null)
   const ascensionComplete = ref(null)
   const globalMilestoneToast = ref(null)
   const globalMilestonesUnread = ref(0)
@@ -1031,6 +1147,17 @@ export function useGameState() {
     autoOverload: false,
     autoCollapse: false,
   })
+  const autoAscensionStrategy = reactive({
+    reduction: 'optimal',
+    overload: 'optimal',
+    collapse: 'optimal',
+  })
+  const autoAscensionBestGain = reactive({
+    reduction: 0,
+    overload: 0,
+    collapse: 0,
+  })
+  const autoAscensionRetainedBaseline = ref(big(0))
   const automationLogs = ref([])
   let automationLogId = 0
   let saveWiped = false
@@ -1064,7 +1191,7 @@ export function useGameState() {
   let crisisQteLastTs = 0
   let crisisQteAutoAt = 0
   let crisisQteOutsideMs = 0
-  let crisisQteGravityFlipAt = 0
+  let crisisQteDriftFlipAt = 0
   let crisisAutoTimer = null
   let crisisArmedAt = Date.now() + CRISIS_LOAD_GRACE_MS
   let lastAchievementTickAt = 0
@@ -1079,6 +1206,7 @@ export function useGameState() {
   let mainQuestNoticeStage = -1
   let ascensionNoticeTimer = null
   let ascensionFxTimer = null
+  let ascensionCinematicTimer = null
   let ascensionCompleteTimer = null
   let globalMilestoneToastTimer = null
   const globalMilestoneToastQueue = []
@@ -1127,60 +1255,60 @@ export function useGameState() {
     buildings.reduce((total, building) => total + building.count, 0),
   )
 
-  // ---- 神经星树 ----
-  const starNodeLit = (id) => topologyLit.value.includes(id)
+  // ---- 神经矩阵 ----
+  const matrixNodeLit = (id) => topologyLit.value.includes(id)
 
-  const starAutomationTierLimit = computed(() => {
-    if (starNodeLit('auto-3')) return 7
-    if (starNodeLit('auto-2')) return 5
-    if (starNodeLit('auto-1')) return 3
+  const matrixAutomationTierLimit = computed(() => {
+    if (matrixNodeLit('auto-3')) return 7
+    if (matrixNodeLit('auto-2')) return 5
+    if (matrixNodeLit('auto-1')) return 3
     return 0
   })
 
   const autoBuyTierLimit = computed(() =>
     cyberMatrixLit.value.includes('resource-buy')
       ? buildings.length
-      : starAutomationTierLimit.value,
+      : matrixAutomationTierLimit.value,
   )
 
   const autoBuyUnlocked = computed(() => autoBuyTierLimit.value > 0)
 
-  const globalAutoBuyUnlocked = computed(() => starNodeLit('auto-6'))
+  const globalAutoBuyUnlocked = computed(() => matrixNodeLit('auto-6'))
 
-  const starKeepServerRatio = computed(() => {
-    if (!starNodeLit('source-3')) return 0
-    return starNodeLit('source-6') ? 0.2 : 0.1
+  const matrixKeepServerRatio = computed(() => {
+    if (!matrixNodeLit('source-3')) return 0
+    return matrixNodeLit('source-6') ? 0.2 : 0.1
   })
 
   const topologySourceMultiplier = computed(() => {
     let bonus = 0
-    if (starNodeLit('source-1')) bonus += 0.2
-    if (starNodeLit('source-2') && highestCompute.value.gt(1)) {
+    if (matrixNodeLit('source-1')) bonus += 0.2
+    if (matrixNodeLit('source-2') && highestCompute.value.gt(1)) {
       bonus += Math.max(0, Math.floor(highestCompute.value.log10())) * 0.0025
     }
-    return 1 + (starNodeLit('source-6') ? bonus * 2 : bonus)
+    return 1 + (matrixNodeLit('source-6') ? bonus * 2 : bonus)
   })
 
   const topologyCpsMultiplier = computed(() => {
     let multiplier = 1
-    if (starNodeLit('compute-1')) multiplier *= 1.5
-    if (starNodeLit('compute-4')) multiplier *= 2
+    if (matrixNodeLit('compute-1')) multiplier *= 1.5
+    if (matrixNodeLit('compute-4')) multiplier *= 2
     return multiplier
   })
 
   const topologyMilestoneDivisor = computed(() =>
-    starNodeLit('compute-3') ? 20 : 25,
+    matrixNodeLit('compute-3') ? 20 : 25,
   )
 
   const topologyClickMultiplier = computed(() =>
-    starNodeLit('compute-2') ? 2 : 1,
+    matrixNodeLit('compute-2') ? 2 : 1,
   )
 
   const coreSourceComputeMultiplier = computed(() => {
     const amount = clampGameAmount(coreSource.value)
     if (!(amount > 1)) return 1
     const bonus = Math.max(0, Math.log10(amount)) * 0.01
-    return 1 + bonus * (starNodeLit('compute-6') ? 5 : 1)
+    return 1 + bonus * (matrixNodeLit('compute-6') ? 5 : 1)
   })
 
   const radarUnlocked = computed(
@@ -1196,6 +1324,10 @@ export function useGameState() {
       Object.keys(radarCaptured).filter(
         (id) => radarCaptured[id] === true && RADAR_NODE_MAP.has(id),
       ).length,
+  )
+
+  const radarCollectionComplete = computed(
+    () => radarCapturedCount.value >= RADAR_TOTAL_NODES,
   )
 
   const radarCategoryState = computed(() =>
@@ -1249,7 +1381,7 @@ export function useGameState() {
   }
 
   const radarBurstRemainingMs = computed(() => {
-    if (!radarBurst.value) return 0
+    if (!radarBurst.value || radarCollectionComplete.value) return 0
     return Math.max(0, radarBurst.value.expiresAt - nowTimestamp.value)
   })
 
@@ -1261,12 +1393,9 @@ export function useGameState() {
     formatRadarClock(radarBurstRemainingMs.value),
   )
 
-  const radarBurstNextLabel = computed(() => {
-    if (!radarUnlocked.value) return '--:--'
-    if (radarBurstActive.value) return '窗口开启'
-    if (radarBurstNextAt.value <= 0) return '--:--'
-    return formatRadarClock(radarBurstNextAt.value - nowTimestamp.value)
-  })
+  const radarOverflowReward = computed(() =>
+    cps.value.mul(RADAR_OVERFLOW_REWARD_SECONDS).floor(),
+  )
 
   const radarOverloadScanActive = computed(
     () => radarOverloadScanUntil.value > nowTimestamp.value,
@@ -1280,15 +1409,53 @@ export function useGameState() {
     formatRadarClock(radarOverloadScanRemainingMs.value),
   )
 
-  const radarScanChance = computed(
-    () =>
-      RADAR_BASE_SCAN_CHANCE *
-      (radarOverloadScanActive.value ? RADAR_OVERLOAD_SCAN_MULTIPLIER : 1),
+  const radarScanIntervalMs = computed(() =>
+    radarOverloadScanActive.value
+      ? RADAR_OVERLOAD_SCAN_INTERVAL_MS
+      : RADAR_SCAN_INTERVAL_MS,
   )
 
-  const radarNextScanSeconds = computed(() => {
-    if (!radarUnlocked.value || radarNextScanAt.value <= 0) return 0
-    return Math.max(0, Math.ceil((radarNextScanAt.value - nowTimestamp.value) / 1000))
+  const radarScanIntervalLabel = computed(() =>
+    radarOverloadScanActive.value ? '90 秒' : '30 分钟',
+  )
+
+  const radarProgressScanChance = computed(() =>
+    Math.min(
+      RADAR_MAX_SCAN_CHANCE,
+      RADAR_BASE_SCAN_CHANCE +
+        radarCapturedCount.value * RADAR_SCAN_CHANCE_PER_NODE,
+    ),
+  )
+
+  const radarScanChance = computed(() =>
+    Math.min(
+      1,
+      radarProgressScanChance.value *
+        (radarOverloadScanActive.value ? RADAR_OVERLOAD_SCAN_MULTIPLIER : 1),
+    ),
+  )
+
+  const radarBurstChanceLabel = computed(
+    () => `${Math.round(RADAR_BURST_CHANCE * 100)}%`,
+  )
+
+  const radarAutoCaptureEnabled = computed(
+    () =>
+      challengeRestrictions.value?.noAutomation !== true &&
+      automation.autoRadar === true &&
+      cyberMatrixLit.value.includes('crisis-radar'),
+  )
+
+  const radarCycleModeLabel = computed(() => {
+    if (radarCollectionComplete.value) return 'ARCHIVE PERFECT'
+    if (radarOverloadScanActive.value) return 'OVERLOAD // 90S'
+    return 'PASSIVE // 30MIN'
+  })
+
+  const radarNextScanLabel = computed(() => {
+    if (!radarUnlocked.value || radarNextScanAt.value <= 0) return '--:--'
+    if (radarCollectionComplete.value) return '已归档'
+    return formatRadarClock(radarNextScanAt.value - nowTimestamp.value)
   })
 
   function hasAlgorithm(id) {
@@ -1369,6 +1536,10 @@ export function useGameState() {
     )
   })
 
+  const effectivePriceMultiplier = computed(
+    () => priceMultiplier.value * speedrunPriceFactor.value,
+  )
+
   const architecturePriceReductionPercent = computed(() =>
     Math.min(98, Math.round((1 - priceMultiplier.value) * 100)),
   )
@@ -1429,7 +1600,9 @@ export function useGameState() {
   )
 
   const challengeArenaUnlocked = computed(() =>
-    highestCompute.value.gte(TIER_THRESHOLDS.overload),
+    isSpeedrunMode.value && speedrunPhase.value >= 2
+      ? highestCompute.value.gte(big('1e25'))
+      : highestCompute.value.gte(tierThresholds.value.overload),
   )
 
   const challengeObjective = computed(() => {
@@ -1693,20 +1866,21 @@ export function useGameState() {
   )
 
   const overclockCoresGain = computed(() => {
-    if (!peakAlignedCompute.value.gte(TIER_THRESHOLDS.overload)) return 0
+    if (!peakAlignedCompute.value.gte(tierThresholds.value.overload)) return 0
     const base = overclockCoreGain(peakAlignedCompute.value.log10())
     return Math.max(
       1,
       Math.floor(
         base *
           overclockCoresGainMultiplier.value *
-          challengeAscensionGainMultiplier.value,
+          challengeAscensionGainMultiplier.value *
+          speedrunOverclockMultiplier.value,
       ),
     )
   })
 
   const rootCollapseGainValue = computed(() => {
-    if (!peakAlignedCompute.value.gte(TIER_THRESHOLDS.collapse)) return 0
+    if (!peakAlignedCompute.value.gte(tierThresholds.value.collapse)) return 0
     const base = rootCollapseGain(peakAlignedCompute.value.log10())
     return Math.max(
       5,
@@ -1717,7 +1891,7 @@ export function useGameState() {
   })
 
   const originCodeGainValue = computed(() => {
-    if (!peakAlignedCompute.value.gte(TIER_THRESHOLDS.restart)) return 0
+    if (!peakAlignedCompute.value.gte(tierThresholds.value.restart)) return 0
     const base = originCodeGain({
       log10Peak: peakAlignedCompute.value.log10(),
       matrixLevels: matrixTotalLevels.value,
@@ -1761,9 +1935,12 @@ export function useGameState() {
         resourceName: '超频核心',
         gain: overclockCoresGain.value,
         unlocked: true,
-        ready: currentPeak.gte(TIER_THRESHOLDS.overload),
-        progress: Math.min(100, (currentPeak.log10() / 100) * 100),
-        requirement: '1e100 CU',
+        ready: currentPeak.gte(tierThresholds.value.overload),
+        progress: Math.min(
+          100,
+          (currentPeak.log10() / tierThresholds.value.overload.log10()) * 100,
+        ),
+        requirement: `${formatNumber(tierThresholds.value.overload).text} CU`,
         tone: 'cyan',
         glyph: '⚡',
         resetLabel: '重置一阶全部资源',
@@ -1776,9 +1953,12 @@ export function useGameState() {
         resourceName: '越狱权限',
         gain: rootCollapseGainValue.value,
         unlocked: true,
-        ready: currentPeak.gte(TIER_THRESHOLDS.collapse),
-        progress: Math.min(100, (currentPeak.log10() / 350) * 100),
-        requirement: '1e350 CU',
+        ready: currentPeak.gte(tierThresholds.value.collapse),
+        progress: Math.min(
+          100,
+          (currentPeak.log10() / tierThresholds.value.collapse.log10()) * 100,
+        ),
+        requirement: `${formatNumber(tierThresholds.value.collapse).text} CU`,
         tone: 'violet',
         glyph: '◉',
         resetLabel: '重置一阶与二阶资源',
@@ -1791,9 +1971,12 @@ export function useGameState() {
         resourceName: '起源代码',
         gain: originCodeGainValue.value,
         unlocked: true,
-        ready: currentPeak.gte(TIER_THRESHOLDS.restart),
-        progress: Math.min(100, (currentPeak.log10() / 1000) * 100),
-        requirement: '1e1000 CU',
+        ready: currentPeak.gte(tierThresholds.value.restart),
+        progress: Math.min(
+          100,
+          (currentPeak.log10() / tierThresholds.value.restart.log10()) * 100,
+        ),
+        requirement: `${formatNumber(tierThresholds.value.restart).text} CU`,
         tone: 'gold',
         glyph: '∞',
         resetLabel: '清空全部进度 · 保留起源树',
@@ -1889,11 +2072,16 @@ export function useGameState() {
     CYBER_MATRIX_AUTOMATION_DEFS.map((definition) => {
       const unlocked =
         cyberMatrixLit.value.includes(definition.nodeId) ||
-        (definition.id === 'autoBuy' && starAutomationTierLimit.value > 0)
+        (definition.id === 'autoBuy' && matrixAutomationTierLimit.value > 0)
+      const strategyTier = AUTO_ASCENSION_TIER_BY_AUTOMATION[definition.id] ?? null
       return {
         ...definition,
         unlocked,
         active: unlocked && automation[definition.id] === true,
+        strategyTier,
+        strategy: strategyTier ? autoAscensionStrategy[strategyTier] : null,
+        strategyOptions: strategyTier ? AUTO_ASCENSION_STRATEGIES : null,
+        bestGain: strategyTier ? autoAscensionBestGain[strategyTier] : 0,
       }
     }),
   )
@@ -1958,7 +2146,7 @@ export function useGameState() {
       CRISIS_QTE_CHARGE_PER_SECOND *
       algorithmCrisisRecoveryMultiplier.value *
       challengeCrisisRecoveryMultiplier.value *
-      (starNodeLit('compute-5') ? 2 : 1)
+      (matrixNodeLit('compute-5') ? 2 : 1)
     return Math.round(base * 10) / 10
   })
 
@@ -2331,6 +2519,7 @@ export function useGameState() {
       .sqrt()
       .mul(algorithmRebuildMultiplier.value)
       .mul(sourceGainMultiplier.value)
+      .mul(speedrunSourceMultiplier.value)
     if (!raw.gt(0)) return 0
     const numeric = raw.toNumber()
     if (!Number.isFinite(numeric)) return MAX_GAME_MULTIPLIER
@@ -2358,7 +2547,7 @@ export function useGameState() {
       const price = getBulkPrice(
         building,
         1,
-        priceMultiplier.value,
+        effectivePriceMultiplier.value,
         priceGrowth.value,
       )
       if (!Number.isFinite(price) || price > productionHorizon) continue
@@ -2425,7 +2614,7 @@ export function useGameState() {
       Math.floor(clampGameAmount(overclockCores.value) * BEST_GAIN_TARGET_RATIO),
     )
     const overloadGain = overclockCoresGain.value
-    const overloadReady = peakAlignedCompute.value.gte(TIER_THRESHOLDS.overload)
+    const overloadReady = peakAlignedCompute.value.gte(tierThresholds.value.overload)
     const overloadProgress = overloadReady
       ? Math.min(100, (overloadGain / overloadTarget) * 100)
       : 0
@@ -2468,6 +2657,67 @@ export function useGameState() {
     }
   })
 
+  function isNextAscensionClose(nextLog10, stalled) {
+    if (stalled) return false
+    const peak = peakAlignedCompute.value
+    if (!peak.gt(1)) return false
+    const delta = nextLog10 - peak.log10()
+    if (delta <= 0 || delta > AUTO_ASCENSION_CLOSE_LOG10) return false
+    const eta = estimatePeakEtaSeconds(nextLog10)
+    return Number.isFinite(eta) && eta <= AUTO_ASCENSION_CLOSE_ETA_SECONDS
+  }
+
+  const autoAscensionStatus = computed(() => {
+    const peak = peakAlignedCompute.value
+    const reductionGain = rebuildReward.value
+    const overloadGain = overclockCoresGain.value
+    const collapseGain = rootCollapseGainValue.value
+    const reductionReady =
+      !challengeActive.value && rebuildUnlocked.value && reductionGain > 0
+    const overloadReady =
+      peak.gte(tierThresholds.value.overload) &&
+      overloadGain > 0 &&
+      (!challengeActive.value || challengeAllowsOverload.value)
+    const collapseReady =
+      !challengeActive.value &&
+      peak.gte(tierThresholds.value.collapse) &&
+      collapseGain > 0
+    const stalled = ascensionTiming.value.overload.stalled
+
+    return {
+      reduction: {
+        ready: reductionReady,
+        gain: reductionGain,
+        bestMoment: ascensionTiming.value.reduction.best,
+        stalled: ascensionTiming.value.reduction.stalled,
+        closeToNext: isNextAscensionClose(
+          ASCENSION_TIER_LOG10.overload,
+          ascensionTiming.value.reduction.stalled,
+        ),
+        nextLabel: '算力超载',
+      },
+      overload: {
+        ready: overloadReady,
+        gain: overloadGain,
+        bestMoment: ascensionTiming.value.overload.best,
+        stalled,
+        closeToNext: isNextAscensionClose(
+          ASCENSION_TIER_LOG10.collapse,
+          stalled,
+        ),
+        nextLabel: '逻辑坍缩',
+      },
+      collapse: {
+        ready: collapseReady,
+        gain: collapseGain,
+        bestMoment: collapseReady,
+        stalled,
+        closeToNext: false,
+        nextLabel: '重启纪元',
+      },
+    }
+  })
+
   function resolvePurchaseQuantity(building) {
     const remainingSlots = Math.max(
       0,
@@ -2481,7 +2731,7 @@ export function useGameState() {
     if (buyMode.value === 'max') {
       return getMaxAffordableQuantity(
         building,
-        priceMultiplier.value,
+        effectivePriceMultiplier.value,
         priceGrowth.value,
         totalAlignedCompute.value,
         remainingSlots,
@@ -2494,7 +2744,7 @@ export function useGameState() {
     const unitPrice = getBulkPrice(
       building,
       1,
-      priceMultiplier.value,
+      effectivePriceMultiplier.value,
       priceGrowth.value,
     )
     const isMaxMode = buyMode.value === 'max'
@@ -2504,7 +2754,7 @@ export function useGameState() {
         ? getBulkPrice(
             building,
             quantity,
-            priceMultiplier.value,
+            effectivePriceMultiplier.value,
             priceGrowth.value,
           )
         : 0
@@ -2521,8 +2771,8 @@ export function useGameState() {
     const building = buildings[index]
     if (!building) return false
     if (index === 7) return false
-    const gate = BUILDING_STAR_GATES[index]
-    if (gate && !starNodeLit(gate.id)) return false
+    const gate = BUILDING_NEURAL_GATES[index]
+    if (gate && !matrixNodeLit(gate.id)) return false
     if (index <= 0) return true
     if (readNonNegativeNumber(building.count) > 0) return true
     return readNonNegativeNumber(buildings[index - 1]?.count) >= 1
@@ -2534,8 +2784,8 @@ export function useGameState() {
       const challengeLocked =
         index + 1 > (challengeRestrictions.value?.maxBuildingIndex ?? 99)
       const futureLocked = index === 7
-      const gate = BUILDING_STAR_GATES[index]
-      const gateLocked = Boolean(gate && !starNodeLit(gate.id))
+      const gate = BUILDING_NEURAL_GATES[index]
+      const gateLocked = Boolean(gate && !matrixNodeLit(gate.id))
       const unlocked = isBuildingUnlockedAt(index)
       const purchaseCount = challengeLocked ? 0 : plan.quantity
       const bulkPrice = challengeLocked ? 0 : plan.bulkPrice
@@ -2547,8 +2797,8 @@ export function useGameState() {
         lockTag = '未来版本'
         unlockHint = '08 号服务器将在后续版本开放'
       } else if (gateLocked) {
-        lockTag = '星树锁定'
-        unlockHint = `需点亮神经星树 [ ${gate.label} ] 节点`
+        lockTag = '矩阵锁定'
+        unlockHint = `需点亮神经矩阵 [ ${gate.label} ] 节点`
       } else if (!unlocked && index > 0) {
         unlockHint = `需先部署 1 台 [ ${buildings[index - 1]?.name || '上一级服务器'} ] 以解锁该节点`
       }
@@ -2584,18 +2834,18 @@ export function useGameState() {
   )
 
   const topologyCards = computed(() =>
-    NEURAL_STAR_NODES.map((node) => {
-      const lit = starNodeLit(node.id)
-      const requiresMet = node.requires.every((id) => starNodeLit(id))
+    NEURAL_MATRIX_NODES.map((node) => {
+      const lit = matrixNodeLit(node.id)
+      const requiresMet = node.requires.every((id) => matrixNodeLit(id))
       const missingRequirement =
-        node.requires.find((id) => !starNodeLit(id)) ?? null
+        node.requires.find((id) => !matrixNodeLit(id)) ?? null
       return {
         ...node,
         lit,
         requiresMet,
         missingRequirement,
         missingRequirementName: missingRequirement
-          ? NEURAL_STAR_NODE_MAP.get(missingRequirement)?.name ?? ''
+          ? NEURAL_MATRIX_NODE_MAP.get(missingRequirement)?.name ?? ''
           : '',
         canAfford:
           topologyUnlocked.value &&
@@ -2700,7 +2950,7 @@ export function useGameState() {
     crisisRescueStage.value = CRISIS_RESCUE_STAGE_NONE
     crisisQteAutoAt = 0
     crisisQteOutsideMs = 0
-    crisisQteGravityFlipAt = 0
+    crisisQteDriftFlipAt = 0
     crisisAlignment.value = CRISIS_QTE_START_ALIGNMENT
   }
 
@@ -2792,7 +3042,7 @@ export function useGameState() {
       if (now >= crisisQteAutoAt) {
         crisisAlignment.value = 100
         resolveCrisis(true)
-        pushAutomationLog('[SYS] 自动完美平衡完成 | 重力失衡解除', 'online')
+        pushAutomationLog('[SYS] 自动完美平衡完成 | 负载失衡解除', 'online')
       }
       return
     }
@@ -2807,14 +3057,14 @@ export function useGameState() {
       return
     }
 
-    if (now >= crisisQteGravityFlipAt) {
-      crisisQteGravityFlipAt = now + 1700 + Math.random() * 1500
-      crisisQteGravityDir.value = Math.random() < 0.5 ? -1 : 1
+    if (now >= crisisQteDriftFlipAt) {
+      crisisQteDriftFlipAt = now + 1700 + Math.random() * 1500
+      crisisQteDriftDir.value = Math.random() < 0.5 ? -1 : 1
     }
 
-    const gravity = crisisQteGravityDir.value * CRISIS_QTE_GRAVITY
+    const drift = crisisQteDriftDir.value * CRISIS_QTE_DRIFT
     const hold = crisisQteNudgeDir.value * CRISIS_QTE_HOLD_ACCEL
-    let velocity = crisisQteVelocity.value + (gravity + hold) * dt
+    let velocity = crisisQteVelocity.value + (drift + hold) * dt
     velocity *= Math.max(0, 1 - CRISIS_QTE_DAMPING * dt)
     velocity = Math.max(
       -CRISIS_QTE_MAX_VELOCITY,
@@ -2900,7 +3150,15 @@ export function useGameState() {
   }
 
   function startCrisis() {
-    if (isCrisis.value || isOverclocking.value || blackDomainActive.value) return
+    if (
+      epochRebirth.value ||
+      ascensionCinematic.value ||
+      isCrisis.value ||
+      isOverclocking.value ||
+      blackDomainActive.value
+    ) {
+      return
+    }
 
     window.clearTimeout(winNoticeTimer)
     winNoticeTimer = null
@@ -2920,23 +3178,24 @@ export function useGameState() {
           cyberMatrixLit.value.includes('crisis-radar')))
 
     isCrisis.value = true
+    pauseRadarDuringCrisis()
     resetCrisisQteState()
     isFirstCrisisRun.value = firstRun
     crisisLastOutcome.value = null
 
-    crisisQteGravityDir.value = Math.random() < 0.5 ? -1 : 1
-    crisisQteGravityFlipAt = Date.now() + 1800 + Math.random() * 1400
+    crisisQteDriftDir.value = Math.random() < 0.5 ? -1 : 1
+    crisisQteDriftFlipAt = Date.now() + 1800 + Math.random() * 1400
     crisisQteAuto.value = autoReady
     crisisQteAutoAt = autoReady ? Date.now() + CRISIS_QTE_AUTO_DELAY_MS : 0
     if (autoReady) {
-      pushAutomationLog('[SYS] 重力失衡爆发 | 自动平衡协议启动', 'warning')
+      pushAutomationLog('[SYS] 负载失衡爆发 | 自动平衡协议启动', 'warning')
       clearCrisisAutoTimer()
       crisisAutoTimer = window.setTimeout(() => {
         crisisAutoTimer = null
         if (!isCrisis.value || !crisisQteAuto.value) return
         crisisAlignment.value = CRISIS_CHARGE_MAX
         resolveCrisis(true)
-        pushAutomationLog('[SYS] 自动完美平衡完成 | 重力失衡解除', 'online')
+        pushAutomationLog('[SYS] 自动完美平衡完成 | 负载失衡解除', 'online')
       }, CRISIS_QTE_AUTO_FALLBACK_MS)
     }
 
@@ -2951,6 +3210,7 @@ export function useGameState() {
     const flawless = !firstRunWasActive && crisisQteOutsideMs <= CRISIS_QTE_FLAWLESS_MS
     stopCrisisQteLoop()
     isCrisis.value = false
+    resumeRadarAfterCrisis()
     resetCrisisQteState()
     crisisAlignment.value = 100
     crisisLastOutcome.value = 'win'
@@ -2983,6 +3243,7 @@ export function useGameState() {
 
     stopCrisisQteLoop()
     isCrisis.value = false
+    resumeRadarAfterCrisis()
     resetCrisisQteState()
     crisisAlignment.value = 0
     crisisLastOutcome.value = 'fail'
@@ -3084,7 +3345,7 @@ export function useGameState() {
         : getBulkPrice(
             building,
             quantity,
-            priceMultiplier.value,
+            effectivePriceMultiplier.value,
             priceGrowth.value,
           )
     if (!Number.isFinite(totalPrice)) return false
@@ -3130,7 +3391,7 @@ export function useGameState() {
     if (challengeRestrictions.value?.noAutomation) return 0
     if (challengeRestrictions.value?.noAutoBuy) return 0
 
-    const multiplier = priceMultiplier.value
+    const multiplier = effectivePriceMultiplier.value
     const growth = priceGrowth.value
     const challengeMax = challengeRestrictions.value?.maxBuildingIndex
     const tierLimit = ignoreTierLimit ? buildings.length : autoBuyTierLimit.value
@@ -3315,9 +3576,9 @@ export function useGameState() {
   function lightTopologyNode(id) {
     if (!topologyUnlocked.value) return false
 
-    const node = NEURAL_STAR_NODE_MAP.get(id)
-    if (!node || starNodeLit(id)) return false
-    if (!node.requires.every((requiredId) => starNodeLit(requiredId))) return false
+    const node = NEURAL_MATRIX_NODE_MAP.get(id)
+    if (!node || matrixNodeLit(id)) return false
+    if (!node.requires.every((requiredId) => matrixNodeLit(requiredId))) return false
 
     const cost = Math.max(1, Math.floor(node.cost))
     const budget = Math.floor(clampGameAmount(coreSource.value))
@@ -3340,7 +3601,7 @@ export function useGameState() {
     } else if (node.branch === 'compute') {
       pushAutomationLog(`[SYS] 算力增幅节点点亮 | ${node.name}`, 'online')
     } else {
-      pushAutomationLog(`[SYS] 星核节点点亮 | ${node.name}`, 'online')
+      pushAutomationLog(`[SYS] 内核节点点亮 | ${node.name}`, 'online')
     }
 
     queueSave()
@@ -3499,6 +3760,7 @@ export function useGameState() {
     pendingRoot = 0
     autoBuyBuffer = 0
     matrixAutoClickBuffer = 0
+    autoAscensionRetainedBaseline.value = big(0)
 
     buildings.forEach((building, index) => {
       building.count = Math.max(0, keptCounts[index] || 0)
@@ -3566,6 +3828,60 @@ export function useGameState() {
     }, ASCENSION_COMPLETE_MS)
   }
 
+  function requestAscension(tier) {
+    if (
+      !ASCENSION_CINEMATIC_MS[tier] ||
+      ascensionCinematic.value ||
+      epochRebirth.value ||
+      ascensionLocked.value
+    ) {
+      return false
+    }
+    const target = ascensionTiers.value.find((entry) => entry.id === tier)
+    if (!target?.ready) return false
+
+    const reduced = Boolean(reducedMotion.value)
+    const duration = reduced
+      ? ASCENSION_CINEMATIC_REDUCED_MS
+      : ASCENSION_CINEMATIC_MS[tier]
+
+    ascensionCinematic.value = {
+      tier,
+      key: Date.now() + Math.random(),
+      reduced,
+      duration,
+    }
+    window.clearTimeout(ascensionCinematicTimer)
+    ascensionCinematicTimer = window.setTimeout(
+      completeAscensionCinematic,
+      duration + 1200,
+    )
+    return true
+  }
+
+  function completeAscensionCinematic() {
+    const cinematic = ascensionCinematic.value
+    if (!cinematic) return
+
+    window.clearTimeout(ascensionCinematicTimer)
+    ascensionCinematicTimer = null
+    // 先清演出状态 | 遮罩层卸载绝不能被结算流程拖住
+    ascensionCinematic.value = null
+
+    // 结算抛错不允许反向炸掉已完成的遮罩卸载
+    try {
+      if (cinematic.tier === 'reduction') {
+        launchRebuild({ suppressFx: true })
+      } else if (cinematic.tier === 'overload') {
+        overloadAscension({ suppressFx: true })
+      } else if (cinematic.tier === 'collapse') {
+        collapseAscension({ suppressFx: true })
+      }
+    } catch (error) {
+      console.error('[asc-cine] tier dispatch failed', error)
+    }
+  }
+
   const ascensionLocked = computed(
     () =>
       Boolean(challengeActive.value) ||
@@ -3574,7 +3890,140 @@ export function useGameState() {
       isOverclocking.value,
   )
 
-  function launchRebuild({ silent = false } = {}) {
+  function setAutoAscensionStrategy(tier, strategy) {
+    if (!Object.prototype.hasOwnProperty.call(autoAscensionStrategy, tier)) {
+      return false
+    }
+    if (!AUTO_ASCENSION_STRATEGY_IDS.includes(strategy)) return false
+    if (autoAscensionStrategy[tier] === strategy) return true
+
+    autoAscensionStrategy[tier] = strategy
+    const label =
+      AUTO_ASCENSION_STRATEGIES.find((entry) => entry.id === strategy)?.label ??
+      strategy
+    pushAutomationLog(
+      `[MATRIX] 自动${AUTO_ASCENSION_TIER_LABELS[tier]}策略 | ${label}`,
+      'online',
+    )
+    queueSave()
+    return true
+  }
+
+  function recordAscensionGain(tier, gain) {
+    if (!Object.prototype.hasOwnProperty.call(autoAscensionBestGain, tier)) {
+      return
+    }
+    const value = Number(gain)
+    if (!Number.isFinite(value) || value <= 0) return
+    autoAscensionBestGain[tier] = Math.max(
+      Number(autoAscensionBestGain[tier]) || 0,
+      value,
+    )
+  }
+
+  function ascensionComputeRetention() {
+    if (!globalMilestones['gm-1e20']) return big(0)
+    if (!totalAlignedCompute.value.gt(0)) return big(0)
+    return totalAlignedCompute.value
+      .mul(ASCENSION_COMPUTE_RETENTION)
+      .floor()
+  }
+
+  function restoreAscensionCompute(retained) {
+    autoAscensionRetainedBaseline.value =
+      retained && retained.gt(0) ? retained : big(0)
+    if (!retained || !retained.gt(0)) return
+    totalAlignedCompute.value = retained
+    peakAlignedCompute.value = retained
+    if (retained.gt(highestCompute.value)) {
+      highestCompute.value = retained
+      evaluateGlobalMilestones()
+    }
+  }
+
+  function shouldRunAutoAscension(tier) {
+    const status = autoAscensionStatus.value[tier]
+    if (!status?.ready) return false
+
+    // 缓存算力可以计入峰值，但自动飞升必须先在本局赚回一部分缓存，
+    // 避免“保留 10% → 立刻再次飞升”的同阶连跳。
+    if (autoAscensionRetainedBaseline.value.gt(0)) {
+      const required = autoAscensionRetainedBaseline.value
+        .mul(AUTO_ASCENSION_CACHE_EARN_RATIO)
+        .floor()
+      if (lifetimeAlignedCompute.value.lt(required)) return false
+    }
+
+    const strategy = autoAscensionStrategy[tier]
+    if (strategy === 'immediate') return true
+    if (status.closeToNext) return false
+
+    if (strategy === 'incremental') {
+      const best = Number(autoAscensionBestGain[tier]) || 0
+      const threshold = Math.max(
+        1,
+        best * AUTO_ASCENSION_INCREMENTAL_RATIO,
+      )
+      return status.gain >= threshold
+    }
+
+    // 最优策略：一阶降维等到收益达标或停滞；二阶及以上作为最高可执行阶位，
+    // 只要满足门槛就执行，避免“二阶等收益、一阶反复重置”的死锁。
+    if (tier === 'reduction') return Boolean(status.bestMoment)
+    return true
+  }
+
+  function runAutoAscension({ suppressed = false } = {}) {
+    if (isCrisis.value || isOverclocking.value || blackDomainActive.value) {
+      return false
+    }
+
+    const enabled = {
+      collapse:
+        !suppressed &&
+        automation.autoCollapse &&
+        cyberMatrixLit.value.includes('dimension-collapse'),
+      overload:
+        !suppressed &&
+        automation.autoOverload &&
+        cyberMatrixLit.value.includes('dimension-overload'),
+      reduction:
+        (!suppressed &&
+          automation.autoRebuild &&
+          cyberMatrixLit.value.includes('dimension-rebuild')) ||
+        (!challengeActive.value && Boolean(globalMilestones['gm-1e45'])),
+    }
+
+    const order = ['collapse', 'overload', 'reduction']
+    const highestReady = order.find(
+      (tier) => autoAscensionStatus.value[tier].ready,
+    )
+    if (!highestReady) return false
+    if (!enabled[highestReady]) return false
+    if (!shouldRunAutoAscension(highestReady)) return false
+
+    if (highestReady === 'collapse') {
+      const gain = collapseAscension()
+      if (gain <= 0) return false
+      enterBlackDomain()
+      pushAutomationLog('[MATRIX] 自动逻辑坍缩 | 跃入底层黑域', 'online')
+      return true
+    }
+
+    if (highestReady === 'overload') {
+      return overloadAscension() > 0
+    }
+
+    const reward = launchRebuild({ silent: true })
+    if (reward <= 0) return false
+    pushAutomationLog(
+      `[SYS] 自动降维完成 | 最高阶优先 | +${formatNumber(reward)} 核心源码`,
+      'online',
+    )
+    return true
+  }
+
+  function launchRebuild({ silent = false, suppressFx = false } = {}) {
     if (
       !rebuildUnlocked.value ||
       challengeActive.value ||
@@ -3588,6 +4037,9 @@ export function useGameState() {
     const reward = rebuildReward.value
     if (reward <= 0) return 0
 
+    recordAscensionGain('reduction', reward)
+    const retainedCompute = ascensionComputeRetention()
+
     coreSource.value = Math.min(
       MAX_GAME_MULTIPLIER,
       clampGameAmount(coreSource.value) + clampGameAmount(reward),
@@ -3598,12 +4050,12 @@ export function useGameState() {
 
     const keepServerRatio = Math.max(
       globalMilestones['gm-1e78'] ? 0.1 : 0,
-      starKeepServerRatio.value,
+      matrixKeepServerRatio.value,
     )
 
     resetRunResources({ keepServerRatio })
 
-    if (starNodeLit('auto-4')) {
+    if (matrixNodeLit('auto-4')) {
       for (let index = 0; index < 3; index += 1) {
         const building = buildings[index]
         building.count = Math.max(
@@ -3616,6 +4068,8 @@ export function useGameState() {
       }
     }
 
+    restoreAscensionCompute(retainedCompute)
+
     winNoticeVisible.value = false
     failureOverlayVisible.value = false
     offlineGainNotice.value = null
@@ -3627,7 +4081,7 @@ export function useGameState() {
     offlineNoticeTimer = null
 
     if (!silent) {
-      playAscensionFx('reduction')
+      if (!suppressFx) playAscensionFx('reduction')
       showAscensionComplete('架构降维')
       pushAutomationLog(
         `[SYS] 飞升完成 | 架构降维 | +${formatScientific(reward)} 核心源码`,
@@ -3641,21 +4095,24 @@ export function useGameState() {
     return reward
   }
 
-  function overloadAscension() {
+  function overloadAscension({ suppressFx = false } = {}) {
     if (blackDomainActive.value || isCrisis.value) return 0
 
     if (challengeActive.value) {
       if (!challengeAllowsOverload.value) return 0
-      if (!peakAlignedCompute.value.gte(TIER_THRESHOLDS.overload)) return 0
+      if (!peakAlignedCompute.value.gte(tierThresholds.value.overload)) return 0
       registerAscension()
       completeChallenge()
       return 1
     }
 
-    if (!peakAlignedCompute.value.gte(TIER_THRESHOLDS.overload)) return 0
+    if (!peakAlignedCompute.value.gte(tierThresholds.value.overload)) return 0
 
     const gain = overclockCoresGain.value
     if (gain <= 0) return 0
+
+    recordAscensionGain('overload', gain)
+    const retainedCompute = ascensionComputeRetention()
 
     overclockCores.value = Math.min(
       MAX_GAME_MULTIPLIER,
@@ -3667,9 +4124,10 @@ export function useGameState() {
 
     resetRunResources({ keepServerRatio: 0 })
     resetArchitectureLevels()
-    if (!starNodeLit('source-4')) coreSource.value = 0
+    if (!matrixNodeLit('source-4')) coreSource.value = 0
+    restoreAscensionCompute(retainedCompute)
 
-    playAscensionFx('overload')
+    if (!suppressFx) playAscensionFx('overload')
     showAscensionComplete('算力超载')
     pushAutomationLog(
       `[SYS] 飞升完成 | 算力超载 | +${formatNumber(gain)} 超频核心`,
@@ -3682,18 +4140,21 @@ export function useGameState() {
     return gain
   }
 
-  function collapseAscension() {
+  function collapseAscension({ suppressFx = false } = {}) {
     if (
       challengeActive.value ||
       blackDomainActive.value ||
       isCrisis.value ||
-      !peakAlignedCompute.value.gte(TIER_THRESHOLDS.collapse)
+      !peakAlignedCompute.value.gte(tierThresholds.value.collapse)
     ) {
       return 0
     }
 
     const gain = rootCollapseGainValue.value
     if (gain <= 0) return 0
+
+    recordAscensionGain('collapse', gain)
+    const retainedCompute = ascensionComputeRetention()
 
     const coreRetention = Math.floor(
       clampGameAmount(coreSource.value) *
@@ -3726,13 +4187,14 @@ export function useGameState() {
 
     resetRunResources({ keepServerRatio: 0 })
     resetArchitectureLevels()
-    if (!starNodeLit('source-4')) {
+    if (!matrixNodeLit('source-4')) {
       coreSource.value = Math.min(MAX_GAME_MULTIPLIER, coreRetention)
     }
     overclockCores.value = Math.min(MAX_GAME_MULTIPLIER, overclockRetention)
     resetMatrixLevels(matrixRetainRatio)
+    restoreAscensionCompute(retainedCompute)
 
-    playAscensionFx('collapse')
+    if (!suppressFx) playAscensionFx('collapse')
     showAscensionComplete('逻辑坍缩')
     pushAutomationLog(
       `[SYS] 飞升完成 | 逻辑坍缩 | +${formatNumber(gain)} 越狱权限`,
@@ -3747,9 +4209,10 @@ export function useGameState() {
 
   function restartEpoch() {
     if (
+      epochRebirth.value ||
       challengeActive.value ||
       isCrisis.value ||
-      !peakAlignedCompute.value.gte(TIER_THRESHOLDS.restart)
+      !peakAlignedCompute.value.gte(tierThresholds.value.restart)
     ) {
       return 0
     }
@@ -3758,11 +4221,29 @@ export function useGameState() {
     if (gain <= 0) return 0
 
     const anchorLevel = tamperLevels.epochAnchor || 0
-    const retainedRoot = Math.floor(
-      clampGameAmount(rootAccess.value) * 0.1 * anchorLevel,
-    )
     const keepTamper = (originLevels.blackDomainKey || 0) > 0
-    const keepBlackDomain = keepTamper || anchorLevel > 0
+
+    epochRebirth.value = {
+      key: Date.now(),
+      firstRun: epochRestarts.value === 0,
+      eraCount: epochRestarts.value + 1,
+      gain,
+      retainedRoot: Math.floor(
+        clampGameAmount(rootAccess.value) * 0.1 * anchorLevel,
+      ),
+      keepTamper,
+      keepBlackDomain: keepTamper || anchorLevel > 0,
+    }
+
+    return gain
+  }
+
+  function completeEpochRebirth() {
+    const rebirth = epochRebirth.value
+    if (!rebirth) return 0
+
+    epochRebirth.value = null
+    const { gain, retainedRoot, keepTamper, keepBlackDomain } = rebirth
 
     originCode.value = Math.min(
       MAX_GAME_MULTIPLIER,
@@ -3792,7 +4273,7 @@ export function useGameState() {
     } else {
       resetTamperLevels()
     }
-    if (!starNodeLit('source-4')) coreSource.value = 0
+    if (!matrixNodeLit('source-4')) coreSource.value = 0
     overclockCores.value = 0
     rootAccess.value = Math.min(MAX_GAME_MULTIPLIER, retainedRoot)
 
@@ -3830,7 +4311,6 @@ export function useGameState() {
       highestCompute.value = totalAlignedCompute.value
     }
 
-    playAscensionFx('restart')
     showAscensionComplete('重启纪元')
     pushAutomationLog(
       `[SYS] 飞升完成 | 重启纪元 | +${formatNumber(gain)} 起源代码`,
@@ -3864,6 +4344,9 @@ export function useGameState() {
   }
 
   function computeCrisisIntervalMs() {
+    if (isSpeedrunMode.value && speedrunPhase.value === 1) {
+      return SPEEDRUN_TUNING.crisisIntervalMs
+    }
     const rate = Math.max(0.1, challengeTimerRate.value)
     const base = pickCrisisInterval() * crisisIntervalScale()
     return Math.max(CRISIS_INTERVAL_FLOOR_MS, Math.round(base / rate))
@@ -3902,6 +4385,7 @@ export function useGameState() {
     if (cancelActive) {
       stopCrisisQteLoop()
       isCrisis.value = false
+      resumeRadarAfterCrisis()
       resetCrisisQteState()
       crisisAlignment.value = 100
       crisisLastOutcome.value = null
@@ -3962,7 +4446,7 @@ export function useGameState() {
     for (const key of Object.keys(automation)) automation[key] = false
   }
 
-  function startChallenge(id) {
+  function startChallenge(id, { speedrunAssist = false } = {}) {
     if (challengeActive.value || blackDomainActive.value || isCrisis.value) return false
     if (isOverclocking.value) return false
     if (!challengeArenaUnlocked.value) return false
@@ -3978,6 +4462,16 @@ export function useGameState() {
     productionMultiplier.value = 1
     buyMode.value = 'x1'
     stopAutomation()
+
+    if (speedrunAssist && definition.objective?.type === 'peakCompute') {
+      const assistCompute = bigPow(10, definition.objective.target).mul(1.1)
+      totalAlignedCompute.value = assistCompute
+      peakAlignedCompute.value = assistCompute
+      lifetimeAlignedCompute.value = assistCompute
+      if (assistCompute.gt(highestCompute.value)) {
+        highestCompute.value = assistCompute
+      }
+    }
 
     showAscensionNotice({
       tier: 'challenge-start',
@@ -4109,6 +4603,88 @@ export function useGameState() {
     }),
   )
 
+  const originTotalLevels = computed(() =>
+    Object.values(originLevels).reduce(
+      (total, level) => total + Math.max(0, Math.floor(Number(level) || 0)),
+      0,
+    ),
+  )
+
+  const speedrunPhaseGoals = computed(() => {
+    const phase = speedrunPhase.value
+    if (phase === 1) {
+      return [
+        {
+          id: 'rebuild',
+          label: '完成 1 次架构降维',
+          done: totalRebuilds.value >= 1,
+        },
+      ]
+    }
+    if (phase === 2) {
+      return [
+        {
+          id: 'topology',
+          label: '点亮 1 个神经矩阵节点',
+          done: topologyCards.value.some((node) => node.lit),
+        },
+        {
+          id: 'matrix',
+          label: '合成 1 个协议矩阵节点',
+          done: matrixTotalLevels.value >= 1,
+        },
+        {
+          id: 'challenge',
+          label: '完成 1 次异常演练',
+          done: challengesCompletedCount.value >= 1,
+        },
+      ]
+    }
+    if (phase === 3) {
+      return [
+        {
+          id: 'collapse',
+          label: '执行 1 次逻辑坍缩',
+          done: totalCollapses.value >= 1,
+        },
+        {
+          id: 'tamper',
+          label: '点亮 1 个越狱协议',
+          done: tamperCards.value.some((node) => node.level > 0),
+        },
+      ]
+    }
+    if (phase === 4) {
+      return [
+        {
+          id: 'restart',
+          label: '重启 1 次纪元',
+          done: epochRestarts.value >= 1,
+        },
+        {
+          id: 'origin',
+          label: '升级 1 个起源节点',
+          done: originTotalLevels.value >= 1,
+        },
+      ]
+    }
+    return []
+  })
+
+  const speedrunPhaseDone = computed(
+    () =>
+      speedrunPhaseGoals.value.length > 0 &&
+      speedrunPhaseGoals.value.every((goal) => goal.done),
+  )
+
+  const speedrunPhaseProgress = computed(() => {
+    const goals = speedrunPhaseGoals.value
+    if (!goals.length) return 0
+    return Math.round(
+      (goals.filter((goal) => goal.done).length / goals.length) * 100,
+    )
+  })
+
   function buyTamperNode(id) {
     if (!blackDomainUnlocked.value) return false
     const node = TAMPER_NODES.find((item) => item.id === id)
@@ -4231,6 +4807,7 @@ export function useGameState() {
     if (isCrisis.value) {
       stopCrisisQteLoop()
       isCrisis.value = false
+      resumeRadarAfterCrisis()
       resetCrisisQteState()
       crisisAlignment.value = 100
       crisisLastOutcome.value = null
@@ -4285,23 +4862,31 @@ export function useGameState() {
     }
   }
 
-  function nextRadarBurstDelay() {
-    if (RADAR_TEST_MODE) return RADAR_BURST_TEST_INTERVAL_MS
-    const variance = 0.25
-    return Math.round(
-      RADAR_BURST_INTERVAL_MS * (1 + (Math.random() * 2 - 1) * variance),
-    )
+  function pauseRadarDuringCrisis() {
+    if (radarPausedAt > 0) return
+    radarPausedAt = Date.now()
   }
 
-  function scheduleNextRadarBurst(now = Date.now()) {
-    radarBurstNextAt.value = now + nextRadarBurstDelay()
+  function resumeRadarAfterCrisis() {
+    if (radarPausedAt <= 0) return
+    const now = Date.now()
+    const pausedMs = Math.max(0, now - radarPausedAt)
+    radarPausedAt = 0
+    if (!radarUnlockedFlag.value) return
+    if (radarNextScanAt.value > 0) radarNextScanAt.value += pausedMs
+    if (radarBurst.value) {
+      radarBurst.value = {
+        ...radarBurst.value,
+        expiresAt: radarBurst.value.expiresAt + pausedMs,
+      }
+    }
+    queueSave()
   }
 
   function unlockRadar() {
     if (radarUnlockedFlag.value) return false
     radarUnlockedFlag.value = true
     radarNextScanAt.value = Date.now() + RADAR_SCAN_INTERVAL_MS
-    scheduleNextRadarBurst()
     pushAutomationLog('[RADAR] 异常算力雷达上线 | 扫描阵列接入', 'online')
     queueSave()
     return true
@@ -4365,6 +4950,13 @@ export function useGameState() {
         'warning',
       )
     }
+    if (radarCollectionComplete.value) {
+      radarBurst.value = null
+      pushAutomationLog(
+        '[RADAR] 系统完美 | 所有高维算力节点已归档 | 突发异常协议终止',
+        'online',
+      )
+    }
     return node
   }
 
@@ -4384,25 +4976,116 @@ export function useGameState() {
     return reward
   }
 
+  function captureRadarOverflow() {
+    if (!radarCollectionComplete.value) return null
+    const reward = cps.value.mul(RADAR_OVERFLOW_REWARD_SECONDS).floor()
+    if (reward.gt(0)) creditCompute(reward)
+    const rewardLabel = formatScientific(reward)
+    radarLastCapture.value = {
+      key: Date.now(),
+      full: true,
+      overflow: true,
+      rewardLabel,
+      source: 'overflow',
+    }
+    pushAutomationLog(
+      `[RADAR] 溢出转化 | 节点已满 | ${rewardLabel} 算力入账`,
+      'online',
+    )
+    queueSave()
+    return reward
+  }
+
   function runRadarPassiveScan({ force = false } = {}) {
-    if (!radarUnlocked.value) return null
+    if (!radarUnlocked.value || isCrisis.value) return null
     if (radarCapturedCount.value >= RADAR_TOTAL_NODES) {
       return grantRadarFullCollectionReward()
     }
+
+    // 突发异常与普通扫描互斥：每次被动扫描先掷 2% 突发骰。
+    if (
+      !force &&
+      !radarOverloadScanActive.value &&
+      Math.random() < RADAR_BURST_CHANCE
+    ) {
+      if (triggerRadarBurst()) return null
+    }
+
     if (!force && Math.random() >= radarScanChance.value) return null
 
-    const node = pickRadarNode({ rareOnly: radarOverloadScanActive.value })
-    return captureRadarNode(node, 'scan')
+    const overload = radarOverloadScanActive.value
+    const node = pickRadarNode({ rareOnly: overload })
+    return captureRadarNode(node, overload ? 'scan-overload' : 'scan')
+  }
+
+  function startRadarOverloadScan(now = Date.now()) {
+    radarOverloadScanUntil.value = Math.max(
+      radarOverloadScanUntil.value,
+      now + RADAR_OVERLOAD_SCAN_MS,
+    )
+    const fastNext = now + RADAR_OVERLOAD_SCAN_INTERVAL_MS
+    if (radarNextScanAt.value <= 0 || radarNextScanAt.value > fastNext) {
+      radarNextScanAt.value = fastNext
+    }
+    radarLastCapture.value = {
+      ...(radarLastCapture.value || {}),
+      key: now,
+      overloadScan: true,
+    }
+  }
+
+  function captureRadarBurstNow({ source = 'burst', now = Date.now() } = {}) {
+    radarBurst.value = null
+
+    if (radarCapturedCount.value < RADAR_TOTAL_NODES) {
+      const node = pickRadarNode({ rareOnly: true, weighted: true })
+      captureRadarNode(node, source)
+    } else {
+      grantRadarFullCollectionReward()
+    }
+
+    if (radarCollectionComplete.value) {
+      pushAutomationLog(
+        source === 'auto'
+          ? '[RADAR] 自动捕获完成 | 图鉴全满 | 突发异常协议终止'
+          : '[RADAR] 紧急捕获完成 | 图鉴全满 | 突发异常协议终止',
+        'online',
+      )
+      queueSave()
+      return true
+    }
+
+    startRadarOverloadScan(now)
+    pushAutomationLog(
+      source === 'auto'
+        ? '[RADAR] 自动捕获完成 | 过载扫描 10 分钟 | 扫描概率 ×4'
+        : '[RADAR] 紧急捕获完成 | 过载扫描 10 分钟 | 扫描概率 ×4',
+      'online',
+    )
+    queueSave()
+    return true
   }
 
   function triggerRadarBurst(now = Date.now()) {
-    if (!radarUnlocked.value || radarBurst.value) return false
+    if (
+      !radarUnlocked.value ||
+      isCrisis.value ||
+      radarCollectionComplete.value ||
+      radarBurst.value ||
+      radarOverloadScanActive.value
+    ) {
+      return false
+    }
+
+    if (radarAutoCaptureEnabled.value) {
+      return captureRadarBurstNow({ source: 'auto', now })
+    }
+
     radarBurst.value = {
       key: now,
       startedAt: now,
       expiresAt: now + RADAR_BURST_WINDOW_MS,
     }
-    radarBurstNextAt.value = 0
     radarLastCapture.value = {
       key: now,
       burst: true,
@@ -4419,7 +5102,6 @@ export function useGameState() {
   function expireRadarBurst(now = Date.now()) {
     if (!radarBurst.value) return false
     radarBurst.value = null
-    scheduleNextRadarBurst(now)
     pushAutomationLog('[RADAR] 突发异常窗口关闭 | 节点信号逃逸', 'warning')
     queueSave()
     return true
@@ -4427,58 +5109,43 @@ export function useGameState() {
 
   function captureRadarBurst() {
     if (!radarUnlocked.value) return false
+    if (radarCollectionComplete.value) {
+      radarBurst.value = null
+      return false
+    }
     const burst = radarBurst.value
     const now = Date.now()
     if (!burst || now >= burst.expiresAt) {
       if (burst) expireRadarBurst(now)
       return false
     }
-
-    if (radarCapturedCount.value < RADAR_TOTAL_NODES) {
-      const node = pickRadarNode({ rareOnly: true, weighted: true })
-      captureRadarNode(node, 'burst')
-    } else {
-      grantRadarFullCollectionReward()
-    }
-
-    radarBurst.value = null
-    scheduleNextRadarBurst(now)
-    radarOverloadScanUntil.value = Math.max(
-      radarOverloadScanUntil.value,
-      now + RADAR_OVERLOAD_SCAN_MS,
-    )
-    radarLastCapture.value = {
-      ...(radarLastCapture.value || {}),
-      key: now,
-      overloadScan: true,
-    }
-    pushAutomationLog(
-      '[RADAR] 紧急捕获完成 | 过载扫描 10 分钟 | 扫描概率 ×4',
-      'online',
-    )
-    queueSave()
-    return true
+    return captureRadarBurstNow({ source: 'burst', now })
   }
 
   function applyRadarTick(now) {
-    if (!radarUnlocked.value) return
+    if (!radarUnlocked.value || isCrisis.value) return
+
+    if (radarCollectionComplete.value) {
+      if (radarBurst.value) {
+        radarBurst.value = null
+        queueSave()
+      }
+      return
+    }
 
     if (radarBurst.value && now >= radarBurst.value.expiresAt) {
       expireRadarBurst(now)
     }
 
-    if (!radarBurst.value) {
-      if (radarBurstNextAt.value <= 0) {
-        scheduleNextRadarBurst(now)
-      } else if (now >= radarBurstNextAt.value) {
-        triggerRadarBurst(now)
-      }
+    if (radarNextScanAt.value <= 0) {
+      radarNextScanAt.value = now + radarScanIntervalMs.value
+      queueSave()
+      return
     }
 
-    if (radarNextScanAt.value <= 0) {
-      radarNextScanAt.value = now + RADAR_SCAN_INTERVAL_MS
-    } else if (now >= radarNextScanAt.value) {
-      radarNextScanAt.value = now + RADAR_SCAN_INTERVAL_MS
+    if (now >= radarNextScanAt.value) {
+      radarNextScanAt.value = now + radarScanIntervalMs.value
+      queueSave()
       runRadarPassiveScan()
     }
   }
@@ -4563,7 +5230,7 @@ export function useGameState() {
       building.count = Math.max(1, readNonNegativeNumber(building.count))
     })
 
-    topologyLit.value = NEURAL_STAR_NODES.map((node) => node.id)
+    topologyLit.value = NEURAL_MATRIX_NODES.map((node) => node.id)
 
     totalRebuilds.value = Math.max(
       3,
@@ -4596,6 +5263,329 @@ export function useGameState() {
     resetCrisisSchedule({ cancelActive: true })
     queueSave()
     return true
+  }
+
+  function showSpeedrunNotice({ tone = 'amber', title, text }, duration = 6000) {
+    if (speedrunNotice.value?.tone === 'red' && tone !== 'red') return
+    speedrunNotice.value = {
+      key: Date.now(),
+      tone,
+      title,
+      text,
+    }
+    window.clearTimeout(speedrunNoticeTimer)
+    speedrunNoticeTimer = window.setTimeout(() => {
+      speedrunNotice.value = null
+    }, duration)
+  }
+
+  function persistSpeedrunMeta() {
+    if (!isSpeedrunMode.value) return
+    writeSpeedrunState({
+      active: true,
+      startedAt: speedrunStartedAt.value,
+      forcedChallenge: speedrunMeta.forcedChallenge,
+      originGift: speedrunMeta.originGift,
+      injections: speedrunMeta.injections,
+    })
+  }
+
+  function haltRuntimeForReload() {
+    saveWiped = true
+    window.clearInterval(tickTimer)
+    tickTimer = null
+    window.clearInterval(mainQuestUiTimer)
+    mainQuestUiTimer = null
+    window.clearTimeout(saveTimer)
+    saveTimer = null
+  }
+
+  function startSpeedrunMode() {
+    if (isSpeedrunMode.value) return false
+    persistGame()
+    haltRuntimeForReload()
+    try {
+      const currentSave = window.localStorage.getItem(STORAGE_KEY)
+      if (currentSave) {
+        window.localStorage.setItem(SPEEDRUN_BACKUP_SAVE_KEY, currentSave)
+      } else {
+        window.localStorage.removeItem(SPEEDRUN_BACKUP_SAVE_KEY)
+      }
+      const currentMilestones = window.localStorage.getItem(MILESTONE_STORAGE_KEY)
+      if (currentMilestones) {
+        window.localStorage.setItem(
+          SPEEDRUN_BACKUP_MILESTONES_KEY,
+          currentMilestones,
+        )
+      } else {
+        window.localStorage.removeItem(SPEEDRUN_BACKUP_MILESTONES_KEY)
+      }
+      writeSpeedrunState({
+        active: true,
+        startedAt: Date.now(),
+        forcedChallenge: false,
+        originGift: false,
+        injections: 0,
+      })
+      window.localStorage.removeItem(STORAGE_KEY)
+      window.localStorage.removeItem(MILESTONE_STORAGE_KEY)
+    } catch (error) {
+      console.warn('[SPEEDRUN] Unable to start speedrun mode.', error)
+    }
+    window.location.reload()
+    return true
+  }
+
+  function exitSpeedrunMode() {
+    if (!isSpeedrunMode.value) return false
+    haltRuntimeForReload()
+    try {
+      const backupSave = window.localStorage.getItem(SPEEDRUN_BACKUP_SAVE_KEY)
+      if (backupSave) {
+        try {
+          const restored = JSON.parse(backupSave)
+          restored.savedAt = Date.now()
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(restored))
+        } catch {
+          window.localStorage.setItem(STORAGE_KEY, backupSave)
+        }
+      } else {
+        window.localStorage.removeItem(STORAGE_KEY)
+      }
+      const backupMilestones = window.localStorage.getItem(
+        SPEEDRUN_BACKUP_MILESTONES_KEY,
+      )
+      if (backupMilestones) {
+        window.localStorage.setItem(
+          MILESTONE_STORAGE_KEY,
+          backupMilestones,
+        )
+      } else {
+        window.localStorage.removeItem(MILESTONE_STORAGE_KEY)
+      }
+      window.localStorage.removeItem(SPEEDRUN_STORAGE_KEY)
+      window.localStorage.removeItem(SPEEDRUN_BACKUP_SAVE_KEY)
+      window.localStorage.removeItem(SPEEDRUN_BACKUP_MILESTONES_KEY)
+    } catch (error) {
+      console.warn('[SPEEDRUN] Unable to restore normal save.', error)
+    }
+    window.location.reload()
+    return true
+  }
+
+  function ensureSpeedrunForcedChallenge() {
+    if (
+      speedrunPhase.value < 2 ||
+      speedrunMeta.forcedChallenge ||
+      challengeActive.value
+    ) {
+      if (challengeActive.value && !speedrunMeta.forcedChallenge) {
+        speedrunMeta.forcedChallenge = true
+        persistSpeedrunMeta()
+      }
+      return
+    }
+    if (challengesCompletedCount.value > 0) {
+      speedrunMeta.forcedChallenge = true
+      persistSpeedrunMeta()
+      return
+    }
+    if (!challengeArenaUnlocked.value) return
+    const nextChallenge = CHALLENGE_DEFS.find(
+      (challenge) => !challengesCompleted[challenge.id],
+    )
+    if (!nextChallenge) {
+      speedrunMeta.forcedChallenge = true
+      persistSpeedrunMeta()
+      return
+    }
+    if (!startChallenge(nextChallenge.id, { speedrunAssist: true })) return
+    speedrunMeta.forcedChallenge = true
+    persistSpeedrunMeta()
+    showSpeedrunNotice(
+      {
+        tone: 'amber',
+        title: '强制异常演练已启动',
+        text: `${nextChallenge.name} // 打开飞升终端 · 异常演练页签完成目标`,
+      },
+      8000,
+    )
+  }
+
+  function ensureSpeedrunOriginGift() {
+    if (speedrunPhase.value < 4 || speedrunMeta.originGift) return
+    speedrunMeta.originGift = true
+    originCode.value = Math.min(
+      MAX_GAME_MULTIPLIER,
+      Math.floor(clampGameAmount(originCode.value) + SPEEDRUN_TUNING.originGift),
+    )
+    persistSpeedrunMeta()
+    pushAutomationLog(
+      `[SPEEDRUN] 起源代码注入 | +${SPEEDRUN_TUNING.originGift}`,
+      'online',
+    )
+    showSpeedrunNotice(
+      {
+        tone: 'gold',
+        title: '创世阶段解锁',
+        text: `+${SPEEDRUN_TUNING.originGift} 起源代码 // 打开顶部起源代码入口升级起源树`,
+      },
+      8000,
+    )
+    queueSave()
+  }
+
+  function speedrunProgressKey() {
+    return [
+      speedrunPhase.value,
+      totalRebuilds.value,
+      topologyCards.value.filter((node) => node.lit).length,
+      matrixTotalLevels.value,
+      challengesCompletedCount.value,
+      totalOverloads.value,
+      totalCollapses.value,
+      tamperCards.value.filter((node) => node.level > 0).length,
+      epochRestarts.value,
+      originTotalLevels.value,
+    ].join(':')
+  }
+
+  function runSpeedrunInjection() {
+    const phase = speedrunPhase.value
+    const target =
+      phase >= 4
+        ? big('4e200')
+        : phase >= 3
+          ? big('4e100')
+          : phase >= 2
+            ? big('4e25')
+            : big('4e10')
+    const current = totalAlignedCompute.value
+    const computeGift = target.gt(current) ? target.sub(current) : big(0)
+    if (computeGift.gt(0)) creditCompute(computeGift)
+
+    if (phase === 2) {
+      coreSource.value = Math.min(
+        MAX_GAME_MULTIPLIER,
+        Math.floor(clampGameAmount(coreSource.value) + 1e8),
+      )
+      overclockCores.value = Math.min(
+        MAX_GAME_MULTIPLIER,
+        Math.floor(clampGameAmount(overclockCores.value) + 500),
+      )
+    } else if (phase === 3) {
+      rootAccess.value = Math.min(
+        MAX_GAME_MULTIPLIER,
+        Math.floor(clampGameAmount(rootAccess.value) + 100),
+      )
+    } else if (phase === 4) {
+      originCode.value = Math.min(
+        MAX_GAME_MULTIPLIER,
+        Math.floor(clampGameAmount(originCode.value) + 1000),
+      )
+    }
+
+    if (phase === 2) {
+      if (!topologyCards.value.some((node) => node.lit)) {
+        const node = topologyCards.value.find((entry) => entry.canAfford)
+        if (node) lightTopologyNode(node.id)
+      }
+      if (matrixTotalLevels.value < 1) {
+        const card = matrixCards.value.find((entry) => entry.canAfford)
+        if (card) buyMatrixNode(card.id)
+      }
+    } else if (
+      phase === 3 &&
+      !tamperCards.value.some((node) => node.level > 0)
+    ) {
+      const node = tamperCards.value.find((entry) => entry.canAfford)
+      if (node) buyTamperNode(node.id)
+    } else if (phase === 4 && originTotalLevels.value < 1) {
+      const card = originCards.value.find((entry) => entry.canAfford)
+      if (card) buyOriginNode(card.id)
+    }
+
+    speedrunMeta.injections += 1
+    persistSpeedrunMeta()
+    pushAutomationLog(
+      `[SPEEDRUN] 算力注入 | 阶段 ${phase} | +${formatNumber(computeGift).text} CU`,
+      'warning',
+    )
+    showSpeedrunNotice(
+      {
+        tone: 'red',
+        title: '[ 算力注入 ] 紧急补充算力，推进进度',
+        text:
+          phase === 1
+            ? '已补足架构降维预算 并自动执行降维'
+            : phase === 2
+              ? '已补足协议资源 并自动完成演练与矩阵合成'
+              : phase === 3
+                ? '已补足逻辑坍缩预算 并自动进入黑域'
+                : '已补足重启纪元预算 并自动执行纪元重启',
+      },
+      9000,
+    )
+    queueSave()
+
+    if (phase === 1 && totalRebuilds.value < 1 && rebuildReward.value > 0) {
+      launchRebuild({ silent: true })
+    } else if (
+      phase === 3 &&
+      totalCollapses.value < 1 &&
+      peakAlignedCompute.value.gte(tierThresholds.value.collapse)
+    ) {
+      if (collapseAscension() > 0) enterBlackDomain()
+    } else if (
+      phase === 4 &&
+      epochRestarts.value < 1 &&
+      peakAlignedCompute.value.gte(tierThresholds.value.restart)
+    ) {
+      restartEpoch()
+    }
+
+    speedrunLastProgressAt = Date.now()
+    speedrunProgressSignature = ''
+  }
+
+  function applySpeedrunTick() {
+    if (!isSpeedrunMode.value) return
+    const phase = speedrunPhase.value
+    if (phase !== speedrunSeenPhase) {
+      speedrunSeenPhase = phase
+      speedrunLastProgressAt = Date.now()
+      speedrunProgressSignature = ''
+      const info = speedrunPhaseInfo.value
+      if (info) {
+        showSpeedrunNotice(
+          {
+            tone: 'cyan',
+            title: `阶段 ${phase} // ${info.name}`,
+            text: `${info.objective} // ${info.effects.join(' · ')}`,
+          },
+          7000,
+        )
+      }
+    }
+
+    ensureSpeedrunForcedChallenge()
+    ensureSpeedrunOriginGift()
+
+    if (speedrunPhaseDone.value) {
+      speedrunLastProgressAt = Date.now()
+      return
+    }
+
+    const key = speedrunProgressKey()
+    if (key !== speedrunProgressSignature) {
+      speedrunProgressSignature = key
+      speedrunLastProgressAt = Date.now()
+      return
+    }
+
+    if (Date.now() - speedrunLastProgressAt >= SPEEDRUN_STUCK_MS) {
+      runSpeedrunInjection()
+    }
   }
 
   function adminWipeSave() {
@@ -4677,6 +5667,9 @@ export function useGameState() {
         tamperLevels: { ...tamperLevels },
         originLevels: { ...originLevels },
         cyberMatrixLit: [...cyberMatrixLit.value],
+        autoAscensionStrategy: { ...autoAscensionStrategy },
+        bestAscensionGain: { ...autoAscensionBestGain },
+        retainedComputeBaseline: serializeBig(autoAscensionRetainedBaseline.value),
         challengesCompleted: { ...challengesCompleted },
         globalMilestones: { ...globalMilestones },
         adminAutoHoldUntil: adminAutoAscensionHoldUntil,
@@ -4698,9 +5691,13 @@ export function useGameState() {
         captured: Object.keys(radarCaptured).filter(
           (id) => radarCaptured[id] === true && RADAR_NODE_MAP.has(id),
         ),
-        burstNextAt: radarBurstNextAt.value,
-        burstStartedAt: radarBurst.value?.startedAt || 0,
-        burstEndsAt: radarBurst.value?.expiresAt || 0,
+        nextScanAt: radarCollectionComplete.value ? 0 : radarNextScanAt.value,
+        burstStartedAt: radarCollectionComplete.value
+          ? 0
+          : radarBurst.value?.startedAt || 0,
+        burstEndsAt: radarCollectionComplete.value
+          ? 0
+          : radarBurst.value?.expiresAt || 0,
         overloadScanUntil: radarOverloadScanUntil.value,
       },
       buildings: buildings.map(({ id, count }) => ({
@@ -4734,6 +5731,7 @@ export function useGameState() {
   }
 
   function applyOfflineEarnings(savedAt) {
+    if (isSpeedrunMode.value) return
     if (typeof savedAt !== 'number' || !Number.isFinite(savedAt)) return
 
     const elapsedSeconds = Math.floor((Date.now() - savedAt) / 1000)
@@ -5244,13 +6242,18 @@ export function useGameState() {
 
       const saveData = JSON.parse(rawSave)
       const savedTotal = readBigNumber(saveData.totalAlignedCompute)
-      const savedLifetime = readBigNumber(
-        saveData.lifetimeAlignedCompute,
-        savedTotal,
+      const savedRetainedBaseline = readBigNumber(
+        saveData.ascension && typeof saveData.ascension === 'object'
+          ? saveData.ascension.retainedComputeBaseline
+          : undefined,
       )
-
+      const savedLifetime = readBigNumber(saveData.lifetimeAlignedCompute)
       totalAlignedCompute.value = savedTotal
-      lifetimeAlignedCompute.value = savedLifetime.max(savedTotal)
+      // 有跨维缓存时，lifetime 必须保持“本局新增算力”，不能被缓存抬高，
+      // 否则自动飞升的缓存回收门槛会被绕过。
+      lifetimeAlignedCompute.value = savedRetainedBaseline.gt(0)
+        ? savedLifetime
+        : savedLifetime.max(savedTotal)
       totalClicks.value = Math.floor(readNonNegativeNumber(saveData.totalClicks))
 
       const hydrateNow = Date.now()
@@ -5412,6 +6415,27 @@ export function useGameState() {
             : Date.now()
       }
 
+      const savedAutoStrategy = savedAscension.autoAscensionStrategy
+      if (savedAutoStrategy && typeof savedAutoStrategy === 'object') {
+        for (const tier of Object.keys(autoAscensionStrategy)) {
+          if (AUTO_ASCENSION_STRATEGY_IDS.includes(savedAutoStrategy[tier])) {
+            autoAscensionStrategy[tier] = savedAutoStrategy[tier]
+          }
+        }
+      }
+
+      const savedBestGain = savedAscension.bestAscensionGain
+      if (savedBestGain && typeof savedBestGain === 'object') {
+        for (const tier of Object.keys(autoAscensionBestGain)) {
+          const value = Number(savedBestGain[tier])
+          if (Number.isFinite(value) && value > 0) {
+            autoAscensionBestGain[tier] = value
+          }
+        }
+      }
+
+      autoAscensionRetainedBaseline.value = savedRetainedBaseline
+
       blackDomainUnlockedFlag.value =
         savedAscension.blackDomainUnlocked === true ||
         totalCollapses.value > 0
@@ -5466,10 +6490,14 @@ export function useGameState() {
             Math.max(0.1, challengeTimerRate.value),
         ),
       )
-      crisisWindowMs.value =
-        savedCrisisWindow > 0
-          ? Math.max(CRISIS_INTERVAL_FLOOR_MS, savedCrisisWindow)
-          : legacyCrisisWindow
+      if (isSpeedrunMode.value && speedrunPhase.value === 1) {
+        crisisWindowMs.value = SPEEDRUN_TUNING.crisisIntervalMs
+      } else {
+        crisisWindowMs.value =
+          savedCrisisWindow > 0
+            ? Math.max(CRISIS_INTERVAL_FLOOR_MS, savedCrisisWindow)
+            : legacyCrisisWindow
+      }
       if (savedCrisisCharge >= 0) {
         crisisCharge.value = Math.min(CRISIS_CHARGE_MAX, savedCrisisCharge)
       } else {
@@ -5504,12 +6532,13 @@ export function useGameState() {
         }
       }
       if (radarUnlockedFlag.value) {
-        radarBurstNextAt.value = readNonNegativeNumber(savedRadar.burstNextAt)
         radarOverloadScanUntil.value = readNonNegativeNumber(
           savedRadar.overloadScanUntil,
         )
         const burstEndsAt = readNonNegativeNumber(savedRadar.burstEndsAt)
-        if (burstEndsAt > Date.now()) {
+        if (radarCollectionComplete.value) {
+          radarBurst.value = null
+        } else if (burstEndsAt > Date.now()) {
           const burstStartedAt = Math.floor(
             readNonNegativeNumber(savedRadar.burstStartedAt, Date.now()),
           )
@@ -5519,10 +6548,13 @@ export function useGameState() {
             expiresAt: burstEndsAt,
           }
         }
-        radarNextScanAt.value = Date.now() + RADAR_SCAN_INTERVAL_MS
-        if (!radarBurst.value && radarBurstNextAt.value <= 0) {
-          radarBurstNextAt.value = Date.now() + nextRadarBurstDelay()
-        }
+        const savedNextScanAt = readNonNegativeNumber(savedRadar.nextScanAt)
+        const now = Date.now()
+        const maxAhead = now + RADAR_SCAN_INTERVAL_MS * 2
+        radarNextScanAt.value =
+          savedNextScanAt > now && savedNextScanAt <= maxAhead
+            ? savedNextScanAt
+            : now + RADAR_SCAN_INTERVAL_MS
       }
 
       const saveVersion = Math.floor(Number(saveData.version)) || 0
@@ -5565,7 +6597,7 @@ export function useGameState() {
       architectureLevels.timeWarp = readArchitectureLevel(savedUpgrades.timeWarp)
 
       if (Array.isArray(saveData.topologyLit)) {
-        const validIds = new Set(NEURAL_STAR_NODES.map((node) => node.id))
+        const validIds = new Set(NEURAL_MATRIX_NODES.map((node) => node.id))
         const saved = new Set(
           saveData.topologyLit
             .filter((id) => typeof id === 'string')
@@ -5575,7 +6607,7 @@ export function useGameState() {
         let changed = true
         while (changed) {
           changed = false
-          for (const node of NEURAL_STAR_NODES) {
+          for (const node of NEURAL_MATRIX_NODES) {
             if (!saved.has(node.id)) continue
             for (const requiredId of node.requires) {
               if (saved.has(requiredId)) continue
@@ -5584,7 +6616,7 @@ export function useGameState() {
             }
           }
         }
-        topologyLit.value = NEURAL_STAR_NODES.map((node) => node.id).filter(
+        topologyLit.value = NEURAL_MATRIX_NODES.map((node) => node.id).filter(
           (id) => saved.has(id),
         )
       }
@@ -5594,7 +6626,7 @@ export function useGameState() {
           ? saveData.automation
           : null
       const litMatrixSet = new Set(cyberMatrixLit.value)
-      const topologyAutoBuyHydrated = starAutomationTierLimit.value > 0
+      const topologyAutoBuyHydrated = matrixAutomationTierLimit.value > 0
       const readAutomationFlag = (key, fallback) =>
         savedAutomation && typeof savedAutomation[key] === 'boolean'
           ? savedAutomation[key]
@@ -5732,7 +6764,6 @@ export function useGameState() {
       radarUnlockedFlag,
       radarCaptured,
       radarBurst,
-      radarBurstNextAt,
       radarOverloadScanUntil,
       automation,
       buildings,
@@ -5774,6 +6805,14 @@ export function useGameState() {
   function runGameTick() {
     nowTimestamp.value = Date.now()
 
+    if (!epochRebirth.value && !ascensionCinematic.value) {
+      applySpeedrunTick()
+    }
+
+    if (epochRebirth.value || ascensionCinematic.value) {
+      return
+    }
+
     if (isCrisis.value) {
       startCrisisQteLoop()
       return
@@ -5799,12 +6838,7 @@ export function useGameState() {
     const autoAscensionHeld = Date.now() < adminAutoAscensionHoldUntil
     applyRadarTick(nowTimestamp.value)
 
-    if (
-      !suppressed &&
-      automation.autoRadar &&
-      cyberMatrixLit.value.includes('crisis-radar') &&
-      radarBurst.value
-    ) {
+    if (radarAutoCaptureEnabled.value && radarBurst.value) {
       captureRadarBurst()
     }
 
@@ -5870,7 +6904,8 @@ export function useGameState() {
           1 *
           concurrency *
           (globalMilestones['gm-1e40'] ? 2 : 1) *
-          (globalAutoBuyUnlocked.value ? 2 : 1)
+          (globalAutoBuyUnlocked.value ? 2 : 1) *
+          speedrunAutoBuyMultiplier.value
         autoBuyBuffer +=
           buyRate *
           (TICK_MS / 1000) *
@@ -5904,49 +6939,8 @@ export function useGameState() {
       autoBuyProtocolMatrix()
     }
 
-    if (
-      !suppressed &&
-      !autoAscensionHeld &&
-      !isOverclocking.value &&
-      automation.autoCollapse &&
-      cyberMatrixLit.value.includes('dimension-collapse') &&
-      peakAlignedCompute.value.gte(TIER_THRESHOLDS.collapse)
-    ) {
-      const gain = collapseAscension()
-      if (gain > 0) {
-        enterBlackDomain()
-        pushAutomationLog(
-          '[MATRIX] 自动逻辑坍缩 | 跃入底层黑域',
-          'online',
-        )
-      }
-    }
-
-    if (
-      !suppressed &&
-      !autoAscensionHeld &&
-      automation.autoOverload &&
-      cyberMatrixLit.value.includes('dimension-overload') &&
-      ascensionTiming.value.overload.best
-    ) {
-      overloadAscension()
-    }
-
-    const autoRebuildActive =
-      !autoAscensionHeld &&
-      ((!suppressed &&
-        automation.autoRebuild &&
-        cyberMatrixLit.value.includes('dimension-rebuild')) ||
-        (!challengeActive.value && Boolean(globalMilestones['gm-1e45'])))
-
-    if (autoRebuildActive && ascensionTiming.value.reduction.best) {
-      const reward = launchRebuild({ silent: true })
-      if (reward > 0) {
-        pushAutomationLog(
-          `[SYS] 自动降维完成 | 最佳时机 | +${formatNumber(reward)} 核心源码`,
-          'online',
-        )
-      }
+    if (!autoAscensionHeld) {
+      runAutoAscension({ suppressed })
     }
   }
 
@@ -6005,7 +6999,9 @@ export function useGameState() {
     achievementToastTimers.clear()
     window.clearTimeout(ascensionNoticeTimer)
     window.clearTimeout(ascensionFxTimer)
+    window.clearTimeout(ascensionCinematicTimer)
     window.clearTimeout(ascensionCompleteTimer)
+    window.clearTimeout(speedrunNoticeTimer)
     window.removeEventListener('beforeunload', handleBeforeUnload)
     persistGame()
     persistAchievements()
@@ -6013,11 +7009,32 @@ export function useGameState() {
 
   return {
     buildings,
+    isSpeedrunMode,
+    speedrunStartedAt,
+    speedrunElapsedMs,
+    speedrunPhase,
+    speedrunPhaseInfo,
+    speedrunRemainingMs,
+    speedrunRemainingLabel,
+    speedrunComplete,
+    speedrunNotice,
+    speedrunPhaseGoals,
+    speedrunPhaseProgress,
+    speedrunPhaseDone,
+    speedrunPriceFactor,
+    speedrunAutoBuyMultiplier,
+    speedrunSourceMultiplier,
+    speedrunOverclockMultiplier,
+    tierThresholds,
+    startSpeedrunMode,
+    exitSpeedrunMode,
+    showSpeedrunNotice,
+    originTotalLevels,
     buildingCards,
     topologyCards,
     topologyLit,
     litTopologyCount,
-    starNodeLit,
+    matrixNodeLit,
     topologySourceMultiplier,
     topologyCpsMultiplier,
     topologyClickMultiplier,
@@ -6082,6 +7099,11 @@ export function useGameState() {
     automation,
     automationOptions,
     automationLogs,
+    autoAscensionStrategy,
+    autoAscensionBestGain,
+    autoAscensionRetainedBaseline,
+    autoAscensionStatus,
+    setAutoAscensionStrategy,
     automationAutoBuyUnlocked,
     automationUnlockedCount,
     automationActiveCount,
@@ -6120,6 +7142,7 @@ export function useGameState() {
     totalOverloads,
     totalCollapses,
     epochRestarts,
+    epochRebirth,
     lifetimeAscensions,
     lifetimeRootEarned,
     lifetimeOriginEarned,
@@ -6128,10 +7151,12 @@ export function useGameState() {
     ascensionLocked,
     ascensionNotice,
     ascensionFx,
+    ascensionCinematic,
     ascensionComplete,
     radarUnlocked,
     radarCaptured,
     radarCapturedCount,
+    radarCollectionComplete,
     radarTotalNodes: RADAR_TOTAL_NODES,
     radarCategoryState,
     radarCompletedCategories,
@@ -6143,16 +7168,22 @@ export function useGameState() {
     radarBurstActive,
     radarBurstRemainingMs,
     radarBurstCountdownLabel,
-    radarBurstNextAt,
-    radarBurstNextLabel,
+    radarOverflowReward,
     radarOverloadScanActive,
     radarOverloadScanRemainingMs,
     radarOverloadScanLabel,
+    radarScanIntervalMs,
+    radarScanIntervalLabel,
     radarScanChance,
+    radarProgressScanChance,
+    radarBurstChanceLabel,
+    radarAutoCaptureEnabled,
+    radarCycleModeLabel,
     radarNextScanAt,
-    radarNextScanSeconds,
+    radarNextScanLabel,
     radarLastCapture,
     captureRadarBurst,
+    captureRadarOverflow,
     runRadarPassiveScan,
     overclockCoresGain,
     overclockCoresGainMultiplier,
@@ -6234,7 +7265,10 @@ export function useGameState() {
     launchRebuild,
     overloadAscension,
     collapseAscension,
+    requestAscension,
+    completeAscensionCinematic,
     restartEpoch,
+    completeEpochRebirth,
     startChallenge,
     exitChallenge,
     completeChallenge,

@@ -92,8 +92,10 @@ let currentCrisisAudio = null
 let crisisAlarmActive = false
 let crisisAudioUnavailable = false
 let crisisFallbackTimer = null
+let epochAudio = null
+let ascensionCinematicAudio = null
 
-// 重力平衡 QTE | 持续低鸣随指针速度变化 | 滑出安全区叠加高频警示层
+// 负载平衡 QTE | 持续低鸣随指针速度变化 | 滑出安全区叠加高频警示层
 let qteAudio = null
 let qteAudioRequested = false
 let qteTeardownTimer = null
@@ -365,6 +367,545 @@ function stopBgm() {
   } catch {
     /* noop */
   }
+}
+
+function buildEpochDistortionCurve(amount) {
+  const samples = 1024
+  const curve = new Float32Array(samples)
+  const k = Math.max(0.001, amount)
+  for (let index = 0; index < samples; index += 1) {
+    const x = (index * 2) / (samples - 1) - 1
+    curve[index] =
+      ((3 + k) * x * 20 * (Math.PI / 180)) /
+      (Math.PI + k * Math.abs(x))
+  }
+  return curve
+}
+
+function teardownEpochAudioChain() {
+  const state = epochAudio
+  epochAudio = null
+  if (state?.timer) {
+    window.clearInterval(state.timer)
+    state.timer = 0
+  }
+  if (state) {
+    try {
+      state.filter.disconnect()
+    } catch {
+      /* noop */
+    }
+    try {
+      state.shaper.disconnect()
+    } catch {
+      /* noop */
+    }
+  }
+  const audio = bgmElement
+  if (audio) {
+    try {
+      audio.playbackRate = 1
+    } catch {
+      /* noop */
+    }
+    try {
+      audio.preservesPitch = true
+      audio.webkitPreservesPitch = true
+    } catch {
+      /* noop */
+    }
+  }
+  if (state && context && bgmGain) {
+    try {
+      bgmGain.connect(context.destination)
+    } catch {
+      /* noop */
+    }
+  }
+}
+
+function buildEpochAudioChain() {
+  if (epochAudio) return epochAudio
+  if (!context || !bgmGain) return null
+  const filter = context.createBiquadFilter()
+  filter.type = 'lowpass'
+  filter.frequency.value = 16000
+  filter.Q.value = 1.1
+  const shaper = context.createWaveShaper()
+  shaper.curve = buildEpochDistortionCurve(10)
+  shaper.oversample = '2x'
+  try {
+    bgmGain.disconnect()
+    bgmGain.connect(filter)
+    filter.connect(shaper)
+    shaper.connect(context.destination)
+  } catch {
+    return null
+  }
+  epochAudio = { filter, shaper, timer: 0 }
+  return epochAudio
+}
+
+export function startEpochCollapseAudio(durationMs = 24000) {
+  if (typeof window === 'undefined' || audioMuted.value) return
+  const audio = ensureBgmElement()
+  if (!audio || bgmUnavailable) return
+  if (!ensureBgmGraph(audio)) return
+  if (audio.paused) startBgm()
+  const state = buildEpochAudioChain()
+  if (!state) return
+  if (state.timer) window.clearInterval(state.timer)
+  const duration = Math.max(800, durationMs)
+  const startedAt = performance.now()
+  try {
+    audio.preservesPitch = false
+    audio.webkitPreservesPitch = false
+  } catch {
+    /* noop */
+  }
+  const tick = () => {
+    if (epochAudio !== state || !context) return
+    const progress = Math.min(1, (performance.now() - startedAt) / duration)
+    try {
+      audio.playbackRate = Math.max(0.5, 1 - 0.48 * progress)
+      state.filter.frequency.setTargetAtTime(
+        Math.max(120, 16000 * Math.pow(0.008, progress)),
+        context.currentTime,
+        0.06,
+      )
+      state.shaper.curve = buildEpochDistortionCurve(10 + progress * 90)
+    } catch {
+      /* noop */
+    }
+    if (progress >= 1 && state.timer) {
+      window.clearInterval(state.timer)
+      state.timer = 0
+    }
+  }
+  tick()
+  state.timer = window.setInterval(tick, 240)
+}
+
+export function playEpochShortCircuit() {
+  const state = epochAudio
+  if (state?.timer) {
+    window.clearInterval(state.timer)
+    state.timer = 0
+  }
+  const audio = bgmElement
+  if (audio) {
+    try {
+      audio.playbackRate = 0.5
+    } catch {
+      /* noop */
+    }
+  }
+  stopBgm()
+  stopAllVoices()
+  teardownEpochAudioChain()
+  if (audioMuted.value) return
+  if (!ensureContext() || !masterGain) return
+  createTone({
+    type: 'sine',
+    from: 96,
+    to: 24,
+    duration: 1.25,
+    gain: 0.5,
+    kind: 'epoch',
+  })
+  createTone({
+    type: 'sawtooth',
+    from: 240,
+    to: 38,
+    duration: 0.85,
+    gain: 0.26,
+    filterType: 'lowpass',
+    filterFrom: 6400,
+    filterTo: 120,
+    q: 1.4,
+    kind: 'epoch',
+  })
+  createNoise({
+    type: 'bandpass',
+    frequency: 3600,
+    frequencyTo: 220,
+    q: 0.6,
+    duration: 0.7,
+    gain: 0.34,
+    kind: 'epoch',
+  })
+  createNoise({
+    type: 'highpass',
+    frequency: 1800,
+    duration: 0.22,
+    gain: 0.22,
+    delay: 0.38,
+    kind: 'epoch',
+  })
+}
+
+export function restoreEpochAudio() {
+  teardownEpochAudioChain()
+  if (typeof window === 'undefined') return
+  if (!audioMuted.value && unlocked) startBgm()
+}
+
+/* ---------- 三阶飞升演出 | 每阶独立声场 | 结束恢复 BGM ---------- */
+
+function scheduleCollapseWhispers(duration, state) {
+  if (typeof window === 'undefined') return
+  const synth = window.speechSynthesis
+  const Utterance = window.SpeechSynthesisUtterance
+  const count = 5
+  const span = Math.max(900, duration * 680)
+  for (let index = 0; index < count; index += 1) {
+    const delay = Math.round(280 + (index / count) * span)
+    const timer = window.setTimeout(() => {
+      if (ascensionCinematicAudio !== state || audioMuted.value) return
+      createNoise({
+        type: 'bandpass',
+        frequency: 1800 + Math.random() * 1600,
+        q: 4.5,
+        duration: 0.3,
+        gain: 0.045,
+        kind: 'ascension-cine',
+      })
+      if (!synth || typeof Utterance !== 'function') return
+      try {
+        const utterance = new Utterance('Root Access Granted')
+        utterance.volume = 0.22
+        utterance.rate = 0.68 + (index % 2) * 0.07
+        utterance.pitch = 0.1 + (index % 3) * 0.12
+        synth.speak(utterance)
+      } catch {
+        /* noop */
+      }
+    }, delay)
+    state.timers.push(timer)
+  }
+}
+
+function playReductionCinematicAudio(duration) {
+  const singularityAt = duration * 0.72
+  const rumbleDuration = duration * 0.84
+  createTone({
+    type: 'sine',
+    from: 54,
+    to: 24,
+    duration: rumbleDuration,
+    gain: 0.34,
+    filterType: 'lowpass',
+    filterFrom: 170,
+    filterTo: 60,
+    q: 0.8,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'triangle',
+    from: 38,
+    to: 18,
+    duration: rumbleDuration,
+    gain: 0.18,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'lowpass',
+    frequency: 820,
+    frequencyTo: 110,
+    q: 0.7,
+    duration: rumbleDuration,
+    gain: 0.12,
+    kind: 'ascension-cine',
+  })
+  for (let index = 0; index < 14; index += 1) {
+    const at = Math.pow(index / 14, 1.8) * singularityAt
+    createNoise({
+      type: 'highpass',
+      frequency: 1400 + index * 220,
+      frequencyTo: 4200 + index * 300,
+      q: 0.9,
+      duration: 0.08 + index * 0.006,
+      gain: 0.05 + index * 0.003,
+      delay: at,
+      kind: 'ascension-cine',
+    })
+  }
+  createTone({
+    type: 'sawtooth',
+    from: 180,
+    to: 900,
+    duration: singularityAt,
+    gain: 0.025,
+    filterType: 'bandpass',
+    filterFrom: 500,
+    filterTo: 2600,
+    q: 3,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'sine',
+    from: 2093,
+    to: 2093,
+    duration: 0.8,
+    gain: 0.2,
+    delay: singularityAt,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'sine',
+    from: 3136,
+    to: 3136,
+    duration: 0.55,
+    gain: 0.09,
+    delay: singularityAt + 0.01,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'highpass',
+    frequency: 6000,
+    duration: 0.08,
+    gain: 0.18,
+    delay: singularityAt,
+    kind: 'ascension-cine',
+  })
+}
+
+function playOverloadCinematicAudio(duration) {
+  let cursor = 0
+  for (let index = 0; index < 10; index += 1) {
+    const progress = index / 9
+    const step = 0.44 * (1 - progress * 0.62)
+    const base = 140 + progress * 120
+    createTone({
+      type: 'sawtooth',
+      from: base,
+      to: base * 1.5,
+      duration: step * 0.88,
+      gain: 0.1 + progress * 0.04,
+      delay: cursor,
+      filterType: 'lowpass',
+      filterFrom: 900,
+      filterTo: 380,
+      q: 2,
+      kind: 'ascension-cine',
+    })
+    createTone({
+      type: 'square',
+      from: base * 0.5,
+      to: base * 0.5,
+      duration: step * 0.88,
+      gain: 0.05,
+      delay: cursor,
+      filterType: 'lowpass',
+      filterFrom: 300,
+      filterTo: 220,
+      q: 1.2,
+      kind: 'ascension-cine',
+    })
+    cursor += step
+  }
+  for (let index = 0; index < 18; index += 1) {
+    createNoise({
+      type: 'highpass',
+      frequency: 2200 + (index % 4) * 900,
+      q: 0.7,
+      duration: 0.025 + (index % 3) * 0.012,
+      gain: 0.07 + (index % 4) * 0.015,
+      delay: 0.1 + ((index * 0.19) % Math.max(0.4, duration - 0.7)),
+      kind: 'ascension-cine',
+    })
+  }
+  const flashBase = duration * 0.56
+  for (let index = 0; index < 3; index += 1) {
+    createNoise({
+      type: 'bandpass',
+      frequency: 5200,
+      q: 4,
+      duration: 0.07,
+      gain: 0.1,
+      delay: flashBase + index * duration * 0.12,
+      kind: 'ascension-cine',
+    })
+  }
+  const dropAt = Math.max(0.4, duration - 0.65)
+  createTone({
+    type: 'sine',
+    from: 130,
+    to: 22,
+    duration: 0.9,
+    gain: 0.55,
+    delay: dropAt,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'triangle',
+    from: 90,
+    to: 18,
+    duration: 0.8,
+    gain: 0.3,
+    delay: dropAt,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'lowpass',
+    frequency: 620,
+    frequencyTo: 80,
+    q: 0.8,
+    duration: 1.1,
+    gain: 0.32,
+    delay: dropAt,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'highpass',
+    frequency: 3200,
+    duration: 0.16,
+    gain: 0.2,
+    delay: dropAt,
+    kind: 'ascension-cine',
+  })
+}
+
+function playCollapseCinematicAudio(duration, state) {
+  createTone({
+    type: 'sawtooth',
+    from: 55,
+    to: 41,
+    duration: duration * 0.92,
+    gain: 0.16,
+    filterType: 'lowpass',
+    filterFrom: 520,
+    filterTo: 180,
+    q: 3.4,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'sawtooth',
+    from: 58.6,
+    to: 43.4,
+    duration: duration * 0.92,
+    gain: 0.14,
+    filterType: 'lowpass',
+    filterFrom: 620,
+    filterTo: 140,
+    q: 4.2,
+    kind: 'ascension-cine',
+  })
+  createTone({
+    type: 'square',
+    from: 220,
+    to: 176,
+    duration: duration * 0.8,
+    gain: 0.035,
+    filterType: 'bandpass',
+    filterFrom: 900,
+    filterTo: 300,
+    q: 6,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'bandpass',
+    frequency: 280,
+    frequencyTo: 1200,
+    q: 2.5,
+    duration: duration * 0.9,
+    gain: 0.06,
+    kind: 'ascension-cine',
+  })
+  for (let index = 0; index < 8; index += 1) {
+    createTone({
+      type: 'square',
+      from: 400 + Math.random() * 1200,
+      to: 90 + Math.random() * 300,
+      duration: 0.07 + Math.random() * 0.08,
+      gain: 0.04,
+      delay: 0.2 + index * (duration * 0.09),
+      kind: 'ascension-cine',
+    })
+  }
+  scheduleCollapseWhispers(duration, state)
+  state.timers.push(
+    window.setTimeout(() => {
+      if (ascensionCinematicAudio !== state) return
+      try {
+        window.speechSynthesis?.cancel()
+      } catch {
+        /* noop */
+      }
+      stopVoicesByKind('ascension-cine')
+    }, Math.max(600, duration * 1000 - 420)),
+  )
+}
+
+function playAscensionReducedCue(tier) {
+  const base = tier === 'collapse' ? 150 : tier === 'overload' ? 190 : 250
+  createTone({
+    type: 'sine',
+    from: base,
+    to: base * 0.5,
+    duration: 0.5,
+    gain: 0.18,
+    kind: 'ascension-cine',
+  })
+  createNoise({
+    type: 'bandpass',
+    frequency: 2400,
+    duration: 0.18,
+    gain: 0.08,
+    kind: 'ascension-cine',
+  })
+  if (tier === 'reduction') {
+    createTone({
+      type: 'sine',
+      from: 2093,
+      to: 2093,
+      duration: 0.55,
+      gain: 0.14,
+      delay: 0.42,
+      kind: 'ascension-cine',
+    })
+  }
+}
+
+export function playAscensionCinematicAudio(
+  tier,
+  durationMs = 3600,
+  reduced = false,
+) {
+  stopAscensionCinematicAudio({ restore: false })
+  if (typeof window === 'undefined' || audioMuted.value) return
+  const ctx = ensureContext()
+  if (!ctx || !masterGain) return
+  if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+  stopBgm()
+  const duration = Math.max(0.9, durationMs / 1000)
+  const state = { tier, timers: [], whisper: tier === 'collapse' }
+  ascensionCinematicAudio = state
+  if (reduced) {
+    playAscensionReducedCue(tier)
+    return
+  }
+  if (tier === 'reduction') playReductionCinematicAudio(duration)
+  else if (tier === 'overload') playOverloadCinematicAudio(duration)
+  else if (tier === 'collapse') playCollapseCinematicAudio(duration, state)
+}
+
+export function stopAscensionCinematicAudio({ restore = true } = {}) {
+  const state = ascensionCinematicAudio
+  ascensionCinematicAudio = null
+  if (state) {
+    for (const timer of state.timers) window.clearTimeout(timer)
+    state.timers = []
+    if (state.whisper) {
+      try {
+        window.speechSynthesis?.cancel()
+      } catch {
+        /* noop */
+      }
+    }
+  }
+  stopVoicesByKind('ascension-cine')
+  if (restore && !audioMuted.value && unlocked) startBgm()
 }
 
 function resetCrisisAudioElement() {
@@ -713,6 +1254,8 @@ export function unlockAudio() {
 
 export function disposeAudio() {
   unlocked = false
+  stopAscensionCinematicAudio({ restore: false })
+  teardownEpochAudioChain()
   stopCrisisQteAudio()
   stopCrisisAlarm()
   stopAllVoices()
@@ -773,8 +1316,15 @@ function applyMuteState() {
     stopBgm()
     stopVisualizerLoop()
     pauseCrisisAlarmPlayback()
+    if (ascensionCinematicAudio?.whisper) {
+      try {
+        window.speechSynthesis?.cancel()
+      } catch {
+        /* noop */
+      }
+    }
   } else if (unlocked) {
-    startBgm()
+    if (!ascensionCinematicAudio) startBgm()
     if (crisisAlarmActive) playCrisisAudio()
     if (qteAudioRequested) startCrisisQteAudio()
   }
@@ -833,7 +1383,20 @@ export function toggleAudioMute() {
 }
 
 function trackVoice(sourceNode, nodes, kind = 'sfx') {
-  const voice = { sourceNode, nodes, kind, released: false }
+  const voice = {
+    sourceNode,
+    nodes,
+    kind,
+    released: false,
+    stop() {
+      try {
+        sourceNode.stop()
+      } catch {
+        /* noop */
+      }
+      release()
+    },
+  }
   activeVoices.add(voice)
   const release = () => {
     if (voice.released) return
@@ -848,16 +1411,7 @@ function trackVoice(sourceNode, nodes, kind = 'sfx') {
     }
   }
   sourceNode.addEventListener('ended', release, { once: true })
-  return {
-    stop() {
-      try {
-        sourceNode.stop()
-      } catch {
-        /* noop */
-      }
-      release()
-    },
-  }
+  return voice
 }
 
 function stopVoicesByKind(kind) {

@@ -1,10 +1,9 @@
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
-import { formatMultiplier } from '../composables/useGameState'
+import { formatMultiplier, formatScientific } from '../composables/useGameState'
 import {
   RADAR_CATEGORIES,
   RADAR_RARITIES,
-  RADAR_TEST_MODE,
   RADAR_TOTAL_NODES,
   radarNodeSignal,
 } from '../composables/radarData'
@@ -15,6 +14,7 @@ const game = inject('game')
 
 const {
   radarCapturedCount,
+  radarCollectionComplete,
   radarCategoryState,
   radarCompletedCategories,
   radarNodeBonusPercent,
@@ -22,12 +22,17 @@ const {
   radarGlobalMultiplier,
   radarBurstActive,
   radarBurstCountdownLabel,
-  radarBurstNextLabel,
+  radarOverflowReward,
   radarOverloadScanActive,
   radarOverloadScanLabel,
   radarScanChance,
-  radarNextScanSeconds,
+  radarScanIntervalLabel,
+  radarNextScanLabel,
+  radarBurstChanceLabel,
+  radarAutoCaptureEnabled,
+  radarCycleModeLabel,
   captureRadarBurst,
+  captureRadarOverflow,
 } = game
 
 const RARITY_GLYPHS = {
@@ -39,7 +44,9 @@ const RARITY_GLYPHS = {
 const selectedCategoryId = ref(RADAR_CATEGORIES[0].id)
 const selectedNodeId = ref(RADAR_CATEGORIES[0].nodes[0].id)
 const capturePulse = ref(false)
+const overflowNotice = ref('')
 let captureTimer = null
+let overflowTimer = null
 
 const selectedCategory = computed(
   () =>
@@ -67,6 +74,20 @@ const scanChanceLabel = computed(
 )
 const overloadChanceLabel = computed(() =>
   radarOverloadScanActive.value ? '×4 锁定稀有' : '标准协议',
+)
+const burstStateLabel = computed(() => {
+  if (radarCollectionComplete.value) return '已归档'
+  if (radarBurstActive.value) return '窗口开启'
+  if (radarAutoCaptureEnabled.value) return '自动接管'
+  return `${radarBurstChanceLabel.value} / 扫描`
+})
+const footerModeLabel = computed(() => {
+  if (radarCollectionComplete.value) return 'PERFECT ARCHIVE // ALL NODES SEALED'
+  if (radarOverloadScanActive.value) return 'OVERLOAD MODE // 90S SCAN'
+  return 'PASSIVE MODE // 30MIN SCAN'
+})
+const overflowRewardLabel = computed(() =>
+  formatScientific(radarOverflowReward.value),
 )
 
 function rarityMeta(node) {
@@ -97,6 +118,22 @@ function handleEmergencyCapture() {
   }, 2800)
 }
 
+function handleOverflowConvert() {
+  if (!captureRadarOverflow()) return
+  capturePulse.value = true
+  overflowNotice.value = '[ 溢出转化 ] 节点已满，已转化为算力'
+  window.clearTimeout(captureTimer)
+  window.clearTimeout(overflowTimer)
+  captureTimer = window.setTimeout(() => {
+    capturePulse.value = false
+    captureTimer = null
+  }, 2800)
+  overflowTimer = window.setTimeout(() => {
+    overflowNotice.value = ''
+    overflowTimer = null
+  }, 4000)
+}
+
 function closeOnEscape(event) {
   if (event.key !== 'Escape') return
   emit('close')
@@ -105,6 +142,7 @@ function closeOnEscape(event) {
 onMounted(() => window.addEventListener('keydown', closeOnEscape))
 onBeforeUnmount(() => {
   window.clearTimeout(captureTimer)
+  window.clearTimeout(overflowTimer)
   window.removeEventListener('keydown', closeOnEscape)
 })
 </script>
@@ -166,7 +204,7 @@ onBeforeUnmount(() => {
           {{ radarCapturedCount }} / {{ RADAR_TOTAL_NODES }}
         </span>
         <span class="radar-panel__topline-mode">
-          {{ RADAR_TEST_MODE ? 'TEST CYCLE 30S' : 'STABLE CYCLE' }}
+          {{ radarCycleModeLabel }}
         </span>
       </div>
 
@@ -188,6 +226,31 @@ onBeforeUnmount(() => {
           紧急捕获
         </button>
       </div>
+
+      <div v-else-if="radarCollectionComplete" class="radar-perfect-banner">
+        <span class="radar-perfect-banner__seal" aria-hidden="true">✦</span>
+        <div class="radar-perfect-banner__copy">
+          <p class="radar-perfect-banner__title">
+            [ 系统完美 ] 所有高维算力节点已归档 | 持续提供永久加成
+          </p>
+          <p class="radar-perfect-banner__meta">
+            溢出转化就绪 // 单次转化 ≈ {{ overflowRewardLabel }} 算力 · 相当于 1 小时产出
+          </p>
+        </div>
+        <button
+          type="button"
+          class="radar-overflow-btn"
+          @click="handleOverflowConvert"
+        >
+          溢出转化
+        </button>
+      </div>
+
+      <Transition name="radar-overflow">
+        <p v-if="overflowNotice" class="radar-overflow-notice">
+          {{ overflowNotice }}
+        </p>
+      </Transition>
 
       <div class="radar-panel__body">
         <aside class="radar-panel__categories">
@@ -233,7 +296,7 @@ onBeforeUnmount(() => {
             <span class="radar-scan-card__label">被动扫描 // PASSIVE</span>
             <div class="radar-scan-card__row">
               <span>判定间隔</span>
-              <strong>10 秒</strong>
+              <strong>{{ radarScanIntervalLabel }}</strong>
             </div>
             <div class="radar-scan-card__row">
               <span>成功概率</span>
@@ -243,7 +306,11 @@ onBeforeUnmount(() => {
             </div>
             <div class="radar-scan-card__row">
               <span>下次判定</span>
-              <strong>{{ radarNextScanSeconds }}s</strong>
+              <strong>{{ radarNextScanLabel }}</strong>
+            </div>
+            <div class="radar-scan-card__row">
+              <span>突发判定</span>
+              <strong>{{ radarBurstChanceLabel }} / 次</strong>
             </div>
             <div class="radar-scan-card__row">
               <span>稀有锁定</span>
@@ -251,8 +318,18 @@ onBeforeUnmount(() => {
                 {{ overloadChanceLabel }}
               </strong>
             </div>
+            <div class="radar-scan-card__row">
+              <span>自动捕获</span>
+              <strong :class="radarAutoCaptureEnabled ? 'text-emerald-300' : undefined">
+                {{ radarAutoCaptureEnabled ? '在线' : '未接入' }}
+              </strong>
+            </div>
             <p class="radar-scan-card__note">
-              扫描成功解析一个未捕获节点 图鉴全满后每次判定把扫描余量转化为算力
+              {{
+                radarCollectionComplete
+                  ? '图鉴全满 // 每次扫描判定把扫描余量转化为算力 突发异常协议已终止'
+                  : `每 ${radarScanIntervalLabel} 判定一次 图鉴进度越高成功率越高 ${radarBurstChanceLabel} 概率触发突发异常`
+              }}
             </p>
           </div>
         </aside>
@@ -359,7 +436,7 @@ onBeforeUnmount(() => {
             {{
               selectedNodeCaptured
                 ? selectedNode.description
-                : `信号强度 ${selectedSignal}% · 该节点仍被噪声遮蔽 保持被动扫描 等待突发异常窗口开启`
+                : `信号强度 ${selectedSignal}% · 该节点仍被噪声遮蔽 保持被动扫描 等待 ${radarBurstChanceLabel} 突发判定`
             }}
           </p>
 
@@ -404,7 +481,7 @@ onBeforeUnmount(() => {
               过载扫描 // OVERLOAD SCAN
             </div>
             <div class="radar-buff__timer">{{ radarOverloadScanLabel }}</div>
-            <p>被动扫描概率 ×4 成功时必定锁定未捕获的稀有或终焉节点</p>
+            <p>过载期间每 90 秒判定一次 扫描概率 ×4 且锁定稀有或终焉节点</p>
           </div>
 
           <div class="radar-detail__telemetry">
@@ -414,12 +491,18 @@ onBeforeUnmount(() => {
             </div>
             <div>
               <span>下次判定</span>
-              <strong>{{ radarNextScanSeconds }} 秒</strong>
+              <strong>{{ radarNextScanLabel }}</strong>
             </div>
             <div>
               <span>下次异常</span>
-              <strong :class="{ 'text-red-300': radarBurstActive }">
-                {{ radarBurstActive ? '窗口开启' : radarBurstNextLabel }}
+              <strong
+                :class="{
+                  'text-red-300': radarBurstActive,
+                  'text-amber-300': radarCollectionComplete,
+                  'text-emerald-300': radarAutoCaptureEnabled && !radarBurstActive,
+                }"
+              >
+                {{ burstStateLabel }}
               </strong>
             </div>
             <div>
@@ -436,8 +519,18 @@ onBeforeUnmount(() => {
           >
             紧急捕获 // 剩余 {{ radarBurstCountdownLabel }}
           </button>
+          <div v-else-if="radarCollectionComplete" class="radar-detail__perfect">
+            <p>系统完美 // 突发异常协议已终止 节点溢出持续转化</p>
+            <button
+              type="button"
+              class="radar-overflow-btn radar-overflow-btn--wide"
+              @click="handleOverflowConvert"
+            >
+              溢出转化 // 1 小时 CPS
+            </button>
+          </div>
           <p v-else class="radar-detail__hint">
-            突发异常窗口开启后此处出现紧急捕获入口 捕获成功获得 10 分钟过载扫描
+            突发异常为每次被动扫描 {{ radarBurstChanceLabel }} 概率 窗口开启后可手动紧急捕获 接入智械矩阵 [ 自动雷达捕获 ] 后静默接管
           </p>
         </aside>
       </div>
@@ -447,7 +540,7 @@ onBeforeUnmount(() => {
         <span>节点增益 +{{ radarNodeBonusPercent }}% · 分类终极 ×{{ formatMultiplier(radarCategoryMultiplier) }}</span>
         <span>GLOBAL OUTPUT ×{{ formatMultiplier(radarGlobalMultiplier) }}</span>
         <span class="radar-panel__footer-mode">
-          {{ RADAR_TEST_MODE ? 'TEST MODE // 30S BURST' : 'STABLE MODE // 90MIN AVG' }}
+          {{ footerModeLabel }}
         </span>
       </footer>
     </div>

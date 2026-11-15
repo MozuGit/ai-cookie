@@ -124,7 +124,7 @@ const baseActions = computed(() => [
     id: 'start-crisis',
     code: 'FORCE_ALIGNMENT_CRISIS',
     label: '强制触发对齐危机',
-    detail: '立即进入重力失衡 QTE',
+    detail: '立即进入负载失衡 QTE',
     event: 'start-crisis',
     feedback: '对齐危机已强制触发',
   },

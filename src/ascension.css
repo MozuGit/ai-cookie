@@ -783,14 +783,18 @@
 
 .asc-tier__footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.3rem 0.5rem;
   margin-top: 0.55rem;
 }
 
 .asc-tier__reset {
+  min-width: 0;
+  flex: 1 1 auto;
   font-size: 7px;
+  line-height: 1.5;
   letter-spacing: 0.1em;
   color: rgba(148, 163, 184, 0.55);
 }
@@ -858,7 +862,7 @@
   filter:
     drop-shadow(0 0 3px var(--best-tone, #fbbf24))
     drop-shadow(0 0 7px var(--best-glow, rgba(251, 191, 36, 0.5)));
-  animation: asc-best-orbit 1.4s linear infinite;
+  animation: asc-best-signal 1.4s linear infinite;
 }
 
 .asc-best-tag {
@@ -2736,7 +2740,7 @@
   }
 }
 
-@keyframes asc-best-orbit {
+@keyframes asc-best-signal {
   from {
     stroke-dashoffset: 0;
   }
@@ -2976,16 +2980,6 @@
   animation: asc-fx-collapse-pulse 1.8s ease-out forwards;
 }
 
-.asc-fx--restart {
-  background: #ffffff;
-  animation: asc-fx-restart 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-body.asc-fx-shake .app-shell,
-body.asc-fx-shake .ascension-hub__frame {
-  animation: asc-fx-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
 .ascension-complete-banner {
   position: fixed;
   top: 1.15rem;
@@ -3105,42 +3099,4 @@ body.asc-fx-shake .ascension-hub__frame {
   }
 }
 
-@keyframes asc-fx-restart {
-  0% {
-    opacity: 0;
-  }
-  7% {
-    opacity: 1;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
 
-@keyframes asc-fx-shake {
-  0%,
-  100% {
-    transform: translate(0, 0);
-  }
-  12% {
-    transform: translate(-3px, 2px);
-  }
-  24% {
-    transform: translate(3px, -2px);
-  }
-  38% {
-    transform: translate(-2px, -1px);
-  }
-  52% {
-    transform: translate(2px, 2px);
-  }
-  66% {
-    transform: translate(-1px, 1px);
-  }
-  82% {
-    transform: translate(1px, -1px);
-  }
-}

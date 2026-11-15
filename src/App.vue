@@ -19,6 +19,8 @@ import AchievementPanel from './components/AchievementPanel.vue'
 import AchievementToast from './components/AchievementToast.vue'
 import AscensionBanner from './components/AscensionBanner.vue'
 import AscensionHub from './components/AscensionHub.vue'
+import EpochRebirthOverlay from './components/EpochRebirthOverlay.vue'
+import AscensionCinematicOverlay from './components/AscensionCinematicOverlay.vue'
 import OriginTree from './components/OriginTree.vue'
 import GlobalMilestoneToast from './components/GlobalMilestoneToast.vue'
 import RadarPanel from './components/RadarPanel.vue'
@@ -142,6 +144,7 @@ const {
   automationAllActive,
   toggleAutomation,
   toggleAllAutomation,
+  setAutoAscensionStrategy,
   alignCore,
   beginCrisisNudge,
   endCrisisNudge,
@@ -166,6 +169,13 @@ const {
   adminSkipCrisis,
   adminWipeSave,
   hydrated,
+  isSpeedrunMode,
+  speedrunPhase,
+  speedrunPhaseInfo,
+  speedrunRemainingLabel,
+  speedrunNotice,
+  startSpeedrunMode,
+  exitSpeedrunMode,
   tourStage,
   mainQuestCard,
   mainQuestPhases,
@@ -187,16 +197,22 @@ const {
   highestCompute,
   overclockCores,
   originCode,
+  originTotalLevels,
   totalOverloads,
   totalCollapses,
   epochRestarts,
+  epochRebirth,
+  completeEpochRebirth,
   lifetimeRootEarned,
   lifetimeOriginEarned,
   ascensionNotice,
   ascensionFx,
+  ascensionCinematic,
   ascensionComplete,
+  completeAscensionCinematic,
   radarUnlocked,
   radarCapturedCount,
+  radarCollectionComplete,
   radarTotalNodes,
   radarCategoryState,
   radarNodeBonusPercent,
@@ -346,7 +362,9 @@ let devtoolsViewportBaseline = null
 
 // 全流程智能指针 | 主线未完成且未手动关闭时持续提供目标
 const guideEligible = computed(() => {
-  if (!hydrated.value || mainQuestCompleted.value) return false
+  if (!hydrated.value) return false
+  if (isSpeedrunMode.value) return true
+  if (mainQuestCompleted.value) return false
   if (!guidesEnabled.value) return false
   return Boolean(mainQuestCard.value)
 })
@@ -458,8 +476,8 @@ const coachingGuideLive = computed(() => {
         'crisis-exit',
         'hub-close',
         'red',
-        '关闭终端并稳定重力',
-        '退出飞升终端 回到重力平衡仪表盘',
+        '关闭终端并稳定总线',
+        '退出飞升终端 回到负载平衡仪表盘',
         '左右微调指针 · 保持在绿色安全区',
       )
     }
@@ -467,7 +485,7 @@ const coachingGuideLive = computed(() => {
       'crisis-balance',
       'core',
       'red',
-      '重力失衡',
+      '负载失衡',
       '左右微调稳定指针 对齐度充满解除危机',
       '指针滑出绿色安全区会流失对齐度',
     )
@@ -794,7 +812,7 @@ const coachingGuideLive = computed(() => {
       'takeover',
       'core',
       'amber',
-      '接管重力失衡 // 对齐核心',
+      '接管负载失衡 // 对齐核心',
       '危机爆发后点击高亮对齐核心 左右微调稳定指针',
       '对齐度充满 100% 即可收回调度权',
     )
@@ -806,9 +824,9 @@ const coachingGuideLive = computed(() => {
         'topology-node',
         'topology-node',
         'amber',
-        '点亮 1 个神经星树节点',
+        '点亮 1 个神经矩阵节点',
         '打开 [ 自动化终端 ] 点击节点查看详情 再次点击点亮',
-        `消耗 ${formatNumber(topologyNode.cost).text} 核心源码 · 星树节点永久保留`,
+        `消耗 ${formatNumber(topologyNode.cost).text} 核心源码 · 矩阵节点永久保留`,
       )
     }
     return strip(
@@ -816,7 +834,7 @@ const coachingGuideLive = computed(() => {
       'core',
       'cyan',
       '积累核心源码',
-      '暂无可点亮的星树节点 完成架构降维积累核心源码',
+      '暂无可点亮的矩阵节点 完成架构降维积累核心源码',
       `首个节点需要 ${formatNumber(topologyCards[0]?.cost ?? 0).text} 核心源码`,
     )
   }
@@ -1302,7 +1320,7 @@ const guideDock = computed(() => {
 
 const IDLE_HINT_DELAY_MS = 60000
 const MODULE_LABELS = {
-  topology: '神经星树',
+  topology: '神经矩阵',
   architecture: '架构升级站',
 }
 
@@ -1575,6 +1593,14 @@ function openAscensionHub(tab = 'tiers') {
   infoOpen.value = false
 }
 
+watch(challengeActive, (id, previousId) => {
+  if (!isSpeedrunMode.value || !id || previousId) return
+  settingsOpen.value = false
+  achievementOpen.value = false
+  originTreeOpen.value = false
+  openAscensionHub('challenges')
+})
+
 function openRadar() {
   closeDrawer()
   radarOpen.value = true
@@ -1627,6 +1653,7 @@ function isTypingTarget(target) {
 }
 
 function handleGlobalKeydown(event) {
+  if (ascensionCinematic.value) return
   if (event.key === 'Escape') {
     achievementOpen.value = false
   }
@@ -1926,7 +1953,6 @@ watch(matrixAutoClickPulse, () => {
 
 watch(reducedMotion, (reduce) => {
   document.documentElement.classList.toggle('reduce-motion', reduce)
-  if (reduce) document.body.classList.remove('asc-fx-shake')
   resetBassVisual()
 }, { immediate: true })
 
@@ -1938,14 +1964,23 @@ watch(
   () => ascensionFx.value?.tier,
   (tier) => {
     if (tier) playSound('ascend')
-    document.body.classList.toggle(
-      'asc-fx-shake',
-      tier === 'reduction' && !reducedMotion.value,
-    )
   },
 )
 
+const spatialHeaderEl = ref(null)
+let railTopObserver = null
+function syncRailTop() {
+  const el = spatialHeaderEl.value
+  if (!el) return
+  const top = Math.ceil(el.getBoundingClientRect().bottom) + 12
+  document.documentElement.style.setProperty('--rail-top', `${top}px`)
+}
+
 onMounted(() => {
+  syncRailTop()
+  railTopObserver = new ResizeObserver(syncRailTop)
+  if (spatialHeaderEl.value) railTopObserver.observe(spatialHeaderEl.value)
+  window.addEventListener('resize', syncRailTop)
   unsubscribeBass = subscribeBassVisualizer(applyBassVisual)
   document.addEventListener('click', unlockAudio, { capture: true, passive: true })
   window.addEventListener('keydown', unlockAudio, { capture: true })
@@ -1976,12 +2011,14 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  railTopObserver?.disconnect()
+  railTopObserver = null
+  window.removeEventListener('resize', syncRailTop)
   if (unsubscribeBass) {
     unsubscribeBass()
     unsubscribeBass = null
   }
   resetBassVisual()
-  document.body.classList.remove('asc-fx-shake')
   window.clearInterval(coachingGuideTimer)
   coachingGuideTimer = null
   for (const timer of popTimers) window.clearTimeout(timer)
@@ -2040,7 +2077,51 @@ onBeforeUnmount(() => {
       <span :style="{ height: `${crisisProgress}%` }"></span>
     </div>
 
+    <div
+      v-if="isSpeedrunMode"
+      class="speedrun-topbar"
+      role="status"
+    >
+      <span class="speedrun-topbar__dot" aria-hidden="true"></span>
+      <span class="speedrun-topbar__label">
+        [ 急速体验模式已激活 // 预计耗时 30 分钟 ]
+      </span>
+      <span class="speedrun-topbar__phase">
+        P{{ speedrunPhase }}/4 · {{ speedrunPhaseInfo?.name }} · {{ speedrunRemainingLabel }}
+      </span>
+      <span
+        class="speedrun-topbar__effects"
+        :title="speedrunPhaseInfo?.effects?.join(' · ')"
+      >
+        {{ speedrunPhaseInfo?.effects?.join(' · ') }}
+      </span>
+      <button
+        type="button"
+        class="speedrun-topbar__exit"
+        data-guide="speedrun-exit"
+        @click="exitSpeedrunMode"
+      >
+        退出急速模式
+      </button>
+    </div>
+
+    <Transition name="speedrun-notice">
+      <div
+        v-if="speedrunNotice"
+        :key="speedrunNotice.key"
+        class="speedrun-notice"
+        :class="`speedrun-notice--${speedrunNotice.tone || 'cyan'}`"
+        role="alert"
+        aria-live="assertive"
+      >
+        <span class="speedrun-notice__scan" aria-hidden="true"></span>
+        <p class="speedrun-notice__title">{{ speedrunNotice.title }}</p>
+        <p class="speedrun-notice__text">{{ speedrunNotice.text }}</p>
+      </div>
+    </Transition>
+
     <header
+      ref="spatialHeaderEl"
       class="spatial-header relative z-10 mx-auto flex w-full max-w-[1680px] items-center justify-between gap-5 px-4 pb-4 pt-5 sm:px-6 lg:px-8"
     >
       <div class="flex min-w-0 items-center gap-3">
@@ -2167,6 +2248,7 @@ onBeforeUnmount(() => {
           v-if="originCode > 0 || epochRestarts > 0 || originTreeUnlocked"
           type="button"
           class="origin-chip"
+          data-guide="open-origin"
           :title="`起源代码 ${formatNumber(originCode).text} // 点击打开起源树`"
           :aria-label="`起源代码 ${formatNumber(originCode).text} 打开起源树`"
           @click="openOriginTree"
@@ -2296,9 +2378,9 @@ onBeforeUnmount(() => {
         </button>
 
         <div
-          class="hidden items-stretch divide-x divide-cyan-800/50 border border-cyan-700/50 bg-[#0b1628]/70 md:flex"
+          class="status-strip hidden items-stretch divide-x divide-cyan-800/50 border border-cyan-700/50 bg-[#0b1628]/70 md:flex"
         >
-          <div class="px-3.5 py-2">
+          <div class="status-strip__cell--uplink px-3.5 py-2">
             <p class="text-[9px] tracking-[0.22em] text-slate-500">上行链路</p>
             <p class="mt-1 flex items-center gap-1.5 text-[11px] tracking-[0.14em] text-emerald-400">
               <span class="status-dot status-dot--emerald"></span>
@@ -2462,7 +2544,7 @@ onBeforeUnmount(() => {
 
     <footer class="spatial-foot">
       <span>自主智能集群 // 算力是唯一货币</span>
-      <span class="hidden sm:inline">延迟 4MS // 扇区 CN-07 // 在线率 100%</span>
+      <span class="hidden sm:inline">延迟 4MS // 机房 CN-07 // 在线率 100%</span>
     </footer>
 
     <div class="spatial-docks" aria-label="全息收纳舱">
@@ -2523,7 +2605,10 @@ onBeforeUnmount(() => {
             {{ radarCapturedCount }}/{{ radarTotalNodes }} 图鉴
           </span>
         </span>
-        <span v-if="radarBurstActive" class="spatial-dock-btn__badge">!</span>
+        <span
+          v-if="radarBurstActive && !radarCollectionComplete"
+          class="spatial-dock-btn__badge"
+        >!</span>
       </button>
 
       <button
@@ -3007,8 +3092,8 @@ onBeforeUnmount(() => {
                 class="radar-summary__stat"
                 :class="{ 'radar-summary__stat--live': radarOverloadScanActive }"
               >
-                <small>超频扫描</small>
-                <strong>{{ radarOverloadScanActive ? '×4' : '待机' }}</strong>
+                <small>过载扫描</small>
+                <strong>{{ radarOverloadScanActive ? '×4 · 90S' : '待机' }}</strong>
               </div>
             </div>
 
@@ -3039,7 +3124,12 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div v-if="radarBurstActive" class="radar-burst-line">
+            <div v-if="radarCollectionComplete" class="radar-perfect-line">
+              <p>[ 系统完美 ] 所有高维算力节点已归档 | 持续提供永久加成</p>
+              <button type="button" @click="openRadar">查看档案</button>
+            </div>
+
+            <div v-else-if="radarBurstActive" class="radar-burst-line">
               <p>⚠ 突发异常窗口开启 紧急捕获收益提升</p>
               <button type="button" @click="openRadar">立即接入</button>
             </div>
@@ -3050,7 +3140,7 @@ onBeforeUnmount(() => {
 
             <p class="holo-note">
               雷达被动扫描游离节点 捕获后永久提升产出
-              <strong>突发异常窗口内捕获收益翻倍</strong> 超频扫描临时扩大搜索范围
+              <strong>突发异常会静默接管或开启紧急捕获窗口</strong> 过载扫描临时扩大搜索范围
             </p>
           </div>
         </template>
@@ -3325,7 +3415,7 @@ onBeforeUnmount(() => {
       :open="activeDrawer === 'automation'"
       side="center"
       title="自动化终端"
-      eyebrow="AUTOMATION TERMINAL // 神经星树"
+      eyebrow="AUTOMATION TERMINAL // 神经矩阵"
       icon="automation"
       tone="violet"
       @close="closeDrawer"
@@ -3345,6 +3435,7 @@ onBeforeUnmount(() => {
             :embedded="true"
             @toggle="toggleAutomation"
             @toggle-all="toggleAllAutomation"
+            @strategy="setAutoAscensionStrategy"
             @open-matrix="openCyberMatrix"
           />
 
@@ -3354,7 +3445,7 @@ onBeforeUnmount(() => {
             class="drill-hub-link"
             @click="openCyberMatrix"
           >
-            进入智械矩阵 // 自动化星图
+            进入智械矩阵 // 自动化网络
           </button>
 
           <p class="holo-note">
@@ -3362,7 +3453,7 @@ onBeforeUnmount(() => {
             <strong>智械觉醒后</strong> 总控台统一开关
           </p>
           <p class="holo-note">
-            神经星树首次点击查看详情 再次点击消耗
+            神经矩阵首次点击查看详情 再次点击消耗
             <strong>核心源码</strong> 点亮 节点永久保留 部分节点解锁服务器权限
           </p>
         </div>
@@ -3370,7 +3461,7 @@ onBeforeUnmount(() => {
         <div class="automation-drawer__column">
           <div class="automation-drawer__topology">
             <div class="bay-topline">
-              <span class="holo-chip holo-chip--violet">神经星树</span>
+              <span class="holo-chip holo-chip--violet">神经矩阵</span>
               <span class="holo-chip">
                 {{ litTopologyCount }}/{{ topologyCards.length }} 节点 · 永久保留
               </span>
@@ -3388,7 +3479,7 @@ onBeforeUnmount(() => {
             />
             <ModuleLock
               v-else
-              module-name="神经星树"
+              module-name="神经矩阵"
               hint="需完成首次架构降维以解密"
               :progress="rebuildProgress"
               :progress-label="`${formatScientific(highestCompute)} / ${REBUILD_UNLOCK_COMPUTE} CU`"
@@ -3405,7 +3496,7 @@ onBeforeUnmount(() => {
           :progress-label="`${formatScientific(highestCompute)} / ${REBUILD_UNLOCK_COMPUTE} CU`"
         />
         <p class="holo-note mt-3">
-          完成第一次架构降维 自动化总线与神经星树上线
+          完成第一次架构降维 自动化总线与神经矩阵上线
         </p>
       </template>
     </HoloDrawer>
@@ -3488,7 +3579,7 @@ onBeforeUnmount(() => {
           role="status"
           aria-live="polite"
         >
-          重力平衡完成 // 调度权收回 全局算力产出永久 +50%
+          负载平衡完成 // 调度权收回 全局算力产出永久 +50%
         </div>
       </Transition>
 
@@ -3595,7 +3686,7 @@ onBeforeUnmount(() => {
 
       <Transition name="radar-alert">
         <button
-          v-if="radarBurstActive && !radarOpen"
+          v-if="radarBurstActive && !radarCollectionComplete && !radarOpen"
           type="button"
           class="radar-burst-alert"
           @click="openRadar"
@@ -3653,6 +3744,24 @@ onBeforeUnmount(() => {
       <Transition name="cyber-matrix">
         <CyberMatrix v-if="cyberMatrixOpen" @close="cyberMatrixOpen = false" />
       </Transition>
+
+      <Transition name="epoch-rebirth">
+        <EpochRebirthOverlay
+          v-if="epochRebirth"
+          :first-run="epochRebirth.firstRun"
+          :era-count="epochRebirth.eraCount"
+          @complete="completeEpochRebirth"
+          @skip="completeEpochRebirth"
+        />
+      </Transition>
+
+      <AscensionCinematicOverlay
+        v-if="ascensionCinematic"
+        :key="ascensionCinematic.key"
+        :tier="ascensionCinematic.tier"
+        :reduced="ascensionCinematic.reduced"
+        @complete="completeAscensionCinematic"
+      />
     </Teleport>
   </div>
 
@@ -3690,8 +3799,11 @@ onBeforeUnmount(() => {
 
   <SettingsPanel
     :open="settingsOpen"
+    :speedrun-active="isSpeedrunMode"
     @close="settingsOpen = false"
     @open-about="handleOpenAbout"
+    @start-speedrun="startSpeedrunMode"
+    @exit-speedrun="exitSpeedrunMode"
   />
 
   <SystemInfoPanel

@@ -89,8 +89,8 @@ const rightDisabled = computed(
 
 const statusTitle = computed(() => {
   if (props.rescueForced) return '强制修正 · 指针回收中'
-  if (rescueActive.value) return '重力时停 · 等待修正'
-  return props.safe ? '对齐充能中 100%' : '重力失衡 · 对齐流失'
+  if (rescueActive.value) return '时序时停 · 等待修正'
+  return props.safe ? '对齐充能中 100%' : '负载失衡 · 对齐流失'
 })
 
 const statusRate = computed(() => {
@@ -120,7 +120,7 @@ function nudge(direction) {
     :class="{ 'qte-shell--rescue': rescueActive }"
     role="dialog"
     aria-modal="true"
-    aria-label="重力平衡"
+    aria-label="负载平衡"
   >
     <div class="qte-shell__backdrop" aria-hidden="true"></div>
 
@@ -139,8 +139,8 @@ function nudge(direction) {
       <span class="qte-panel__corner qte-panel__corner--br" aria-hidden="true"></span>
 
       <header class="qte-header">
-        <p class="qte-header__eyebrow">重力平衡协议 // GRAVITY BALANCE</p>
-        <h2 class="qte-header__title">对齐危机 · 重力失衡</h2>
+        <p class="qte-header__eyebrow">负载平衡协议 // LOAD BALANCE</p>
+        <h2 class="qte-header__title">对齐危机 · 负载失衡</h2>
         <p class="qte-header__sub">指针稳定在绿色安全区 充满对齐度解除危机</p>
       </header>
 
