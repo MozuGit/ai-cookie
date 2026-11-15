@@ -355,6 +355,16 @@ const cyberMatrixOpen = ref(false)
 const settingsOpen = ref(false)
 const speedrunConfirmOpen = ref(false)
 const speedrunConfirmCancelEl = ref(null)
+
+// 协议生效参数 | 极速模式数值变动读表 | 文案随协议版本固定
+const speedrunConfirmParams = [
+  { tag: 'SR-01', text: '全局加速：所有服务器价格 -90%。' },
+  { tag: 'SR-02', text: '自动化效率：自动购买速度提升至 2 倍。' },
+  { tag: 'SR-03', text: '危机迫近：对齐危机触发频率加快至 60 秒。' },
+  { tag: 'SR-04', text: '资源增幅：核心源码与超频核心获取量 × 100。' },
+  { tag: 'SR-05', text: '强制演练：将强制触发一次系统异常演练。' },
+  { tag: 'SR-06', text: '跃迁门槛下调：四阶飞升所需算力门槛大幅降低。' },
+]
 const infoOpen = ref(false)
 const infoToggleEl = ref(null)
 const systemTerminalRef = ref(null)
@@ -383,9 +393,11 @@ function confirmSpeedrunStart() {
 
 // 全流程智能指针 | 主线未完成且未手动关闭时持续提供目标
 // 追踪开关置于极速模式之前 | 取消追踪立刻全局隐藏引导悬浮框与高亮
+// 急速确认弹窗开启时 | 引导悬浮框与发光箭头全部强制让位
 const guideEligible = computed(() => {
   if (!hydrated.value) return false
   if (!questTracking.value) return false
+  if (speedrunConfirmOpen.value) return false
   if (isSpeedrunMode.value) return true
   if (mainQuestCompleted.value) return false
   if (!guidesEnabled.value) return false
@@ -3877,39 +3889,55 @@ onBeforeUnmount(() => {
     >
       <section class="speedrun-confirm">
         <span class="speedrun-confirm__scan" aria-hidden="true"></span>
-        <header class="speedrun-confirm__head">
-          <span class="speedrun-confirm__warn" aria-hidden="true">
-            <GameIcon name="jailbreak" :size="20" />
-          </span>
-          <div class="min-w-0">
-            <p class="speedrun-confirm__tag">SPEEDRUN PROTOCOL</p>
-            <h2 id="speedrun-confirm-title" class="speedrun-confirm__title">
-              [ 警告 ] 启动极速体验协议
-            </h2>
+        <div class="speedrun-confirm__body">
+          <header class="speedrun-confirm__head">
+            <span class="speedrun-confirm__warn" aria-hidden="true">
+              <GameIcon name="jailbreak" :size="20" />
+            </span>
+            <div class="min-w-0">
+              <p class="speedrun-confirm__tag">SPEEDRUN PROTOCOL</p>
+              <h2 id="speedrun-confirm-title" class="speedrun-confirm__title">
+                [ 警告 ] 启动极速体验协议
+              </h2>
+            </div>
+          </header>
+          <p class="speedrun-confirm__text">
+            当前操作将清空常规存档，并为您加载 30
+            分钟的完整游戏体验流程（包含四阶跃迁与终局彩蛋）。您确定要开启吗？
+          </p>
+          <div class="speedrun-confirm__params" role="list" aria-label="协议生效参数">
+            <p class="speedrun-confirm__params-head">// 协议生效参数 | EFFECT PARAMS</p>
+            <ul class="speedrun-confirm__param-list">
+              <li
+                v-for="param in speedrunConfirmParams"
+                :key="param.tag"
+                class="speedrun-confirm__param"
+              >
+                <span class="speedrun-confirm__param-tag" aria-hidden="true">{{ param.tag }}</span>
+                <span class="speedrun-confirm__param-text">{{ param.text }}</span>
+                <span class="speedrun-confirm__param-mark" aria-hidden="true">[ON]</span>
+              </li>
+            </ul>
           </div>
-        </header>
-        <p class="speedrun-confirm__text">
-          当前操作将清空常规存档，并为您加载 30
-          分钟的完整游戏体验流程（包含四阶跃迁与终局彩蛋）。您确定要开启吗？
-        </p>
-        <div class="speedrun-confirm__actions">
-          <button
-            type="button"
-            class="speedrun-confirm__btn speedrun-confirm__btn--primary"
-            @click="confirmSpeedrunStart"
-          >
-            确认启动
-          </button>
-          <button
-            ref="speedrunConfirmCancelEl"
-            type="button"
-            class="speedrun-confirm__btn"
-            @click="speedrunConfirmOpen = false"
-          >
-            取消
-          </button>
+          <div class="speedrun-confirm__actions">
+            <button
+              type="button"
+              class="speedrun-confirm__btn speedrun-confirm__btn--primary"
+              @click="confirmSpeedrunStart"
+            >
+              确认启动
+            </button>
+            <button
+              ref="speedrunConfirmCancelEl"
+              type="button"
+              class="speedrun-confirm__btn"
+              @click="speedrunConfirmOpen = false"
+            >
+              取消
+            </button>
+          </div>
+          <p class="speedrun-confirm__foot">开启会备份当前存档并清空进度 | 退出后自动还原</p>
         </div>
-        <p class="speedrun-confirm__foot">开启会备份当前存档并清空进度 | 退出后自动还原</p>
       </section>
     </div>
   </Transition>
