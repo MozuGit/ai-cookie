@@ -983,6 +983,8 @@ export function useGameState() {
     ? getSpeedrunPhaseId(Date.now() - speedrunStartedAt.value)
     : 0
   let speedrunSeenPhase = bootSpeedrunPhase
+  // 跃迁门槛播报去重 | 每次急速运行每个门槛只弹一次
+  const speedrunGatesNotified = new Set()
   const initialCrisisWindow =
     isSpeedrunMode.value && bootSpeedrunPhase === 1
       ? SPEEDRUN_TUNING.crisisIntervalMs
@@ -1027,15 +1029,16 @@ export function useGameState() {
   const speedrunComplete = computed(
     () => isSpeedrunMode.value && speedrunElapsedMs.value >= SPEEDRUN_TOTAL_MS,
   )
+  // 急速数值曲线 | 全程生效 | 不随阶段开关
   const speedrunPriceFactor = computed(() =>
-    isSpeedrunMode.value && speedrunPhase.value === 1
-      ? SPEEDRUN_TUNING.priceMultiplier
-      : 1,
+    isSpeedrunMode.value ? SPEEDRUN_TUNING.priceMultiplier : 1,
   )
   const speedrunAutoBuyMultiplier = computed(() =>
-    isSpeedrunMode.value && speedrunPhase.value === 1
-      ? SPEEDRUN_TUNING.autoBuyMultiplier
-      : 1,
+    isSpeedrunMode.value ? SPEEDRUN_TUNING.autoBuyMultiplier : 1,
+  )
+  // 急速产出曲线 | 每台服务器额外 +5% 全局产出 | 节点越多曲线越陡 | 普通模式恒为 1
+  const speedrunNodeSurgeMultiplier = computed(() =>
+    isSpeedrunMode.value ? 1 + totalNodes.value * SPEEDRUN_TUNING.nodeSurge : 1,
   )
   const speedrunSourceMultiplier = computed(() =>
     isSpeedrunMode.value && speedrunPhase.value >= 2
@@ -1476,9 +1479,16 @@ export function useGameState() {
     hasAlgorithm('routing') ? 1 + totalNodes.value * 0.02 : 1,
   )
 
+  // 阶层越迁 | 急速模式台阶从 +0.1x 强化到 +1x | 全局倍率曲线更陡
+  const classLeapStep = computed(() =>
+    isSpeedrunMode.value ? SPEEDRUN_TUNING.classLeapStep : 0.1,
+  )
+
   const algorithmMilestoneMultiplier = computed(() =>
     hasAlgorithm('classLeap')
-      ? 1 + Math.floor(totalNodes.value / topologyMilestoneDivisor.value) * 0.1
+      ? 1 +
+        Math.floor(totalNodes.value / topologyMilestoneDivisor.value) *
+          classLeapStep.value
       : 1,
   )
 
@@ -1495,7 +1505,9 @@ export function useGameState() {
       if (hasAlgorithm('multithread')) bonus += 1
       if (hasAlgorithm('routing')) bonus += totalNodes.value * 0.02
       if (hasAlgorithm('classLeap')) {
-        bonus += Math.floor(totalNodes.value / topologyMilestoneDivisor.value) * 0.1
+        bonus +=
+          Math.floor(totalNodes.value / topologyMilestoneDivisor.value) *
+          classLeapStep.value
       }
       if (hasAlgorithm('logSingularity') && totalAlignedCompute.value.gt(1)) {
         bonus += totalAlignedCompute.value.log10()
@@ -1551,6 +1563,8 @@ export function useGameState() {
   )
 
   const priceGrowth = computed(() => {
+    // 急速模式压平价格增长曲线 1.15 → 1.05 | 优先级最高 | 不动飞升门槛只动底层曲线
+    if (isSpeedrunMode.value) return SPEEDRUN_TUNING.priceGrowth
     if (challengeRestrictions.value?.priceGrowth) {
       return challengeRestrictions.value.priceGrowth
     }
@@ -2207,6 +2221,7 @@ export function useGameState() {
       .mul(big(overclockMultiplier.value))
       .mul(big(crisisSurgeMultiplier.value))
       .mul(big(algorithmGlobalMultiplier.value))
+      .mul(big(speedrunNodeSurgeMultiplier.value))
       .mul(big(architectureTimeWarpMultiplier.value))
       .mul(big(challengeIndependentMultiplier.value))
       .mul(big(challengeGlobalTimeMultiplier.value))
@@ -2829,11 +2844,16 @@ export function useGameState() {
       return {
         ...building,
         baseCps: Math.floor(
-          clampGameAmount(unitBaseCps * algorithmGlobalMultiplier.value),
+          clampGameAmount(
+            unitBaseCps * algorithmGlobalMultiplier.value * speedrunNodeSurgeMultiplier.value,
+          ),
         ),
         totalCps: Math.floor(
           clampGameAmount(
-            unitBaseCps * algorithmGlobalMultiplier.value * building.count,
+            unitBaseCps *
+              algorithmGlobalMultiplier.value *
+              speedrunNodeSurgeMultiplier.value *
+              building.count,
           ),
         ),
         index: index + 1,
@@ -5296,7 +5316,7 @@ export function useGameState() {
   }
 
   function showSpeedrunNotice({ tone = 'amber', title, text }, duration = 6000) {
-    if (speedrunNotice.value?.tone === 'red' && tone !== 'red') return
+    if (speedrunNotice.value?.tone === 'red' && tone !== 'red') return false
     speedrunNotice.value = {
       key: Date.now(),
       tone,
@@ -5307,6 +5327,7 @@ export function useGameState() {
     speedrunNoticeTimer = window.setTimeout(() => {
       speedrunNotice.value = null
     }, duration)
+    return true
   }
 
   function persistSpeedrunMeta() {
@@ -5591,6 +5612,35 @@ export function useGameState() {
     speedrunProgressSignature = ''
   }
 
+  // 跃迁门槛即时示意 | 门槛保持原始阈值 1e10 / 1e100 / 1e350 / 1e1000 | 曲线加速不降门槛
+  // 达成瞬间立刻弹报 让玩家无需等待引导刷新
+  const SPEEDRUN_GATE_NOTICES = [
+    {
+      id: 'reduction',
+      check: () => rebuildUnlocked.value,
+      title: '跃迁门槛达成 // 架构降维',
+      text: '最高算力已达 1e10 // 打开右侧跃迁终端执行第一次架构降维',
+    },
+    {
+      id: 'overload',
+      check: () => peakAlignedCompute.value.gte(tierThresholds.value.overload),
+      title: '跃迁门槛达成 // 算力超载',
+      text: '峰值算力已达 1e100 // 打开跃迁终端执行算力超载',
+    },
+    {
+      id: 'collapse',
+      check: () => peakAlignedCompute.value.gte(tierThresholds.value.collapse),
+      title: '跃迁门槛达成 // 逻辑坍缩',
+      text: '峰值算力已达逻辑坍缩门槛 // 打开跃迁终端执行逻辑坍缩',
+    },
+    {
+      id: 'restart',
+      check: () => peakAlignedCompute.value.gte(tierThresholds.value.restart),
+      title: '跃迁门槛达成 // 重启纪元',
+      text: '峰值算力已达重启门槛 // 执行重启纪元完成转生循环',
+    },
+  ]
+
   function applySpeedrunTick() {
     if (!isSpeedrunMode.value) return
     const phase = speedrunPhase.value
@@ -5613,6 +5663,20 @@ export function useGameState() {
 
     ensureSpeedrunForcedChallenge()
     ensureSpeedrunOriginGift()
+
+    for (const gate of SPEEDRUN_GATE_NOTICES) {
+      if (speedrunGatesNotified.has(gate.id)) continue
+      let ready = false
+      try {
+        ready = gate.check()
+      } catch {
+        ready = false
+      }
+      if (!ready) continue
+      // 红字公告优先期间新弹报会被丢弃 | 门槛弹报须真正展示后才标记已通知 否则永久丢失
+      if (!showSpeedrunNotice({ tone: 'amber', title: gate.title, text: gate.text }, 7000)) continue
+      speedrunGatesNotified.add(gate.id)
+    }
 
     if (speedrunPhaseDone.value) {
       speedrunLastProgressAt = Date.now()

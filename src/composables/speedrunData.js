@@ -8,10 +8,17 @@ export const SPEEDRUN_STUCK_MS = 2 * 60 * 1000
 
 export const SPEEDRUN_TUNING = {
   priceMultiplier: 0.1,
-  autoBuyMultiplier: 2,
+  // 急速价格增长曲线 | 普通 1.15 | 急速压到 1.05 | 采购成本几乎不暴涨
+  priceGrowth: 1.05,
+  // 自动采购 tick | 急速每秒 20 次 | 全程生效
+  autoBuyMultiplier: 20,
   crisisIntervalMs: 60 * 1000,
   sourceMultiplier: 100,
   overclockMultiplier: 100,
+  // 产出曲线 | 每台服务器额外提供 +5% 全局产出 | 买得越多 倍率越陡
+  nodeSurge: 0.05,
+  // 阶层越迁强化 | 普通 每 25 台 +0.1x | 急速 每 25 台 +1x
+  classLeapStep: 1,
   collapseThreshold: '1e100',
   restartThreshold: '1e200',
   originGift: 1000,
