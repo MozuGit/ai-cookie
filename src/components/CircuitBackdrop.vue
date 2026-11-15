@@ -12,9 +12,11 @@ const canvasEl = ref(null)
 const systemReduce = ref(false)
 const mobileUi = ref(false)
 
-// 急速模式 | 光点流速与拖尾按阶段递增 P4 达到极致
+// 急速模式 | 光点流速按阶段递增 | 极速感由光球增亮变大表现 | 拖尾不随阶段拉长
 const SPEEDRUN_FLOW = { 1: 2, 2: 2.3, 3: 2.6, 4: 3 }
-const SPEEDRUN_TRAIL = { 1: 1.7, 2: 1.9, 3: 2.2, 4: 2.6 }
+const SPEEDRUN_GLOW = { 1: 1.15, 2: 1.3, 3: 1.45, 4: 1.6 }
+// 流速上限 | 超过后逐帧位移大于光球直径 | 流光会断裂成频闪
+const FLOW_CAP = 6.5
 
 const fxActive = computed(
   () =>
@@ -36,9 +38,12 @@ const MOBILE_FPS = 30
 const KICK_DECAY = 6.2
 const GLOW_SIZE = 64
 const PACKET_TONES = [
-  { glow: '103, 232, 249', core: '#f0fdff' },
-  { glow: '110, 231, 183', core: '#f0fdf4' },
+  { glow: '103, 232, 249', core: '#67e8f9' },
+  { glow: '110, 231, 183', core: '#6ee7b7' },
 ]
+// 拖尾 | 严格沿走线的短渐变 | 不用直线弦连接
+const TRAIL_MIN = 3
+const TRAIL_MAX = 6
 
 let ctx = null
 let board = null
@@ -80,7 +85,8 @@ let scrollFrame = 0
 let watchdogTimer = 0
 let contextLost = false
 let speedFlow = 1
-let speedTrail = 1
+let speedGlow = 1
+let clock = 0
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -190,9 +196,10 @@ function createPacket(initial = false) {
     trace,
     dist: initial ? Math.random() * trace.length : 0,
     speed: rand(70, 170),
-    tail: rand(18, 36),
     size: rand(1.1, 2.5),
     tone: Math.floor(Math.random() * PACKET_TONES.length),
+    seed: rand(0, TAU),
+    breathRate: rand(1.4, 2.4),
   }
 }
 
@@ -383,9 +390,10 @@ function buildLinks() {
       trace,
       dist: rand(0, trace.length),
       speed: rand(46, 96),
-      tail: rand(10, 20),
       size: rand(0.9, 1.6),
       tone: 1,
+      seed: rand(0, TAU),
+      breathRate: rand(1.4, 2.4),
     })
   }
 }
@@ -419,9 +427,9 @@ function buildGlowSprites() {
     if (!g) return null
     const radius = GLOW_SIZE / 2
     const gradient = g.createRadialGradient(radius, radius, 0, radius, radius, radius)
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.95)')
-    gradient.addColorStop(0.2, `rgba(${tone.glow}, 0.6)`)
-    gradient.addColorStop(0.55, `rgba(${tone.glow}, 0.15)`)
+    gradient.addColorStop(0, `rgba(${tone.glow}, 0.9)`)
+    gradient.addColorStop(0.22, `rgba(${tone.glow}, 0.55)`)
+    gradient.addColorStop(0.55, `rgba(${tone.glow}, 0.16)`)
     gradient.addColorStop(1, `rgba(${tone.glow}, 0)`)
     g.fillStyle = gradient
     g.fillRect(0, 0, GLOW_SIZE, GLOW_SIZE)
@@ -536,39 +544,56 @@ function updatePacket(packet, dt, flow) {
       packet.speed = next.speed
       packet.size = next.size
       packet.tone = next.tone
-      packet.tail = next.tail
+      packet.seed = next.seed
+      packet.breathRate = next.breathRate
     }
     packet.dist = 0
   }
 }
 
+// 光点渲染 | 短渐变拖尾严格沿走线采样 | 发光圆球呼吸 | 拖尾不随急速倍增
 function drawPacket(packet, dt, flow, offsetX, offsetY) {
   updatePacket(packet, dt, flow)
-  const head = sampleTrace(packet.trace, packet.dist)
-  const tail = sampleTrace(
-    packet.trace,
-    Math.max(0, packet.dist - packet.tail * speedTrail * (1 + kick * 0.9)),
-  )
   const tone = PACKET_TONES[packet.tone]
+  const head = sampleTrace(packet.trace, packet.dist)
   const headX = head.x + offsetX
   const headY = head.y + offsetY
+  const breathe = 0.82 + 0.18 * Math.sin(clock * packet.breathRate + packet.seed)
 
-  ctx.globalAlpha = 0.3 + kick * 0.28
-  ctx.strokeStyle = `rgba(${tone.glow}, 0.85)`
-  ctx.lineWidth = Math.max(0.7, packet.size * 0.8)
-  ctx.beginPath()
-  ctx.moveTo(tail.x + offsetX, tail.y + offsetY)
-  ctx.lineTo(headX, headY)
-  ctx.stroke()
+  // 拖尾 | 沿路径多段采样渐变衰减 | 长度限制在 3~6px
+  const trailLen = Math.min(
+    packet.dist,
+    clamp(TRAIL_MIN + kick * 2 + (speedGlow - 1), TRAIL_MIN, TRAIL_MAX),
+  )
+  if (trailLen > 0.5) {
+    const steps = 2
+    ctx.lineCap = 'round'
+    ctx.lineWidth = Math.max(0.8, packet.size * 0.75)
+    ctx.strokeStyle = tone.core
+    // 拖尾与光核用 source-over | 保持青绿本色 | 叠加过曝会泛白
+    ctx.globalCompositeOperation = 'source-over'
+    for (let i = 0; i < steps; i += 1) {
+      const from = sampleTrace(packet.trace, packet.dist - (trailLen * (i + 1)) / steps)
+      const to = sampleTrace(packet.trace, packet.dist - (trailLen * i) / steps)
+      ctx.globalAlpha = (0.42 + kick * 0.2) * breathe * (1 - i / steps)
+      ctx.beginPath()
+      ctx.moveTo(from.x + offsetX, from.y + offsetY)
+      ctx.lineTo(to.x + offsetX, to.y + offsetY)
+      ctx.stroke()
+    }
+  }
 
+  // 发光圆球 | 径向渐变光晕 | 极速感来自增亮变大而非拉长拖尾
   const sprite = glowSprites[packet.tone]
   if (sprite) {
-    const radius = packet.size * (7 + kick * 5)
-    ctx.globalAlpha = Math.min(1, 0.5 + kick * 0.5)
+    ctx.globalCompositeOperation = 'lighter'
+    const radius = Math.min(18, packet.size * (5 + kick * 3) * speedGlow * (0.93 + breathe * 0.07))
+    ctx.globalAlpha = Math.min(0.8, (0.34 + kick * 0.26 + (speedGlow - 1) * 0.22) * breathe)
     ctx.drawImage(sprite, headX - radius, headY - radius, radius * 2, radius * 2)
   }
 
-  ctx.globalAlpha = Math.min(1, 0.86 + kick * 0.14)
+  ctx.globalCompositeOperation = 'source-over'
+  ctx.globalAlpha = Math.min(0.85, (0.55 + kick * 0.25) * breathe)
   ctx.fillStyle = tone.core
   ctx.beginPath()
   ctx.arc(headX, headY, packet.size * 0.62, 0, TAU)
@@ -664,7 +689,7 @@ function drawScene(dt, staticFrame) {
   drawLinks(staticFrame)
 
   if (!staticFrame && dt > 0) {
-    drawPackets(dt, (1 + kick * 2.4 + bass * 0.7) * speedFlow)
+    drawPackets(dt, Math.min(FLOW_CAP, (1 + kick * 2.4 + bass * 0.7) * speedFlow))
   }
 
   ctx.globalAlpha = 1
@@ -685,7 +710,7 @@ function updateDebug() {
   canvas.dataset.flow = (1 + kick * 2.4 + bass * 0.7).toFixed(2)
   canvas.dataset.speedPhase = String(props.phase)
   canvas.dataset.speedFlow = speedFlow.toFixed(2)
-  canvas.dataset.speedTrail = speedTrail.toFixed(2)
+  canvas.dataset.speedGlow = speedGlow.toFixed(2)
   canvas.dataset.links = String(linkTraces.length)
   canvas.dataset.dpr = dpr.toFixed(2)
   canvas.dataset.canvasWidth = String(width)
@@ -763,6 +788,7 @@ function tick(now) {
 
   const dt = Math.min(0.05, Math.max(0, (now - lastFrameAt) / 1000))
   lastFrameAt = now
+  clock = (clock + dt) % 1024
   kick *= Math.exp(-dt * KICK_DECAY)
   if (kick < 0.002) kick = 0
 
@@ -916,7 +942,7 @@ function syncMobileUi() {
 function syncSpeedrun() {
   const active = fxActive.value
   speedFlow = active ? SPEEDRUN_FLOW[props.phase] ?? 1 : 1
-  speedTrail = active ? SPEEDRUN_TRAIL[props.phase] ?? 1 : 1
+  speedGlow = active ? SPEEDRUN_GLOW[props.phase] ?? 1 : 1
   updateDebug()
 }
 
