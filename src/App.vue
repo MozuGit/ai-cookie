@@ -52,7 +52,6 @@ import {
 import { useWheelScrollChain } from './composables/useWheelScrollChain'
 import { buildQuestFallbackGuide } from './composables/questGuideTargets'
 import {
-  ALIGNMENT_TARGET,
   JAILBREAK_UNLOCK_REBUILDS,
   REBUILD_UNLOCK_COMPUTE,
   formatMultiplier,
@@ -1474,8 +1473,7 @@ const coreClickLocked = computed(() => challengeClickDisabled.value)
 const challengeLockLabel = computed(
   () => challengeDefinition.value?.name ?? '异常演练',
 )
-const displayAlignment = computed(() => alignment.value)
-const displayAlignmentLabel = computed(() => Math.floor(displayAlignment.value))
+const displayAlignmentLabel = computed(() => Math.floor(alignment.value))
 const bonusPercent = computed(() =>
   Math.round((productionMultiplier.value - 1) * 100),
 )
@@ -2469,6 +2467,16 @@ onBeforeUnmount(() => {
             <p class="text-[9px] tracking-[0.22em] text-slate-500">版本</p>
             <p class="mt-1 text-[11px] tracking-[0.14em] text-slate-400">V1.0.0</p>
           </div>
+          <div
+            class="px-3.5 py-2"
+            :title="`本地存档 // 自动保存 · ${saveLabel}`"
+            :aria-label="`本地存档 自动保存 ${saveLabel}`"
+          >
+            <p class="text-[9px] tracking-[0.22em] text-slate-500">本地存档</p>
+            <p class="mt-1 text-[11px] tabular-nums tracking-[0.14em] text-slate-400">
+              {{ saveLabel }}
+            </p>
+          </div>
         </div>
       </div>
     </header>
@@ -2581,36 +2589,6 @@ onBeforeUnmount(() => {
             >
               AC 自动点击 {{ matrixAutoClickRate }}/s
             </span>
-          </div>
-
-          <div class="core-stage__foot">
-            <div class="core-stage__alignment-head">
-              <div>
-                <p class="core-stage__alignment-label">对齐度</p>
-                <p class="core-stage__alignment-sub">
-                  累计算力 / 目标 {{ formatNumber(ALIGNMENT_TARGET).text }} CU
-                </p>
-              </div>
-              <p class="core-stage__alignment-value">
-                {{ displayAlignmentLabel }}<span>%</span>
-              </p>
-            </div>
-
-            <div
-              class="core-stage__bar"
-              role="progressbar"
-              aria-label="对齐度"
-              :aria-valuenow="displayAlignmentLabel"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            >
-              <span :style="{ width: `${displayAlignment}%` }"></span>
-            </div>
-
-            <div class="core-stage__save">
-              <span>本地存档 // 自动保存</span>
-              <span class="tabular-nums">{{ saveLabel }}</span>
-            </div>
           </div>
         </div>
       </section>

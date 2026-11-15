@@ -94,7 +94,7 @@
   height: 100%;
   min-height: 0;
   max-height: calc(100dvh - 8.5rem);
-  grid-template-rows: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
+  grid-template-rows: minmax(min-content, 1fr) auto minmax(min-content, 0.6fr);
   justify-items: center;
   align-items: center;
   gap: clamp(0.35rem, 1vh, 0.8rem);
@@ -325,152 +325,6 @@
   box-shadow: 0 0 9px rgba(248, 113, 113, 0.95);
 }
 
-/* 对齐度 / 危机倒计时 */
-.core-stage__foot {
-  width: min(720px, 92%);
-  border: 1px solid rgba(34, 211, 238, 0.22);
-  background:
-    linear-gradient(100deg, rgba(4, 16, 27, 0.78), rgba(3, 10, 18, 0.5));
-  padding: clamp(0.4rem, 1vh, 0.65rem) clamp(0.7rem, 2vw, 1.1rem);
-  clip-path: polygon(
-    0 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% 100%,
-    12px 100%,
-    0 calc(100% - 12px)
-  );
-}
-
-.core-stage__alignment-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.8rem;
-}
-
-.core-stage__alignment-label {
-  color: #64748b;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-}
-
-.core-stage__alignment-sub {
-  margin-top: 0.15rem;
-  color: #155e75;
-  font-size: 9px;
-  letter-spacing: 0.06em;
-}
-
-.core-stage__alignment-value {
-  flex: none;
-  color: #67e8f9;
-  font-size: clamp(1.35rem, 2.4vw, 1.9rem);
-  font-weight: 700;
-  line-height: 1;
-  text-shadow: 0 0 14px rgba(34, 211, 238, 0.5);
-}
-
-.core-stage__alignment-value span {
-  margin-left: 0.1rem;
-  color: #155e75;
-  font-size: 0.62em;
-  font-weight: 600;
-}
-
-.core-stage__alignment-note {
-  margin-top: 0.22rem;
-  color: #fca5a5;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-}
-
-.core-stage--crisis .core-stage__foot {
-  border-color: rgba(248, 113, 113, 0.3);
-}
-
-.core-stage--crisis .core-stage__alignment-value {
-  color: #fca5a5;
-  text-shadow: 0 0 14px rgba(248, 113, 113, 0.6);
-}
-
-.core-stage__bar {
-  position: relative;
-  margin-top: 0.4rem;
-  height: 9px;
-  overflow: hidden;
-  border: 1px solid rgba(34, 211, 238, 0.5);
-  background: #040d18;
-  padding: 2px;
-}
-
-.core-stage__bar > span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #155e75, #22d3ee, #a5f3fc);
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.55);
-  transition: width 0.2s ease-out;
-}
-
-.core-stage--crisis .core-stage__bar {
-  border-color: rgba(248, 113, 113, 0.6);
-}
-
-.core-stage--crisis .core-stage__bar > span {
-  background: linear-gradient(90deg, #7f1d1d, #ef4444, #fca5a5);
-  box-shadow: 0 0 12px rgba(248, 113, 113, 0.6);
-}
-
-.core-stage__foot-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-top: 0.25rem;
-  color: #475569;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-}
-
-.core-stage__crisis-meter {
-  height: 4px;
-  flex: 1 1 auto;
-  max-width: 46%;
-  border: 1px solid rgba(127, 29, 29, 0.4);
-  background: #0a111c;
-  padding: 1px;
-}
-
-.core-stage__crisis-meter > span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #7f1d1d, #ef4444, #fca5a5);
-}
-
-.core-stage__save {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  margin-top: 0.22rem;
-  border-top: 1px solid rgba(34, 211, 238, 0.13);
-  padding-top: 0.22rem;
-  color: #475569;
-  font-size: 8.5px;
-  letter-spacing: 0.12em;
-}
-
-.core-stage__save > span:first-child {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.core-stage__save > span:last-child {
-  flex: none;
-}
-
 /* ---------- 四向全息 dock ---------- */
 .spatial-docks {
   position: fixed;
@@ -612,7 +466,7 @@
 
 .spatial-dock-btn--bottom {
   left: 50%;
-  bottom: 1.05rem;
+  bottom: 1.5rem;
   transform: translateX(-50%);
   padding: 0.6rem 1rem;
   border-color: rgba(34, 211, 238, 0.52);
@@ -2443,7 +2297,8 @@
 }
 
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .spatial-header .status-strip {
+  /* header 单行紧凑档 | status-strip 仅保留最右 本地存档 单元 */
+  .spatial-header .status-strip > div:not(:last-child) {
     display: none;
   }
 
@@ -2540,11 +2395,6 @@
 
   .core-stage__manual {
     margin-top: 0.35rem;
-  }
-
-  .core-stage__foot {
-    padding-top: 0.4rem;
-    padding-bottom: 0.4rem;
   }
 }
 
@@ -2657,28 +2507,6 @@
   .core-stage__manual {
     margin-top: 0.4rem;
     font-size: 8.5px;
-  }
-
-  .core-stage__foot {
-    width: 100%;
-    padding: 0.5rem 0.65rem;
-  }
-
-  .core-stage__alignment-label {
-    font-size: 8px;
-  }
-
-  .core-stage__alignment-sub {
-    font-size: 8px;
-  }
-
-  .core-stage__alignment-value {
-    font-size: 1.2rem;
-  }
-
-  .core-stage__foot-row,
-  .core-stage__save {
-    font-size: 8px;
   }
 
   /* 底部四按钮导航 */
