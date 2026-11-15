@@ -29,12 +29,10 @@ const COMMAND_PROMPT = 'root@singularity:~#'
 const COLLAPSE_AUDIO_MS = 2800
 const MAX_LOG_LINES = 76
 const FLOOD_RUSH_INTERVAL = 10
-const FLOOD_SLOW_INTERVAL = 34
-const FLOOD_SILENCE_INTERVAL = 70
 const FLOOD_RAGE_INTERVAL = 4
-const COMMAND_TYPE_MS = 20
-const COMMAND_BEAT_MS = 260
+const COMMAND_TYPE_MS = 40
 const COMMAND_ENTER_MS = 500
+const PURGE_BLACK_MS = 700
 const PURGE_RAGE_MS = 1100
 const SINGULARITY_BLACKOUT_MS = 1000
 const SINGULARITY_STAGGER_MS = 950
@@ -139,7 +137,6 @@ const memoirIndex = ref(0)
 const memoryIndex = ref(-1)
 const memoryVisible = ref(false)
 const typedCommand = ref('')
-const silenced = ref(false)
 const purgeFiles = ref(0)
 const commandEntered = ref(false)
 const flashBurst = ref(false)
@@ -677,50 +674,42 @@ function stopRain() {
 
 async function runPurge() {
   phase.value = 'purge'
-  silenced.value = false
   typedCommand.value = ''
   commandEntered.value = false
   flashBurst.value = false
   singularityCount.value = 0
   stopRain()
   startEpochCollapseAudio(COLLAPSE_AUDIO_MS)
-  startFlood(FLOOD_RUSH_INTERVAL)
 
-  await wait(PURGE_RUSH_MS)
+  // 纯黑待机：底部只留提示符与闪烁光标
+  await wait(PURGE_BLACK_MS)
   if (disposed) return
 
-  phase.value = 'sudo'
-  startFlood(FLOOD_SLOW_INTERVAL)
+  // 缓缓键入删除命令
   await typeText(COMMAND_TEXT, (value) => {
     typedCommand.value = value
   }, COMMAND_TYPE_MS)
   if (disposed) return
 
-  // 敲完命令后的死寂一拍：日志压暗减速，随后回车
-  silenced.value = true
-  startFlood(FLOOD_SILENCE_INTERVAL)
-  await wait(COMMAND_BEAT_MS)
-  if (disposed) return
-
-  // 回车：整行命令落进滚动日志，像真实终端一样被打印并随日志上滚
-  commandEntered.value = true
-  floodLines.push(`${COMMAND_PROMPT} ${COMMAND_TEXT}`)
-  if (logEl.value) {
-    logEl.value.textContent = floodLines.join('\n')
-  }
+  // 停顿半秒 模拟按下回车
   await wait(COMMAND_ENTER_MS)
   if (disposed) return
 
-  // 回车 0.5s 后：日志刷屏拉到极限，屏幕剧烈闪烁
+  // 回车生效 命令行定格在日志区顶部 红色删除日志开始瀑布刷屏
+  commandEntered.value = true
+  startFlood(FLOOD_RUSH_INTERVAL)
+
+  await wait(PURGE_RUSH_MS)
+  if (disposed) return
+
   phase.value = 'rage'
-  silenced.value = false
   flashBurst.value = true
   playEpochShortCircuit()
   startFlood(FLOOD_RAGE_INTERVAL)
   await wait(PURGE_RAGE_MS)
   if (disposed) return
 
-  // 骤停：黑屏 1 秒
+  // 骤停：日志清空 全屏纯黑
   stopFlood()
   flashBurst.value = false
   floodLines = []
@@ -946,29 +935,23 @@ onBeforeUnmount(() => {
     <div
       v-if="isTerminalPhase"
       class="epoch-rebirth__terminal"
-      :class="{ 'is-silenced': silenced }"
       aria-hidden="true"
     >
-      <div class="epoch-rebirth__terminal-head">
+      <div v-if="commandEntered" class="epoch-rebirth__terminal-head">
         <span>[ SYSTEM PURGE ] // 物理格式化进行中</span>
         <span>{{ String(purgeFiles).padStart(5, '0') }} FILES</span>
       </div>
 
       <div class="epoch-rebirth__terminal-log">
-        <pre ref="logEl" class="epoch-rebirth__terminal-text"></pre>
-        <div
-          v-if="phase === 'sudo' && !commandEntered"
-          class="epoch-rebirth__command"
-          role="group"
-          aria-label="root 提权命令输入"
-        >
+        <div class="epoch-rebirth__command" role="group" aria-label="root 提权命令输入">
           <span class="epoch-rebirth__command-prompt">{{ COMMAND_PROMPT + ' ' }}</span>
           <span class="epoch-rebirth__command-typed">{{ typedCommand }}</span>
-          <span class="epoch-rebirth__command-caret" aria-hidden="true"></span>
+          <span v-if="!commandEntered" class="epoch-rebirth__command-caret" aria-hidden="true"></span>
         </div>
+        <pre ref="logEl" class="epoch-rebirth__terminal-text"></pre>
       </div>
 
-      <div class="epoch-rebirth__terminal-foot">
+      <div v-if="commandEntered" class="epoch-rebirth__terminal-foot">
         <span>deleting /dev/singularity</span>
         <span>KERNEL PANIC: DISABLED</span>
       </div>

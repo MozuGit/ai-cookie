@@ -240,20 +240,9 @@
   line-height: 1.36;
   letter-spacing: 0.015em;
   text-shadow: 0 0 9px rgba(239, 68, 68, 0.24);
-  transition: opacity 0.4s ease;
 }
 
-.epoch-rebirth__terminal.is-silenced .epoch-rebirth__terminal-text {
-  opacity: 0.48;
-}
-
-.epoch-rebirth__terminal.is-silenced .epoch-rebirth__terminal-head,
-.epoch-rebirth__terminal.is-silenced .epoch-rebirth__terminal-foot {
-  opacity: 0.5;
-  transition: opacity 0.4s ease;
-}
-
-/* 真实终端输入行：固定在滚动日志底部，亮绿高亮 */
+/* 命令行：纯黑键入 回车后定格在日志区顶部 随刷屏上滚 */
 .epoch-rebirth__command {
   display: flex;
   flex: none;
@@ -301,7 +290,7 @@
   flex-direction: column;
   justify-content: center;
   gap: 18px;
-  padding: 0 12vw;
+  padding: 14vh 12vw 0;
   background: #000;
 }
 
