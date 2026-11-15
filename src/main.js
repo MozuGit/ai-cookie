@@ -23,5 +23,6 @@ import './speedrun.css'
 import './epoch-rebirth.css'
 import './reduced-motion.css'
 import './ascension-cinematic.css'
+import './mobile-notice.css'
 
 createApp(App).mount('#app')

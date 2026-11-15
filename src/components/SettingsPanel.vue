@@ -3,11 +3,15 @@ import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { audioMuted, toggleAudioMute } from '../audio'
 import {
   numberFormatMode,
+  particlesEnabled,
   reducedMotion,
   setNumberFormat,
+  setParticlesEnabled,
   setReducedMotion,
   setShowConfirm,
+  setSpectrumEnabled,
   settings,
+  spectrumEnabled,
 } from '../composables/useSettings'
 
 const props = defineProps({
@@ -213,6 +217,38 @@ onBeforeUnmount(unbindKeys)
                 <span class="settings-row__desc">关闭屏幕震动与多余粒子特效 提升低端机性能</span>
               </span>
               <span class="settings-switch" :class="{ 'settings-switch--on': reducedMotion }" aria-hidden="true">
+                <span class="settings-switch__knob"></span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="settings-row settings-row--action"
+              role="switch"
+              :aria-checked="spectrumEnabled"
+              @click="setSpectrumEnabled(!spectrumEnabled)"
+            >
+              <span class="settings-row__copy">
+                <span class="settings-row__name">音频频谱律动</span>
+                <span class="settings-row__desc">BGM 低频能量驱动核心光晕与边框脉动 关闭可降负载</span>
+              </span>
+              <span class="settings-switch" :class="{ 'settings-switch--on': spectrumEnabled }" aria-hidden="true">
+                <span class="settings-switch__knob"></span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="settings-row settings-row--action"
+              role="switch"
+              :aria-checked="particlesEnabled"
+              @click="setParticlesEnabled(!particlesEnabled)"
+            >
+              <span class="settings-row__copy">
+                <span class="settings-row__name">背景粒子动效</span>
+                <span class="settings-row__desc">电路板数据流粒子持续运算 关闭后渲染为静态帧</span>
+              </span>
+              <span class="settings-switch" :class="{ 'settings-switch--on': particlesEnabled }" aria-hidden="true">
                 <span class="settings-switch__knob"></span>
               </span>
             </button>

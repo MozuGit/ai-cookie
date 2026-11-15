@@ -1,7 +1,7 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { subscribeBassVisualizer } from '../audio'
-import { reducedMotion } from '../composables/useSettings'
+import { particlesEnabled, reducedMotion } from '../composables/useSettings'
 
 const canvasEl = ref(null)
 
@@ -65,7 +65,7 @@ function rand(min, max) {
 }
 
 function staticMode() {
-  return reducedMotion.value || systemReduce
+  return reducedMotion.value || systemReduce || !particlesEnabled.value
 }
 
 function randomDirection() {
@@ -871,6 +871,7 @@ function syncSystemMotion() {
 }
 
 watch(reducedMotion, () => applyMode())
+watch(particlesEnabled, () => applyMode())
 
 onMounted(() => {
   syncSystemMotion()

@@ -5,6 +5,7 @@ const LEGACY_AUDIO_KEY = 'ai-cookie.audio.v1'
 
 const NUMBER_FORMATS = ['scientific', 'compact', 'chinese']
 const MOBILE_QUERY = '(max-width: 768px)'
+const MOBILE_UA_PATTERN = /Android|iPhone|iPad|iPod|Mobile|Windows Phone/i
 
 function isMobileViewport() {
   try {
@@ -18,13 +19,26 @@ function isMobileViewport() {
   }
 }
 
+export function isMobileDevice() {
+  try {
+    if (typeof navigator !== 'undefined' && MOBILE_UA_PATTERN.test(navigator.userAgent)) {
+      return true
+    }
+    return typeof window !== 'undefined' && window.innerWidth < 768
+  } catch {
+    return false
+  }
+}
+
 const DEFAULTS = {
-  version: 2,
+  version: 3,
   numberFormat: 'compact',
   muted: false,
   reducedMotion: isMobileViewport(),
   showConfirm: true,
   guides: true,
+  spectrum: !isMobileDevice(),
+  particles: !isMobileDevice(),
 }
 
 function readLegacyMuted() {
@@ -44,7 +58,7 @@ function readSettings() {
     if (!raw) return fallback
     const parsed = JSON.parse(raw)
     return {
-      version: 2,
+      version: 3,
       numberFormat: NUMBER_FORMATS.includes(parsed?.numberFormat)
         ? parsed.numberFormat
         : fallback.numberFormat,
@@ -58,6 +72,12 @@ function readSettings() {
           ? parsed.showConfirm
           : fallback.showConfirm,
       guides: typeof parsed?.guides === 'boolean' ? parsed.guides : fallback.guides,
+      spectrum:
+        typeof parsed?.spectrum === 'boolean' ? parsed.spectrum : fallback.spectrum,
+      particles:
+        typeof parsed?.particles === 'boolean'
+          ? parsed.particles
+          : fallback.particles,
     }
   } catch {
     return fallback
@@ -71,6 +91,8 @@ export const muted = computed(() => settings.value.muted)
 export const reducedMotion = computed(() => settings.value.reducedMotion)
 export const showConfirm = computed(() => settings.value.showConfirm)
 export const guidesEnabled = computed(() => settings.value.guides)
+export const spectrumEnabled = computed(() => settings.value.spectrum)
+export const particlesEnabled = computed(() => settings.value.particles)
 
 function persist() {
   try {
@@ -112,6 +134,20 @@ export function setGuidesEnabled(enabled) {
   const next = Boolean(enabled)
   if (settings.value.guides === next) return
   settings.value = { ...settings.value, guides: next }
+  persist()
+}
+
+export function setSpectrumEnabled(enabled) {
+  const next = Boolean(enabled)
+  if (settings.value.spectrum === next) return
+  settings.value = { ...settings.value, spectrum: next }
+  persist()
+}
+
+export function setParticlesEnabled(enabled) {
+  const next = Boolean(enabled)
+  if (settings.value.particles === next) return
+  settings.value = { ...settings.value, particles: next }
   persist()
 }
 

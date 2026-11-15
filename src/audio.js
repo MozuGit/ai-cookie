@@ -3,6 +3,7 @@ import {
   muted as audioMuted,
   reducedMotion,
   setMuted,
+  spectrumEnabled,
 } from './composables/useSettings'
 
 export { audioMuted }
@@ -149,6 +150,10 @@ watch(reducedMotion, () => {
   syncVisualizer()
 })
 
+watch(spectrumEnabled, () => {
+  syncVisualizer()
+})
+
 function handleBgmError() {
   const audio = bgmElement
   if (!audio) return
@@ -191,6 +196,7 @@ function ensureBgmElement() {
 
 function visualMotionAllowed() {
   return (
+    spectrumEnabled.value &&
     !audioMuted.value &&
     !reducedMotion.value &&
     !prefersReducedMotion &&

@@ -21,6 +21,7 @@ import AscensionBanner from './components/AscensionBanner.vue'
 import AscensionHub from './components/AscensionHub.vue'
 import EpochRebirthOverlay from './components/EpochRebirthOverlay.vue'
 import AscensionCinematicOverlay from './components/AscensionCinematicOverlay.vue'
+import MobileCompatNotice from './components/MobileCompatNotice.vue'
 import OriginTree from './components/OriginTree.vue'
 import GlobalMilestoneToast from './components/GlobalMilestoneToast.vue'
 import RadarPanel from './components/RadarPanel.vue'
@@ -2061,6 +2062,7 @@ onBeforeUnmount(() => {
     class="app-shell relative flex min-h-screen flex-col overflow-x-clip text-slate-300"
   >
     <CircuitBackdrop />
+    <MobileCompatNotice />
     <div class="bass-frame pointer-events-none fixed inset-0 z-[2]" aria-hidden="true"></div>
     <div ref="bassDebugEl" class="bass-debug" aria-hidden="true">Bass: 0.00</div>
     <div class="spatial-vignette" aria-hidden="true"></div>
