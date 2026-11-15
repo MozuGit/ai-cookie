@@ -8,7 +8,10 @@ const props = defineProps({
   phases: { type: Array, default: () => [] },
   completed: { type: Boolean, default: false },
   total: { type: Number, default: 24 },
+  tracking: { type: Boolean, default: true },
 })
+
+defineEmits(['toggle-tracking'])
 
 const mobileQuery =
   typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -86,6 +89,18 @@ function phaseTitle(phase) {
       <span class="main-quest__count">
         {{ completed ? total : (quest?.index ?? 0) }} / {{ total }}
       </span>
+      <button
+        v-if="!completed"
+        type="button"
+        class="main-quest__track"
+        :class="tracking ? 'main-quest__track--on' : 'main-quest__track--off'"
+        :aria-pressed="tracking"
+        :aria-label="tracking ? '取消追踪当前任务' : '追踪当前任务'"
+        :title="tracking ? '取消追踪 | 隐藏全屏引导悬浮框' : '追踪当前任务 | 显示引导悬浮框'"
+        @click="$emit('toggle-tracking')"
+      >
+        {{ tracking ? '[ ● 追踪中 ]' : '[ ○ 未追踪 ]' }}
+      </button>
       <button
         type="button"
         class="main-quest__toggle main-quest__toggle--mobile"

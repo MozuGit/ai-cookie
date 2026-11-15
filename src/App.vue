@@ -42,7 +42,13 @@ import {
   toggleAudioMute,
   unlockAudio,
 } from './audio'
-import { guidesEnabled, reducedMotion, setGuidesEnabled } from './composables/useSettings'
+import {
+  guidesEnabled,
+  questTracking,
+  reducedMotion,
+  setGuidesEnabled,
+  setQuestTracking,
+} from './composables/useSettings'
 import { useWheelScrollChain } from './composables/useWheelScrollChain'
 import { buildQuestFallbackGuide } from './composables/questGuideTargets'
 import {
@@ -376,8 +382,10 @@ function confirmSpeedrunStart() {
 }
 
 // 全流程智能指针 | 主线未完成且未手动关闭时持续提供目标
+// 追踪开关置于极速模式之前 | 取消追踪立刻全局隐藏引导悬浮框与高亮
 const guideEligible = computed(() => {
   if (!hydrated.value) return false
+  if (!questTracking.value) return false
   if (isSpeedrunMode.value) return true
   if (mainQuestCompleted.value) return false
   if (!guidesEnabled.value) return false
@@ -1270,6 +1278,7 @@ const activeDrawerTab = computed(() => {
 
 // 收纳舱关闭时指向舱门 | 打开时只指向舱内目标 | 页签不符时指向页签
 const globalGuide = computed(() => {
+  if (!guideEligible.value) return null
   const guide = smartGuide.value
   if (!guide) return null
   const entry = guideDrawerEntry(guide.target)
@@ -2476,6 +2485,8 @@ onBeforeUnmount(() => {
         :phases="mainQuestPhases"
         :completed="mainQuestCompleted"
         :total="mainQuestCount"
+        :tracking="questTracking"
+        @toggle-tracking="setQuestTracking(!questTracking)"
       />
     </div>
 

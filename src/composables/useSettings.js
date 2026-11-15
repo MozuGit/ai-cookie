@@ -37,6 +37,7 @@ const DEFAULTS = {
   reducedMotion: isMobileViewport(),
   showConfirm: true,
   guides: true,
+  questTracking: true,
   spectrum: !isMobileDevice(),
   particles: !isMobileDevice(),
 }
@@ -72,6 +73,10 @@ function readSettings() {
           ? parsed.showConfirm
           : fallback.showConfirm,
       guides: typeof parsed?.guides === 'boolean' ? parsed.guides : fallback.guides,
+      questTracking:
+        typeof parsed?.questTracking === 'boolean'
+          ? parsed.questTracking
+          : fallback.questTracking,
       spectrum:
         typeof parsed?.spectrum === 'boolean' ? parsed.spectrum : fallback.spectrum,
       particles:
@@ -91,6 +96,7 @@ export const muted = computed(() => settings.value.muted)
 export const reducedMotion = computed(() => settings.value.reducedMotion)
 export const showConfirm = computed(() => settings.value.showConfirm)
 export const guidesEnabled = computed(() => settings.value.guides)
+export const questTracking = computed(() => settings.value.questTracking)
 export const spectrumEnabled = computed(() => settings.value.spectrum)
 export const particlesEnabled = computed(() => settings.value.particles)
 
@@ -134,6 +140,13 @@ export function setGuidesEnabled(enabled) {
   const next = Boolean(enabled)
   if (settings.value.guides === next) return
   settings.value = { ...settings.value, guides: next }
+  persist()
+}
+
+export function setQuestTracking(enabled) {
+  const next = Boolean(enabled)
+  if (settings.value.questTracking === next) return
+  settings.value = { ...settings.value, questTracking: next }
   persist()
 }
 

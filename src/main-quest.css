@@ -252,6 +252,56 @@
   letter-spacing: 0.14em;
 }
 
+/* ---- 任务追踪开关 | 控制全局引导悬浮框显隐 ---- */
+.main-quest__track {
+  flex: none;
+  padding: 3px 6px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 9px;
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.main-quest__track--on {
+  border-color: rgba(34, 211, 238, 0.6);
+  background: rgba(34, 211, 238, 0.12);
+  color: #67e8f9;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.55);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.18);
+}
+
+.main-quest__track--on:hover,
+.main-quest__track--on:focus-visible {
+  border-color: rgba(103, 232, 249, 0.9);
+  background: rgba(34, 211, 238, 0.2);
+  color: #a5f3fc;
+}
+
+.main-quest__track--off {
+  border-color: rgba(100, 116, 139, 0.4);
+  background: rgba(15, 23, 42, 0.4);
+  color: #64748b;
+}
+
+.main-quest__track--off:hover,
+.main-quest__track--off:focus-visible {
+  border-color: rgba(148, 163, 184, 0.6);
+  background: rgba(30, 41, 59, 0.5);
+  color: #94a3b8;
+}
+
+.main-quest__track:focus-visible {
+  outline: 1px solid rgba(103, 232, 249, 0.7);
+  outline-offset: 2px;
+}
+
 .main-quest__phases {
   position: relative;
   z-index: 2;
@@ -653,6 +703,12 @@
   .main-quest__count {
     font-size: 8px;
     letter-spacing: 0.08em;
+  }
+
+  .main-quest__track {
+    padding: 4px 6px;
+    font-size: 8px;
+    letter-spacing: 0.06em;
   }
 
   .main-quest__toggle {
