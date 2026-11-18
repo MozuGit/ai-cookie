@@ -354,6 +354,23 @@ const cyberMatrixOpen = ref(false)
 const settingsOpen = ref(false)
 const speedrunConfirmOpen = ref(false)
 const speedrunConfirmCancelEl = ref(null)
+const SPEEDRUN_PROMPT_KEY = 'has_seen_speedrun_prompt'
+
+function readSpeedrunPromptSeen() {
+  try {
+    return localStorage.getItem(SPEEDRUN_PROMPT_KEY) === '1'
+  } catch {
+    return true
+  }
+}
+
+function writeSpeedrunPromptSeen() {
+  try {
+    localStorage.setItem(SPEEDRUN_PROMPT_KEY, '1')
+  } catch {
+    /* noop */
+  }
+}
 
 // 协议生效参数 | 极速模式数值变动读表 | 文案随协议版本固定
 const speedrunConfirmParams = [
@@ -380,9 +397,13 @@ let recentCoreClicks = []
 let devtoolsViewportBaseline = null
 
 watch(speedrunConfirmOpen, async (open) => {
-  if (!open) return
-  await nextTick()
-  speedrunConfirmCancelEl.value?.focus()
+  if (open) {
+    await nextTick()
+    speedrunConfirmCancelEl.value?.focus()
+    return
+  }
+  // 首访协议弹窗 | 确认 / 取消 / Esc / 遮罩点击任一关闭路径均落盘标记
+  writeSpeedrunPromptSeen()
 })
 
 function confirmSpeedrunStart() {
@@ -2011,6 +2032,10 @@ function syncRailTop() {
 }
 
 onMounted(() => {
+  // 首访自动弹出极速体验协议 | 无标记且未处于极速模式时立刻弹出 | 关闭路径统一落盘
+  if (!readSpeedrunPromptSeen() && !isSpeedrunMode.value) {
+    speedrunConfirmOpen.value = true
+  }
   syncRailTop()
   railTopObserver = new ResizeObserver(syncRailTop)
   if (spatialHeaderEl.value) railTopObserver.observe(spatialHeaderEl.value)

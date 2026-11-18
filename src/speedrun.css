@@ -303,11 +303,11 @@
 }
 
 /* ---------- 启动确认弹窗 ---------- */
-/* 层级 9750 | 压过引导悬浮框 9700 与成就 Toast 9600 | 仍低于危机 QTE 9800 与全屏演出 9999 */
+/* 层级 9999 | 首访自动弹出 | 置顶压过引导悬浮框 9700 成就 Toast 9600 危机 QTE 9800 全屏演出 */
 .speedrun-confirm-overlay {
   position: fixed;
   inset: 0;
-  z-index: 9750;
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
