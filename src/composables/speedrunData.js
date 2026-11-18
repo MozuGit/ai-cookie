@@ -76,7 +76,6 @@ const DEFAULT_SPEEDRUN_STATE = {
   startedAt: 0,
   forcedChallenge: false,
   originGift: false,
-  injections: 0,
 }
 
 export function getSpeedrunPhaseId(elapsedMs) {
@@ -104,7 +103,6 @@ export function readSpeedrunState() {
       startedAt: Math.max(0, Number(parsed?.startedAt) || 0),
       forcedChallenge: parsed?.forcedChallenge === true,
       originGift: parsed?.originGift === true,
-      injections: Math.max(0, Math.floor(Number(parsed?.injections) || 0)),
     }
   } catch {
     return { ...DEFAULT_SPEEDRUN_STATE }

@@ -181,6 +181,7 @@ const {
   speedrunPhaseInfo,
   speedrunRemainingLabel,
   speedrunNotice,
+  speedrunStallHint,
   startSpeedrunMode,
   exitSpeedrunMode,
   tourStage,
@@ -404,6 +405,14 @@ watch(speedrunConfirmOpen, async (open) => {
   }
   // 首访协议弹窗 | 确认 / 取消 / Esc / 遮罩点击任一关闭路径均落盘标记
   writeSpeedrunPromptSeen()
+})
+
+// 极速停滞温和提示 | 状态层每 2 分钟计数一次 | 只推系统日志不代发资源
+watch(speedrunStallHint, () => {
+  systemTerminalRef.value?.pushLine(
+    'SYS',
+    '检测到管理员停滞 | 建议开启自动化或重启极速协议',
+  )
 })
 
 function confirmSpeedrunStart() {

@@ -966,9 +966,10 @@ export function useGameState() {
   const speedrunMeta = reactive({
     forcedChallenge: bootSpeedrunState.forcedChallenge,
     originGift: bootSpeedrunState.originGift,
-    injections: bootSpeedrunState.injections,
   })
   const speedrunNotice = ref(null)
+  // 停滞温和提示计数 | 状态层只计数 | App 层监听后推送系统日志 不代发资源
+  const speedrunStallHint = ref(0)
   let speedrunNoticeTimer = null
   let speedrunLastProgressAt = Date.now()
   let speedrunProgressSignature = ''
@@ -5339,7 +5340,6 @@ export function useGameState() {
       startedAt: speedrunStartedAt.value,
       forcedChallenge: speedrunMeta.forcedChallenge,
       originGift: speedrunMeta.originGift,
-      injections: speedrunMeta.injections,
     })
   }
 
@@ -5378,7 +5378,6 @@ export function useGameState() {
         startedAt: Date.now(),
         forcedChallenge: false,
         originGift: false,
-        injections: 0,
       })
       markSpeedrunEverUsed()
       speedrunEverUsed.value = true
@@ -5505,113 +5504,9 @@ export function useGameState() {
     ].join(':')
   }
 
-  function runSpeedrunInjection() {
-    const phase = speedrunPhase.value
-    const target =
-      phase >= 4
-        ? big('4e200')
-        : phase >= 3
-          ? big('4e100')
-          : phase >= 2
-            ? big('4e25')
-            : big('4e10')
-    const current = totalAlignedCompute.value
-    const computeGift = target.gt(current) ? target.sub(current) : big(0)
-    if (computeGift.gt(0)) creditCompute(computeGift)
-
-    if (phase === 2) {
-      coreSource.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        Math.floor(clampGameAmount(coreSource.value) + 1e8),
-      )
-      overclockCores.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        Math.floor(clampGameAmount(overclockCores.value) + 500),
-      )
-    } else if (phase === 3) {
-      rootAccess.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        Math.floor(clampGameAmount(rootAccess.value) + 100),
-      )
-    } else if (phase === 4) {
-      originCode.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        Math.floor(clampGameAmount(originCode.value) + 1000),
-      )
-    }
-
-    if (phase === 2) {
-      if (!topologyCards.value.some((node) => node.lit)) {
-        const node = topologyCards.value.find((entry) => entry.canAfford)
-        if (node) lightTopologyNode(node.id)
-      }
-      if (matrixTotalLevels.value < 1) {
-        const card = matrixCards.value.find((entry) => entry.canAfford)
-        if (card) buyMatrixNode(card.id)
-      }
-    } else if (
-      phase === 3 &&
-      !tamperCards.value.some((node) => node.level > 0)
-    ) {
-      const node = tamperCards.value.find((entry) => entry.canAfford)
-      if (node) buyTamperNode(node.id)
-    } else if (phase === 4 && originTotalLevels.value < 1) {
-      const card = originCards.value.find((entry) => entry.canAfford)
-      if (card) buyOriginNode(card.id)
-    }
-
-    speedrunMeta.injections += 1
-    persistSpeedrunMeta()
-    pushAutomationLog(
-      `[SPEEDRUN] 算力注入 | 阶段 ${phase} | +${formatNumber(computeGift).text} CU`,
-      'warning',
-    )
-    showSpeedrunNotice(
-      {
-        tone: 'red',
-        title: '[ 算力注入 ] 紧急补充算力，推进进度',
-        text:
-          phase === 1
-            ? '已补足架构降维预算 // 跃迁演出结束后自动降维'
-            : phase === 2
-              ? '已补足协议资源 并自动完成演练与矩阵合成'
-              : phase === 3
-                ? '已补足逻辑坍缩预算 // 跃迁演出结束后进入黑域'
-                : '已补足重启纪元预算 并自动执行纪元重启',
-      },
-      9000,
-    )
-    queueSave()
-
-    if (phase === 1 && totalRebuilds.value < 1) {
-      if (speedrunFirstRebuildLocked.value) {
-        showSpeedrunNotice(
-          {
-            tone: 'gold',
-            title: '[ 体验目标 ] 架构降维待命',
-            text: `手动点击核心 x${SPEEDRUN_FIRST_REBUILD_MIN_CLICKS} · 采购服务器 x${SPEEDRUN_FIRST_REBUILD_MIN_SERVERS} · 经历 1 次对齐危机`,
-          },
-          9000,
-        )
-      } else if (rebuildReward.value > 0) {
-        requestAscension('reduction')
-      }
-    } else if (
-      phase === 3 &&
-      totalCollapses.value < 1 &&
-      peakAlignedCompute.value.gte(tierThresholds.value.collapse)
-    ) {
-      requestAscension('collapse', { enterBlackDomain: true })
-    } else if (
-      phase === 4 &&
-      epochRestarts.value < 1 &&
-      peakAlignedCompute.value.gte(tierThresholds.value.restart)
-    ) {
-      restartEpoch()
-    }
-
-    speedrunLastProgressAt = Date.now()
-    speedrunProgressSignature = ''
+  // 停滞温和提示 | 每 2 分钟一次 | 只提醒不代发资源 不替玩家做决定
+  function notifySpeedrunStall() {
+    speedrunStallHint.value += 1
   }
 
   // 跃迁门槛即时示意 | 门槛保持原始阈值 1e10 / 1e100 / 1e350 / 1e1000 | 曲线加速不降门槛
@@ -5693,9 +5588,9 @@ export function useGameState() {
     }
 
     if (Date.now() - speedrunLastProgressAt >= SPEEDRUN_STUCK_MS) {
-      // 注入若被危机/演出拦截 每 2 分钟重试一次 而非逐帧连发
+      // 停滞温和提示 每 2 分钟一次 而非逐帧连发
       speedrunLastProgressAt = Date.now()
-      runSpeedrunInjection()
+      notifySpeedrunStall()
     }
   }
 
@@ -7134,6 +7029,7 @@ export function useGameState() {
     speedrunRemainingLabel,
     speedrunComplete,
     speedrunNotice,
+    speedrunStallHint,
     speedrunPhaseGoals,
     speedrunPhaseProgress,
     speedrunPhaseDone,
