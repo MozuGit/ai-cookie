@@ -1223,7 +1223,6 @@ export function useGameState() {
   let pendingCoolant = 0
   let pendingRoot = 0
   let overclockDeadline = 0
-  let autoBuyBuffer = 0
   let matrixAutoClickBuffer = 0
   let adminAutoAscensionHoldUntil = 0
 
@@ -3431,6 +3430,8 @@ export function useGameState() {
   }
 
   function autoBuyMax({ ignoreTierLimit = false } = {}) {
+    // 算力为 0 直接跳过 | 不执行任何遍历计算
+    if (!totalAlignedCompute.value.gt(0)) return 0
     let purchased = 0
     if (challengeRestrictions.value?.noAutomation) return 0
     if (challengeRestrictions.value?.noAutoBuy) return 0
@@ -3802,7 +3803,6 @@ export function useGameState() {
     peakAlignedCompute.value = big(0)
     pendingProduction = big(0)
     pendingRoot = 0
-    autoBuyBuffer = 0
     matrixAutoClickBuffer = 0
     autoAscensionRetainedBaseline.value = big(0)
 
@@ -6878,7 +6878,6 @@ export function useGameState() {
 
     runAchievementProgress()
     runMainQuestProgress()
-    const timerRate = challengeTimerRate.value
     const productionTickSeconds =
       (TICK_MS / 1000) *
       algorithmTickRateMultiplier.value *
@@ -6929,32 +6928,9 @@ export function useGameState() {
       matrixAutoClickBuffer = 0
     }
 
-    const autoBuyActive = !suppressed && autoBuyNodeActive.value
-
-    if (autoBuyActive) {
-      if (!isOverclocking.value) {
-        const concurrency = infiniteConcurrencyOwned.value ? 2 : 1
-        const buyRate =
-          1 *
-          concurrency *
-          (globalMilestones['gm-1e40'] ? 2 : 1) *
-          (globalAutoBuyUnlocked.value ? 2 : 1) *
-          speedrunAutoBuyMultiplier.value
-        autoBuyBuffer +=
-          buyRate *
-          (TICK_MS / 1000) *
-          algorithmAutomationMultiplier.value *
-          originAutomationMultiplier.value *
-          timerRate
-        let burst = 0
-        while (autoBuyBuffer >= 1 && burst < buyRate) {
-          autoBuyBuffer -= 1
-          autoBuyMax()
-          burst += 1
-        }
-      }
-    } else {
-      autoBuyBuffer = 0
+    // 买爆模式 | 每 100ms 一次全清扫 | 算力足够即买至可买上限 | 无速率限制
+    if (!suppressed && autoBuyNodeActive.value && !isOverclocking.value) {
+      autoBuyMax()
     }
 
     if (
@@ -6982,7 +6958,6 @@ export function useGameState() {
     pendingProduction = big(0)
     pendingCoolant = 0
     pendingRoot = 0
-    autoBuyBuffer = 0
     matrixAutoClickBuffer = 0
     totalAlignedCompute.value = toBigNumber(totalAlignedCompute.value)
     lifetimeAlignedCompute.value = toBigNumber(lifetimeAlignedCompute.value)
