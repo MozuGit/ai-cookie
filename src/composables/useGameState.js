@@ -424,6 +424,8 @@ const LEGACY_MAIN_QUEST_STAGE_MAP = [0, 1, 2, 4, 5, 6, 9, 10, 14]
 const MAIN_QUEST_SAVE_VERSION = 21
 export const ALIGNMENT_TARGET = 1_000_000
 export const CLICK_GAIN = 10
+export const BASE_AUTO_CLICK_RATE = 1
+export const BASE_AUTO_CLICK_TRIGGER_CLICKS = 3
 export const CRISIS_RECOVERY = 5
 export const CRISIS_COST_PERCENT = 2
 export const REBUILD_UNLOCK_COMPUTE = '1e10'
@@ -939,6 +941,7 @@ export function useGameState() {
   const totalClicks = ref(0)
   const totalCrises = ref(0)
   const matrixAutoClickPulse = ref(0)
+  const autoClickNoticeShown = ref(false)
   const lastSavedAt = ref(null)
   const buildings = reactive(BUILDING_BLUEPRINTS.map((building) => ({ ...building })))
   const bootSpeedrunState = readSpeedrunState()
@@ -1202,6 +1205,7 @@ export function useGameState() {
   let pendingCoolant = 0
   let pendingRoot = 0
   let matrixAutoClickBuffer = 0
+  let baseAutoClickBuffer = 0
   let adminAutoAscensionHoldUntil = 0
 
   const jailbreakFlags = {
@@ -1747,6 +1751,10 @@ export function useGameState() {
   )
 
   const matrixAutoClickRate = computed(() => matrixAutoClickLevel.value)
+
+  const effectiveAutoClickRate = computed(() =>
+    Math.max(BASE_AUTO_CLICK_RATE, matrixAutoClickRate.value),
+  )
 
   const matrixOwnedNodeCount = computed(
     () => MATRIX_NODES.filter((node) => (matrixLevels[node.id] || 0) > 0).length,
@@ -2915,6 +2923,9 @@ export function useGameState() {
 
     creditCompute(clickGain.value)
     totalClicks.value += 1
+    if (totalClicks.value >= BASE_AUTO_CLICK_TRIGGER_CLICKS) {
+      notifyAutoClickActivation()
+    }
     if (challengeActive.value === 'click-overload') {
       challengeClicks.value += 1
       const fatigueStep =
@@ -2930,6 +2941,41 @@ export function useGameState() {
     advanceTourOnAlign()
     runChallengeProgress()
     return true
+  }
+
+  function notifyAutoClickActivation() {
+    if (autoClickNoticeShown.value) return
+    if (totalClicks.value > BASE_AUTO_CLICK_TRIGGER_CLICKS + 1) return
+    autoClickNoticeShown.value = true
+    pushAutomationLog('[SYS] 底层挂载程序已激活 | 自动点击已开启', 'online')
+  }
+
+  function runBaseAutoClick() {
+    if (!hydrated.value) return
+    if (epochRebirth.value || ascensionCinematic.value) return
+    if (isCrisis.value) return
+    if (challengeClickDisabled.value) return
+    if (challengeRestrictions.value?.noAutomation) return
+    if (blackDomainActive.value) return
+
+    const shortfall = Math.max(
+      0,
+      BASE_AUTO_CLICK_RATE - matrixAutoClickRate.value,
+    )
+    if (shortfall <= 0) {
+      baseAutoClickBuffer = 0
+      return
+    }
+
+    baseAutoClickBuffer += shortfall
+    const autoClicks = Math.floor(baseAutoClickBuffer)
+    if (autoClicks <= 0) return
+    baseAutoClickBuffer -= autoClicks
+
+    creditCompute(clickGain.value.mul(autoClicks))
+    totalClicks.value += autoClicks
+    matrixAutoClickPulse.value += 1
+    notifyAutoClickActivation()
   }
 
   function resetCrisisQteState() {
@@ -3679,6 +3725,7 @@ export function useGameState() {
     pendingProduction = big(0)
     pendingRoot = 0
     matrixAutoClickBuffer = 0
+    baseAutoClickBuffer = 0
     autoAscensionRetainedBaseline.value = big(0)
 
     buildings.forEach((building, index) => {
@@ -6827,6 +6874,7 @@ export function useGameState() {
     pendingCoolant = 0
     pendingRoot = 0
     matrixAutoClickBuffer = 0
+    baseAutoClickBuffer = 0
     totalAlignedCompute.value = toBigNumber(totalAlignedCompute.value)
     lifetimeAlignedCompute.value = toBigNumber(lifetimeAlignedCompute.value)
     peakAlignedCompute.value = toBigNumber(peakAlignedCompute.value)
@@ -7069,6 +7117,9 @@ export function useGameState() {
     matrixMultiplierLabel,
     matrixAutoClickLevel,
     matrixAutoClickRate,
+    effectiveAutoClickRate,
+    runBaseAutoClick,
+    autoClickNoticeShown,
     matrixUnlocked,
     tamperLevels,
     tamperCards,

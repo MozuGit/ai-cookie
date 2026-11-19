@@ -137,6 +137,9 @@ const {
   autoBuyNodeActive,
   matrixAutoClickPulse,
   matrixAutoClickRate,
+  effectiveAutoClickRate,
+  runBaseAutoClick,
+  autoClickNoticeShown,
   automationUnlockedCount,
   automationActiveCount,
   automationAllActive,
@@ -403,6 +406,15 @@ watch(speedrunStallHint, () => {
   systemTerminalRef.value?.pushLine(
     'SYS',
     '检测到管理员停滞 | 建议开启自动化或重启极速协议',
+  )
+})
+
+// 开局自动点击激活提示 | 状态层会话一次性触发 | 系统终端立即播报
+watch(autoClickNoticeShown, (shown) => {
+  if (!shown) return
+  systemTerminalRef.value?.pushLine(
+    'SYS',
+    '底层挂载程序已激活 | 自动点击已开启',
   )
 })
 
@@ -1143,8 +1155,10 @@ const coachingGuideLive = computed(() => {
 })
 
 const GUIDE_UI_INTERVAL_MS = 500
+const BASE_AUTO_CLICK_INTERVAL_MS = 1000
 const coachingGuide = shallowRef(null)
 let coachingGuideTimer = null
+let baseAutoClickTimer = null
 
 function coachingGuideKey(guide) {
   if (!guide) return 'none'
@@ -2039,6 +2053,10 @@ onMounted(() => {
     syncCoachingGuide,
     GUIDE_UI_INTERVAL_MS,
   )
+  baseAutoClickTimer = window.setInterval(
+    runBaseAutoClick,
+    BASE_AUTO_CLICK_INTERVAL_MS,
+  )
   window.addEventListener('keydown', handleGlobalKeydown)
   window.addEventListener('keyup', handleGlobalKeyup)
   window.addEventListener('blur', handleWindowBlur)
@@ -2064,6 +2082,8 @@ onBeforeUnmount(() => {
   resetBassVisual()
   window.clearInterval(coachingGuideTimer)
   coachingGuideTimer = null
+  window.clearInterval(baseAutoClickTimer)
+  baseAutoClickTimer = null
   for (const timer of popTimers) window.clearTimeout(timer)
   popTimers.clear()
   for (const timer of ringTimers) window.clearTimeout(timer)
@@ -2591,6 +2611,9 @@ onBeforeUnmount(() => {
                   ? `手动输入 // 每次虹吸 1 秒 CPS = ${formatNumber(clickGain).text} CU`
                   : `手动输入 // 每次 +${formatNumber(clickGain).text} CU`
             }}
+            <span class="text-[9px] tracking-[0.06em] text-slate-500">
+              [ 自动点击 // {{ effectiveAutoClickRate }}次/秒 ]
+            </span>
             <span
               v-if="matrixAutoClickRate > 0"
               class="border border-emerald-500/55 bg-emerald-500/[0.08] px-1.5 py-0.5 text-[9px] text-emerald-300"
