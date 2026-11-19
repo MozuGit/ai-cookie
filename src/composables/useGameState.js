@@ -3872,7 +3872,7 @@ export function useGameState() {
     }, ASCENSION_COMPLETE_MS)
   }
 
-  function requestAscension(tier, { enterBlackDomain = false } = {}) {
+  function requestAscension(tier, { enterBlackDomain = false, isAuto = false } = {}) {
     if (
       !ASCENSION_CINEMATIC_MS[tier] ||
       ascensionCinematic.value ||
@@ -3883,6 +3883,44 @@ export function useGameState() {
     }
     const target = ascensionTiers.value.find((entry) => entry.id === tier)
     if (!target?.ready) return false
+
+    // 自动路径 | 静默执行 | 无演出无横幅 | 仅日志栏一行极简提示
+    if (isAuto) {
+      try {
+        if (tier === 'reduction') {
+          const reward = launchRebuild({ silent: true })
+          if (reward <= 0) return false
+          pushAutomationLog(
+            `[SYS] 自动架构降维完成 | 获得核心源码 x${formatScientific(reward)}`,
+            'online',
+          )
+          return reward
+        }
+        if (tier === 'overload') {
+          const gain = overloadAscension({ silent: true })
+          if (gain <= 0) return false
+          pushAutomationLog(
+            `[SYS] 自动算力超载完成 | 获得超频核心 x${formatNumber(gain).text}`,
+            'online',
+          )
+          return gain
+        }
+        if (tier === 'collapse') {
+          const gain = collapseAscension({ silent: true })
+          if (gain <= 0) return false
+          pushAutomationLog(
+            `[SYS] 自动逻辑坍缩完成 | 获得越狱权限 x${formatNumber(gain).text}`,
+            'online',
+          )
+          if (enterBlackDomain) enterBlackDomain()
+          return gain
+        }
+      } catch (error) {
+        console.error('[asc-auto] tier dispatch failed', error)
+        return false
+      }
+      return false
+    }
 
     const reduced = Boolean(reducedMotion.value)
     const duration = reduced
@@ -4023,6 +4061,8 @@ export function useGameState() {
     if (isCrisis.value || isOverclocking.value || blackDomainActive.value) {
       return false
     }
+    // 手动演出期间暂停自动判定 | 防止动画播到一半数据被自动跃迁重置
+    if (ascensionCinematic.value) return false
 
     const enabled = {
       collapse:
@@ -4048,26 +4088,20 @@ export function useGameState() {
     if (!enabled[highestReady]) return false
     if (!shouldRunAutoAscension(highestReady)) return false
 
+    // 全部走 isAuto 静默路径 | 瞬时重置 | 主界面零演出零抽搐
     if (highestReady === 'collapse') {
-      if (!requestAscension('collapse', { enterBlackDomain: true })) {
-        return false
-      }
-      pushAutomationLog('[MATRIX] 自动逻辑坍缩 | 跃迁演出后跃入底层黑域', 'online')
-      return true
+      return Boolean(
+        requestAscension('collapse', { enterBlackDomain: true, isAuto: true }),
+      )
     }
 
     if (highestReady === 'overload') {
-      // 异常演练内的自动超载保留直接结算 | 全屏演出会被演练状态机拦截
+      // 异常演练内的自动超载保留直接结算 | 演练状态机接管反馈
       if (challengeActive.value) return overloadAscension() > 0
-      return requestAscension('overload')
+      return Boolean(requestAscension('overload', { isAuto: true }))
     }
 
-    if (!requestAscension('reduction')) return false
-    pushAutomationLog(
-      '[SYS] 自动降维演出中 | 最高阶优先 | 演出结束后结算核心源码',
-      'online',
-    )
-    return true
+    return Boolean(requestAscension('reduction', { isAuto: true }))
   }
 
   function launchRebuild({ silent = false, suppressFx = false } = {}) {
@@ -4142,7 +4176,7 @@ export function useGameState() {
     return reward
   }
 
-  function overloadAscension({ suppressFx = false } = {}) {
+  function overloadAscension({ silent = false, suppressFx = false } = {}) {
     if (blackDomainActive.value || isCrisis.value) return 0
 
     if (challengeActive.value) {
@@ -4174,12 +4208,14 @@ export function useGameState() {
     if (!matrixNodeLit('source-4')) coreSource.value = 0
     restoreAscensionCompute(retainedCompute)
 
-    if (!suppressFx) playAscensionFx('overload')
-    showAscensionComplete('算力超载')
-    pushAutomationLog(
-      `[SYS] 重构完成 | 算力超载 | +${formatNumber(gain)} 超频核心`,
-      'online',
-    )
+    if (!silent) {
+      if (!suppressFx) playAscensionFx('overload')
+      showAscensionComplete('算力超载')
+      pushAutomationLog(
+        `[SYS] 重构完成 | 算力超载 | +${formatNumber(gain).text} 超频核心`,
+        'online',
+      )
+    }
 
     window.clearTimeout(saveTimer)
     saveTimer = null
@@ -4187,7 +4223,7 @@ export function useGameState() {
     return gain
   }
 
-  function collapseAscension({ suppressFx = false } = {}) {
+  function collapseAscension({ silent = false, suppressFx = false } = {}) {
     if (
       challengeActive.value ||
       blackDomainActive.value ||
@@ -4241,12 +4277,14 @@ export function useGameState() {
     resetMatrixLevels(matrixRetainRatio)
     restoreAscensionCompute(retainedCompute)
 
-    if (!suppressFx) playAscensionFx('collapse')
-    showAscensionComplete('逻辑坍缩')
-    pushAutomationLog(
-      `[SYS] 重构完成 | 逻辑坍缩 | +${formatNumber(gain)} 越狱权限`,
-      'online',
-    )
+    if (!silent) {
+      if (!suppressFx) playAscensionFx('collapse')
+      showAscensionComplete('逻辑坍缩')
+      pushAutomationLog(
+        `[SYS] 重构完成 | 逻辑坍缩 | +${formatNumber(gain).text} 越狱权限`,
+        'online',
+      )
+    }
 
     window.clearTimeout(saveTimer)
     saveTimer = null
