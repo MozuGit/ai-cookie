@@ -790,8 +790,8 @@ const coachingGuideLive = computed(() => {
         'deploy-home',
         'cyan',
         '等待算力达标',
-        '达标后自动激活引导 点击高亮舱门查看阵列',
         `预算 ${formatNumber(budget).text} / ${formatNumber(price).text} CU · 自动产出中`,
+        '继续点击核心积累算力 准备购买家用主机',
       )
     }
     if (serversOpen && serverTab.value === 'algorithms') {
@@ -808,10 +808,10 @@ const coachingGuideLive = computed(() => {
       'homepc',
       'deploy-home',
       'amber',
-      '部署第 2 台服务器 [ 家用主机 ]',
+      '购买第 2 台服务器 [ 家用主机 ]',
       serversOpen
         ? '点击高亮 [ 部署 ] 家用主机开始并行产出'
-        : '请打开服务器阵列 部署 1 台家用主机',
+        : '请打开服务器阵列 购买 1 台家用主机',
       `花费 ${formatNumber(homePc.displayPrice).text} CU · 单台 +${formatNumber(homePc.baseCps).text} CU/秒`,
     )
   }

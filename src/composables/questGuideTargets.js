@@ -19,8 +19,8 @@ export const QUEST_GUIDE_TARGETS = {
   },
   homepc: {
     target: 'deploy-home',
-    title: '部署第 2 台服务器 [ 家用主机 ]',
-    hint: '打开 [ 服务器阵列 ] 部署 1 台家用主机',
+    title: '购买第 2 台服务器 [ 家用主机 ]',
+    hint: '打开 [ 服务器阵列 ] 购买 1 台家用主机',
   },
   servers: {
     target: 'deploy-first',
