@@ -784,16 +784,21 @@ function formatAmount(amount) {
   return formatCompactAmount(amount)
 }
 
-function isInvalidNumber(value) {
-  return typeof value === 'number' && Number.isNaN(value)
+// 溢出显示分级 | NaN 归零 | JS Infinity 封顶 1.00e308 | 大数引擎上限显示 MAX_OUTPUT | 不再出现 ∞
+function guardOverflowParts(value, amount) {
+  if (typeof value === 'number') {
+    if (Number.isNaN(value)) return makeNumberParts('0', '')
+    if (value === Number.POSITIVE_INFINITY) return makeNumberParts('1.00', 'e308')
+  }
+  if (!amount.gt(0)) return makeNumberParts('0', '')
+  if (!amount.isFinite()) return makeNumberParts('MAX_OUTPUT', '')
+  return null
 }
 
 export function formatNumber(value) {
-  if (isInvalidNumber(value)) return makeNumberParts('∞', '')
   const amount = toBigNumber(value)
-  if (!amount.gt(0)) return makeNumberParts('0', '')
-  if (!amount.isFinite()) return makeNumberParts('∞', '')
-  return formatAmount(amount)
+  const guarded = guardOverflowParts(value, amount)
+  return guarded ?? formatAmount(amount)
 }
 
 const TEXT_NUMBER_TOKEN = /\b1e(\d+)\b|\b(\d{1,3}(?:,\d{3})+)\b/g
@@ -807,26 +812,23 @@ export function formatTextNumbers(text) {
 }
 
 export function formatChineseNumber(value) {
-  if (isInvalidNumber(value)) return '∞'
   const amount = toBigNumber(value)
-  if (!amount.gt(0)) return '0'
-  if (!amount.isFinite()) return '∞'
+  const guarded = guardOverflowParts(value, amount)
+  if (guarded) return guarded.text
   return formatChineseAmount(amount).text
 }
 
 export function formatScientific(value) {
-  if (isInvalidNumber(value)) return '∞'
   const amount = toBigNumber(value)
-  if (!amount.gt(0)) return '0'
-  if (!amount.isFinite()) return '∞'
+  const guarded = guardOverflowParts(value, amount)
+  if (guarded) return guarded.text
   return formatAmount(amount).text
 }
 
 export function formatMultiplier(value) {
-  if (isInvalidNumber(value)) return '∞'
   const amount = toBigNumber(value)
-  if (!amount.gt(0)) return '0'
-  if (!amount.isFinite()) return '∞'
+  const guarded = guardOverflowParts(value, amount)
+  if (guarded) return guarded.text
   if (amount.e >= 6) return formatAmount(amount).text
   const numeric = amount.toNumber()
   if (numeric >= 100) return String(Math.round(numeric))
@@ -860,17 +862,14 @@ function getMaxAffordableQuantity(
   priceMultiplier,
   priceGrowth,
   available,
-  maxQuantity = GAME_BALANCE.purchase.maxSearchQuantity,
+  maxQuantity = Number.MAX_SAFE_INTEGER,
 ) {
   const budget = toBigNumber(available)
   if (!budget.gt(0)) return 0
 
   const limit = Math.max(
     0,
-    Math.min(
-      GAME_BALANCE.purchase.maxSearchQuantity,
-      Math.floor(Number(maxQuantity) || 0),
-    ),
+    Math.min(Number.MAX_SAFE_INTEGER, Math.floor(Number(maxQuantity) || 0)),
   )
   if (limit <= 0) return 0
   if (budget.lt(getBulkPrice(building, 1, priceMultiplier, priceGrowth))) return 0

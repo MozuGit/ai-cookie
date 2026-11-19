@@ -12,9 +12,15 @@ const props = defineProps({
 const emit = defineEmits(['buy'])
 
 const indexLabel = computed(() => String(props.card.index).padStart(2, '0'))
-const deployLabel = computed(() =>
-  props.card.isMaxMode ? 'MAX' : `×${props.card.purchaseCount}`,
+const maxBuyText = computed(() =>
+  props.card.maxQuantity >= 10000
+    ? formatNumber(props.card.maxQuantity).text
+    : String(props.card.maxQuantity),
 )
+const deployLabel = computed(() => {
+  if (!props.card.isMaxMode) return `×${props.card.purchaseCount}`
+  return props.card.canAfford ? `MAX (${maxBuyText.value}台)` : 'MAX'
+})
 const unlockTitle = computed(
   () =>
     props.card.unlockHint ||
@@ -196,7 +202,7 @@ onBeforeUnmount(() => {
           class="text-[10px] font-semibold tracking-[0.08em]"
           :class="card.canAfford ? 'text-slate-950' : 'text-slate-600'"
         >
-          部署 <span class="text-[12px]">{{ deployLabel }}</span>
+          <template v-if="!(card.isMaxMode && card.canAfford)">部署 </template><span class="text-[12px]">{{ deployLabel }}</span>
         </span>
         <span
           class="flex max-w-full items-center gap-1 text-[15px] font-bold tabular-nums"
@@ -218,13 +224,6 @@ onBeforeUnmount(() => {
           class="text-[9px] tracking-[0.08em] text-rose-400"
         >
           协议封锁
-        </span>
-        <span
-          v-else-if="card.isMaxMode"
-          class="text-[9px] tracking-[0.06em]"
-          :class="card.canAfford ? 'text-slate-800' : 'text-slate-700'"
-        >
-          可购买 {{ card.maxQuantity }} 台
         </span>
         <span
           v-else-if="!card.locked"

@@ -28,9 +28,6 @@ export const GAME_BALANCE = Object.freeze({
   matrix: Object.freeze({
     costGrowth: 2.5,
   }),
-  purchase: Object.freeze({
-    maxSearchQuantity: 1000,
-  }),
 })
 
 const DEFAULT_GROWTH = GAME_BALANCE.server.priceGrowth
