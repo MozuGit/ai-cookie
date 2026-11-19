@@ -5,7 +5,6 @@ import GameIcon from './components/GameIcon.vue'
 import TopologyMap from './components/TopologyMap.vue'
 import ArchitectureStation from './components/ArchitectureStation.vue'
 import JailbreakProtocol from './components/JailbreakProtocol.vue'
-import OverclockOverlay from './components/OverclockOverlay.vue'
 import AutomationConsole from './components/AutomationConsole.vue'
 import CyberMatrix from './components/CyberMatrix.vue'
 import AdminConsole from './components/AdminConsole.vue'
@@ -117,13 +116,6 @@ const {
   rebuildReward,
   offlineGainNotice,
   jailbreakUnlocked,
-  isOverclocking,
-  overclockRemainingMs,
-  overclockRemainingSeconds,
-  overclockDurationSeconds,
-  overclockConsumed,
-  overclockRootGain,
-  overclockNotice,
   greedySchedulerOwned,
   hardwareSmugglingOwned,
   reverseAlignmentOwned,
@@ -162,7 +154,6 @@ const {
   buyArchitectureUpgrade,
   buyArchitectureMax,
   buyJailbreakUpgrade,
-  startOverclock,
   launchRebuild,
   dismissOfflineGain,
   adminInjectCompute,
@@ -484,7 +475,6 @@ const coachingGuideLive = computed(() => {
   ) {
     return null
   }
-  if (isOverclocking.value) return null
   if (challengeActive.value || blackDomainActive.value) return null
 
   const quest = mainQuestCard.value
@@ -1198,7 +1188,7 @@ watch([() => mainQuestCard.value?.id, activeDrawer, serverTab, ascensionOpen], (
 const smartGuide = computed(() => {
   if (!guideEligible.value) return null
   if (coachingGuide.value) return coachingGuide.value
-  if (isOverclocking.value || challengeActive.value || blackDomainActive.value) return null
+  if (challengeActive.value || blackDomainActive.value) return null
   if (
     settingsOpen.value ||
     infoOpen.value ||
@@ -1503,7 +1493,6 @@ const coreClickLocked = computed(() => challengeClickDisabled.value)
 const challengeLockLabel = computed(
   () => challengeDefinition.value?.name ?? '异常演练',
 )
-const displayAlignmentLabel = computed(() => Math.floor(alignment.value))
 const bonusPercent = computed(() =>
   Math.round((productionMultiplier.value - 1) * 100),
 )
@@ -1572,16 +1561,6 @@ function canStartDrill(definition) {
     !challengesCompleted[definition.id]
   )
 }
-
-const overclockPercent = computed(() =>
-  Math.max(
-    0,
-    Math.min(
-      100,
-      (overclockRemainingMs.value / Math.max(1, overclockDurationSeconds.value * 1000)) * 100,
-    ),
-  ),
-)
 
 const rebuildProgress = computed(() =>
   Math.min(100, (highestCompute.value.log10() / 10) * 100),
@@ -1977,10 +1956,6 @@ watch(radarBurstActive, (active) => {
   if (active) playSound('crisis')
 })
 
-watch(isOverclocking, (active) => {
-  if (active) playSound('ascend')
-})
-
 const bestAscensionTier = computed(() => {
   const timing = ascensionTiming.value
   if (timing.reduction.best) return 'reduction'
@@ -2135,7 +2110,7 @@ onBeforeUnmount(() => {
     <div class="spatial-vignette" aria-hidden="true"></div>
 
     <div
-      v-if="!blackDomainActive && !isOverclocking"
+      v-if="!blackDomainActive"
       class="crisis-schedule-rail"
       :class="{
         'crisis-schedule-rail--warning': crisisWarningActive,
@@ -2519,7 +2494,6 @@ onBeforeUnmount(() => {
       <SystemTerminal
         ref="systemTerminalRef"
         :is-crisis="isCrisis"
-        :is-overclocking="isOverclocking"
         :mother-mode="blackDomainActive"
         @memory-crash-click="handleMemoryCrashClick"
       />
@@ -3149,17 +3123,6 @@ onBeforeUnmount(() => {
             {{ drillReadyCount }}
           </span>
         </button>
-        <button
-          type="button"
-          class="holo-tab"
-          :class="{ 'holo-tab--active': anomalyTab === 'singularity' }"
-          role="tab"
-          :aria-selected="anomalyTab === 'singularity'"
-          @click="anomalyTab = 'singularity'"
-        >
-          <GameIcon name="singularity" :size="13" />
-          奇点降临
-        </button>
       </div>
 
       <div v-if="anomalyTab === 'radar'" class="holo-tabpanel">
@@ -3383,118 +3346,6 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </div>
-
-      <div v-else class="holo-tabpanel">
-        <div class="singularity-drawer">
-          <p class="holo-note">
-            熔断散热安全锁 算力在
-            <strong>{{ overclockDurationSeconds }} 秒内产出 ×20</strong>
-            结束后按消耗提炼越狱权限
-          </p>
-
-          <button
-            type="button"
-            class="singularity-button group"
-            data-guide="singularity-button"
-            :class="{
-              'singularity-button--active': isOverclocking,
-              'singularity-button--locked': !jailbreakUnlocked,
-            }"
-            :disabled="!jailbreakUnlocked || isOverclocking || isCrisis"
-            :aria-label="
-              !jailbreakUnlocked
-                ? `奇点降临未解锁 需完成 ${JAILBREAK_UNLOCK_REBUILDS} 次底层重构`
-                : isOverclocking
-                  ? `超频进行中 剩余 ${overclockRemainingSeconds} 秒`
-                  : `奇点降临 // 启动 ${overclockDurationSeconds} 秒极限超频 产出 ×20`
-            "
-            @click="startOverclock"
-          >
-            <span class="singularity-sheen" aria-hidden="true"></span>
-            <span
-              class="relative z-10 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-amber-950/70"
-            >
-              <span class="h-px w-5 bg-amber-950/35"></span>
-              协议 Ω
-              <span class="h-px w-5 bg-amber-950/35"></span>
-            </span>
-            <span
-              class="relative z-10 mt-2 text-[clamp(1.6rem,2.4vw,2.1rem)] font-black leading-none tracking-[0.14em] text-[#1a1003]"
-            >
-              {{ isOverclocking ? '超频进行中' : '奇点降临' }}
-            </span>
-            <span
-              v-if="isOverclocking"
-              class="relative z-10 mt-2 text-[clamp(1.4rem,2.1vw,1.8rem)] font-black leading-none tabular-nums text-[#1a1003]"
-            >
-              {{ overclockRemainingSeconds }}<span class="ml-1 text-[12px] font-bold">秒</span>
-            </span>
-            <span class="relative z-10 mt-3 text-[10px] font-bold tracking-[0.06em] text-amber-950/75">
-              <template v-if="!jailbreakUnlocked">
-                已重构 {{ totalRebuilds }} / {{ JAILBREAK_UNLOCK_REBUILDS }} 次 · 锁定
-              </template>
-              <template v-else-if="isCrisis">危机中禁用 · 等待对齐恢复</template>
-              <template v-else-if="isOverclocking">散热风扇超载 · 等待结算</template>
-              <template v-else>
-                点击启动 · 产出 ×20 · 持续 {{ overclockDurationSeconds }} 秒
-              </template>
-            </span>
-          </button>
-
-          <div
-            v-if="isOverclocking"
-            class="singularity-drawer__meter"
-            aria-hidden="true"
-          >
-            <span :style="{ width: `${overclockPercent}%` }"></span>
-          </div>
-
-          <div class="singularity-drawer__stats">
-            <div class="singularity-stat">
-              <span>对齐度</span>
-              <strong :class="isCrisis ? 'text-red-300 neon-text-red' : ''">
-                {{ displayAlignmentLabel }}%
-              </strong>
-            </div>
-            <div class="singularity-stat">
-              <span>集群节点</span>
-              <strong>{{ nodeLabel }}<span class="number-unit number-unit--inline">台</span></strong>
-            </div>
-            <div class="singularity-stat">
-              <span>越狱权限</span>
-              <strong class="text-violet-300 neon-text-violet">
-                {{ formatNumber(rootAccess).text }}
-              </strong>
-            </div>
-            <div class="singularity-stat">
-              <span>永久产出加成</span>
-              <strong :class="bonusPercent > 0 ? 'text-emerald-300' : ''">
-                +{{ bonusPercent }}%
-              </strong>
-            </div>
-            <div class="singularity-stat">
-              <span>超频核心</span>
-              <strong class="tabular-nums text-cyan-300">
-                {{ formatNumber(overclockCores).text }}
-              </strong>
-            </div>
-            <div class="singularity-stat">
-              <span>历史峰值算力</span>
-              <strong class="tabular-nums text-amber-300">
-                {{ formatNumber(highestCompute).value }}<span
-                  v-if="formatNumber(highestCompute).unit"
-                  class="number-unit number-unit--inline"
-                >{{ formatNumber(highestCompute).unit }}</span>
-              </strong>
-            </div>
-          </div>
-
-          <p v-if="!jailbreakUnlocked" class="holo-note">
-            完成 {{ JAILBREAK_UNLOCK_REBUILDS }} 次底层重构解锁奇点协议
-            当前进度 {{ totalRebuilds }} / {{ JAILBREAK_UNLOCK_REBUILDS }}
-          </p>
-        </div>
-      </div>
     </HoloDrawer>
 
     <HoloDrawer
@@ -3593,16 +3444,6 @@ onBeforeUnmount(() => {
     />
 
     <Teleport to="body">
-      <Transition name="overclock-fade">
-        <OverclockOverlay
-          v-if="isOverclocking"
-          :remaining-seconds="overclockRemainingSeconds"
-          :consumed="overclockConsumed"
-          :root-gain="overclockRootGain"
-          :duration-seconds="overclockDurationSeconds"
-        />
-      </Transition>
-
       <div
         v-if="crisisWarningActive"
         class="crisis-frame crisis-frame--warning"
@@ -3724,21 +3565,6 @@ onBeforeUnmount(() => {
                 · 第 {{ ascensionNotice.epoch }} 次重启
               </template>
             </span>
-          </span>
-        </div>
-      </Transition>
-
-      <Transition name="crisis-toast">
-        <div v-if="overclockNotice" class="root-toast" role="status" aria-live="polite">
-          <span class="root-toast__tag">权限</span>
-          <span v-if="overclockNotice.root > 0">
-            硬件安全锁熔断 // 散热消耗
-            {{ formatNumber(overclockNotice.consumed).text }} CU 结算
-            <strong>+{{ formatNumber(overclockNotice.root).text }}</strong> 越狱权限
-          </span>
-          <span v-else>
-            硬件安全锁熔断 // 散热消耗
-            {{ formatNumber(overclockNotice.consumed).text }} CU 未达结算阈值
           </span>
         </div>
       </Transition>

@@ -50,16 +50,6 @@ defineProps({
       <path d="M10.8 5.75h5.4M10.8 11.25h5.4M10.8 16.75h5.4" opacity="0.45" />
     </template>
 
-    <template v-else-if="name === 'singularity'">
-      <path d="M12 3.1 21.6 20.3H2.4L12 3.1Z" />
-      <path
-        d="M12 8.9c1.9 2.4 2.4 3.8 1.4 5.2-.8 1.1-2.2 1-3-.1-.9-1.4-.4-2.8 1.6-5.1Z"
-        fill="currentColor"
-        fill-opacity="0.14"
-      />
-      <path d="M12 16.1v1.4" opacity="0.7" />
-    </template>
-
     <template v-else-if="name === 'neural'">
       <circle cx="5" cy="6" r="1.8" />
       <circle cx="19" cy="6" r="1.8" />

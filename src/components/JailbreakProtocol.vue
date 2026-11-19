@@ -42,7 +42,7 @@ const affordableCount = computed(
             {{ formatNumber(rootAccess).text }}
           </p>
           <p class="mt-1.5 text-[10px] tracking-[0.06em] text-slate-400">
-            超频散热消耗结算获得
+            越狱权限由逻辑坍缩与黑域提炼获得
           </p>
         </div>
         <div class="shrink-0 text-right">
@@ -157,7 +157,7 @@ const affordableCount = computed(
     </div>
 
     <p class="mt-3 border-t border-violet-900/40 pt-2.5 text-[10px] leading-relaxed tracking-[0.02em] text-slate-500">
-      越狱权限只来自极限超频时的散热消耗
+      越狱权限来自逻辑坍缩与黑域提炼
       <span class="text-violet-400">底层重构不会清除这些协议</span>
     </p>
   </div>

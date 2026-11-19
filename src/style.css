@@ -1026,72 +1026,6 @@
   transform: translateY(4px);
 }
 
-.singularity-button {
-  background:
-    radial-gradient(circle at 50% -15%, rgba(255, 251, 235, 0.95), transparent 45%),
-    linear-gradient(135deg, #f6dc93 0%, #d7a536 42%, #f4e3a7 64%, #a97414 100%);
-  box-shadow:
-    0 0 38px rgba(251, 191, 36, 0.17),
-    inset 0 0 0 1px rgba(255, 249, 214, 0.45),
-    inset 0 0 30px rgba(255, 248, 202, 0.16);
-  transition:
-    filter 0.25s ease,
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.singularity-button::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    135deg,
-    transparent 0,
-    transparent 10px,
-    rgba(59, 37, 6, 0.055) 10px,
-    rgba(59, 37, 6, 0.055) 11px
-  );
-  pointer-events: none;
-}
-
-.singularity-button:disabled {
-  cursor: not-allowed;
-  filter: saturate(0.78) brightness(0.82);
-}
-
-.singularity-button:not(:disabled):hover {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 55px rgba(251, 191, 36, 0.28),
-    inset 0 0 0 1px rgba(255, 249, 214, 0.6),
-    inset 0 0 30px rgba(255, 248, 202, 0.2);
-}
-
-.singularity-button:not(:disabled):active {
-  transform: translateY(0) scale(0.995);
-}
-
-.singularity-button:focus-visible {
-  outline-color: #fde68a;
-  outline-offset: 4px;
-}
-
-.singularity-sheen {
-  position: absolute;
-  inset: -40% -65%;
-  z-index: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.45) 50%,
-    transparent 65%
-  );
-  mix-blend-mode: screen;
-  animation: singularity-sheen 6.5s ease-in-out infinite;
-  pointer-events: none;
-}
-
 .source-chip {
   display: flex;
   flex: none;
@@ -1230,134 +1164,6 @@
   mix-blend-mode: screen;
   animation: rebuild-sheen 5s ease-in-out infinite;
   pointer-events: none;
-}
-
-.overclock-trigger {
-  position: relative;
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  align-items: stretch;
-  overflow: hidden;
-  padding: 0.6rem 1.1rem 0.7rem;
-  border: 1px solid rgba(254, 202, 202, 0.9);
-  background:
-    radial-gradient(circle at 12% -60%, rgba(255, 241, 242, 0.95), transparent 54%),
-    linear-gradient(115deg, #fecaca 0%, #f87171 26%, #ef4444 52%, #dc2626 78%, #991b1b 100%);
-  box-shadow:
-    0 0 34px rgba(239, 68, 68, 0.32),
-    inset 0 0 0 1px rgba(255, 241, 242, 0.35),
-    inset 0 0 30px rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  isolation: isolate;
-  text-align: left;
-  transition:
-    filter 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  animation: overclock-warning 1.9s ease-in-out infinite;
-}
-
-.overclock-trigger::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    135deg,
-    transparent 0,
-    transparent 10px,
-    rgba(37, 4, 4, 0.1) 10px,
-    rgba(37, 4, 4, 0.1) 11px
-  );
-}
-
-.overclock-trigger:hover:not(:disabled) {
-  filter: brightness(1.07);
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 56px rgba(239, 68, 68, 0.5),
-    inset 0 0 0 1px rgba(255, 241, 242, 0.55),
-    inset 0 0 36px rgba(255, 255, 255, 0.12);
-}
-
-.overclock-trigger:active:not(:disabled) {
-  transform: translateY(0) scale(0.998);
-}
-
-.overclock-trigger:disabled {
-  cursor: not-allowed;
-  filter: saturate(0.72) brightness(0.8);
-}
-
-.overclock-trigger:focus-visible {
-  outline-color: #fecaca;
-  outline-offset: 3px;
-}
-
-.overclock-trigger--active {
-  border-color: rgba(248, 113, 113, 0.95);
-  background:
-    radial-gradient(circle at 12% -60%, rgba(255, 241, 242, 0.9), transparent 54%),
-    linear-gradient(115deg, #fca5a5 0%, #f87171 26%, #ef4444 55%, #dc2626 82%, #b91c1c 100%);
-  animation: overclock-active-pulse 0.9s ease-in-out infinite;
-}
-
-.overclock-trigger__title {
-  color: #250404;
-}
-
-.overclock-trigger__stripes {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 3px;
-  z-index: 1;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(69, 10, 10, 0.55) 0,
-    rgba(69, 10, 10, 0.55) 8px,
-    transparent 8px,
-    transparent 16px
-  );
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.overclock-trigger__flare {
-  position: absolute;
-  inset: -40% -70%;
-  z-index: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.35) 50%,
-    transparent 62%
-  );
-  mix-blend-mode: screen;
-  animation: overclock-sheen 2.6s linear infinite;
-  pointer-events: none;
-}
-
-.overclock-trigger__meter {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 2;
-  height: 2px;
-  background: rgba(37, 4, 4, 0.45);
-  pointer-events: none;
-}
-
-.overclock-trigger__meter > span {
-  display: block;
-  height: 100%;
-  background: #fecaca;
-  box-shadow: 0 0 10px rgba(254, 202, 202, 0.9);
-  transition: width 0.12s linear;
 }
 
 .protocol-tabs {
@@ -2248,193 +2054,6 @@
   transform: translateY(10px);
 }
 
-.overclock-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  overflow: hidden;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 52%, rgba(239, 68, 68, 0.13), transparent 40%),
-    radial-gradient(circle at 50% 112%, rgba(249, 115, 22, 0.14), transparent 55%);
-}
-
-.overclock-overlay__heat {
-  position: absolute;
-  inset: -10%;
-  background:
-    radial-gradient(circle at 50% 54%, rgba(248, 113, 113, 0.24), transparent 38%),
-    radial-gradient(circle at 22% 80%, rgba(251, 146, 60, 0.12), transparent 34%);
-  filter: blur(18px);
-  animation: overclock-heat 1.6s ease-in-out infinite;
-}
-
-.overclock-streams {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0.75;
-}
-
-.overclock-stream {
-  position: absolute;
-  top: -24vh;
-  height: 22vh;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(248, 113, 113, 0.65),
-    transparent
-  );
-  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
-  animation-name: overclock-stream-fall;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.overclock-ember {
-  position: absolute;
-  bottom: -2vh;
-  border-radius: 9999px;
-  background: #fca5a5;
-  box-shadow: 0 0 8px rgba(248, 113, 113, 0.9);
-  opacity: 0;
-  animation-name: overclock-ember-rise;
-  animation-timing-function: ease-out;
-  animation-iteration-count: infinite;
-}
-
-.overclock-fan-wrap {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(52vw, 430px);
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  animation: overclock-vibrate 0.18s linear infinite;
-}
-
-.overclock-fan-wrap__halo {
-  position: absolute;
-  inset: 8%;
-  border-radius: 9999px;
-  background: radial-gradient(circle, rgba(239, 68, 68, 0.24), transparent 66%);
-  filter: blur(8px);
-  animation: overclock-heat 1.2s ease-in-out infinite;
-}
-
-.overclock-fan {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  color: #fca5a5;
-  filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.45));
-}
-
-.overclock-fan__rim {
-  fill: rgba(15, 8, 10, 0.5);
-  stroke: rgba(248, 113, 113, 0.7);
-  stroke-width: 1.2;
-}
-
-.overclock-fan__rim-inner {
-  fill: none;
-  stroke: rgba(248, 113, 113, 0.22);
-  stroke-width: 0.8;
-  stroke-dasharray: 3 5;
-}
-
-.overclock-fan__blades {
-  transform-box: view-box;
-  transform-origin: 100px 100px;
-  animation: spin 0.32s linear infinite;
-}
-
-.overclock-fan__blade {
-  fill: rgba(248, 113, 113, 0.28);
-  stroke: rgba(254, 202, 202, 0.8);
-  stroke-width: 1;
-}
-
-.overclock-fan__hub {
-  fill: #fca5a5;
-  opacity: 0.9;
-}
-
-.overclock-fan__bolt {
-  fill: #450a0a;
-}
-
-.overclock-overlay__hud {
-  position: absolute;
-  left: 50%;
-  bottom: 8vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 0.6rem 1.4rem 0.7rem;
-  border: 1px solid rgba(248, 113, 113, 0.55);
-  background: linear-gradient(180deg, rgba(69, 10, 10, 0.9), rgba(20, 5, 5, 0.93));
-  box-shadow:
-    0 0 34px rgba(239, 68, 68, 0.3),
-    inset 0 0 22px rgba(239, 68, 68, 0.08);
-  transform: translateX(-50%);
-}
-
-.overclock-overlay__tag {
-  font-size: 7px;
-  letter-spacing: 0.3em;
-  color: #fca5a5;
-}
-
-.overclock-overlay__timer {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1.1;
-  color: #fee2e2;
-  text-shadow: 0 0 14px rgba(248, 113, 113, 0.8);
-}
-
-.overclock-overlay__timer span {
-  font-size: 11px;
-  color: #fca5a5;
-}
-
-.overclock-overlay__sub {
-  font-size: 7px;
-  letter-spacing: 0.16em;
-  color: rgba(254, 202, 202, 0.7);
-}
-
-.overclock-overlay__meter {
-  display: block;
-  width: 120px;
-  height: 2px;
-  margin-top: 5px;
-  background: rgba(69, 10, 10, 0.8);
-}
-
-.overclock-overlay__meter span {
-  display: block;
-  height: 100%;
-  background: #f87171;
-  box-shadow: 0 0 8px rgba(248, 113, 113, 0.9);
-  transition: width 0.12s linear;
-}
-
-.overclock-fade-enter-active,
-.overclock-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.overclock-fade-enter-from,
-.overclock-fade-leave-to {
-  opacity: 0;
-}
-
 .crisis-shake {
   animation: crisis-shake 0.42s linear infinite;
   will-change: transform;
@@ -2612,104 +2231,6 @@
   }
 }
 
-@keyframes overclock-warning {
-  0%,
-  100% {
-    box-shadow:
-      0 0 26px rgba(239, 68, 68, 0.28),
-      inset 0 0 0 1px rgba(255, 241, 242, 0.3),
-      inset 0 0 30px rgba(255, 255, 255, 0.08);
-  }
-  50% {
-    box-shadow:
-      0 0 56px rgba(239, 68, 68, 0.52),
-      inset 0 0 0 1px rgba(255, 241, 242, 0.55),
-      inset 0 0 40px rgba(255, 255, 255, 0.12);
-  }
-}
-
-@keyframes overclock-active-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 30px rgba(239, 68, 68, 0.4),
-      inset 0 0 30px rgba(255, 255, 255, 0.1);
-  }
-  50% {
-    box-shadow:
-      0 0 68px rgba(248, 113, 113, 0.7),
-      inset 0 0 44px rgba(255, 255, 255, 0.18);
-  }
-}
-
-@keyframes overclock-sheen {
-  0% {
-    transform: translateX(-62%);
-  }
-  100% {
-    transform: translateX(62%);
-  }
-}
-
-@keyframes overclock-heat {
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
-
-@keyframes overclock-vibrate {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) translate3d(0, 0, 0) rotate(0deg);
-  }
-  25% {
-    transform: translate(-50%, -50%) translate3d(-2px, 1px, 0) rotate(-0.4deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) translate3d(1px, -2px, 0) rotate(0.35deg);
-  }
-  75% {
-    transform: translate(-50%, -50%) translate3d(2px, 1px, 0) rotate(-0.25deg);
-  }
-}
-
-@keyframes overclock-stream-fall {
-  0% {
-    transform: translateY(-10vh);
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  85% {
-    opacity: 0.7;
-  }
-  100% {
-    transform: translateY(135vh);
-    opacity: 0;
-  }
-}
-
-@keyframes overclock-ember-rise {
-  0% {
-    transform: translate3d(0, 0, 0) scale(0.7);
-    opacity: 0;
-  }
-  18% {
-    opacity: 0.9;
-  }
-  100% {
-    transform: translate3d(14px, -92vh, 0) scale(0.2);
-    opacity: 0;
-  }
-}
-
 @keyframes crisis-shake {
   0%,
   100% {
@@ -2839,17 +2360,6 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -190%) scale(1.16);
-  }
-}
-
-@keyframes singularity-sheen {
-  0%,
-  28% {
-    transform: translateX(-65%);
-  }
-  68%,
-  100% {
-    transform: translateX(65%);
   }
 }
 
@@ -4889,70 +4399,6 @@
   animation: crisis-meter-pulse 0.7s ease-in-out infinite;
 }
 
-/* ===== Singularity extras ===== */
-.singularity-button--locked {
-  filter: saturate(0.3) brightness(0.58);
-}
-
-.singularity-button--active {
-  animation: singularity-live-pulse 1.15s ease-in-out infinite;
-}
-
-.singularity-metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 0.35rem 0.2rem;
-  border: 1px solid rgba(251, 191, 36, 0.28);
-  background: rgba(26, 16, 3, 0.35);
-}
-
-.singularity-metric span {
-  color: #a16207;
-  font-size: 9.5px;
-  letter-spacing: 0.04em;
-}
-
-.singularity-metric strong {
-  color: #fde68a;
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
-}
-
-.singularity-stat {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px dashed rgba(180, 83, 9, 0.35);
-  color: #94a3b8;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-}
-
-.singularity-stat strong {
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.overclock-inline-meter {
-  position: relative;
-  height: 7px;
-  padding: 1px;
-  border: 1px solid rgba(248, 113, 113, 0.55);
-  background: #1a070b;
-}
-
-.overclock-inline-meter span {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #7f1d1d, #ef4444, #fca5a5);
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.65);
-  transition: width 0.12s linear;
-}
-
 /* ===== Topology shell ===== */
 .topology-inline {
   display: flex;
@@ -6477,22 +5923,6 @@
   }
 }
 
-@keyframes singularity-live-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 38px rgba(251, 191, 36, 0.17),
-      inset 0 0 0 1px rgba(255, 249, 214, 0.45),
-      inset 0 0 30px rgba(255, 248, 202, 0.16);
-  }
-  50% {
-    box-shadow:
-      0 0 70px rgba(251, 191, 36, 0.42),
-      inset 0 0 0 1px rgba(255, 249, 214, 0.75),
-      inset 0 0 44px rgba(255, 248, 202, 0.26);
-  }
-}
-
 @keyframes topology-node-breathe {
   0%,
   100% {
@@ -6587,27 +6017,6 @@
     gap: 0.35rem;
     padding: 0.7rem 0.8rem;
     font-size: 10px;
-  }
-
-  .overclock-trigger {
-    padding: 0.55rem 0.75rem 0.62rem;
-  }
-
-  .overclock-fan-wrap {
-    width: min(72vw, 320px);
-  }
-
-  .overclock-overlay__hud {
-    bottom: 5vh;
-    padding: 0.5rem 1rem 0.6rem;
-  }
-
-  .overclock-overlay__timer {
-    font-size: 20px;
-  }
-
-  .overclock-overlay__sub {
-    letter-spacing: 0.08em;
   }
 
   .rebuild-trigger {
@@ -7012,7 +6421,6 @@
   .core-glyph,
   .core-halo,
   .status-dot,
-  .singularity-sheen,
   .crisis-shake,
   .crisis-frame,
   .crisis-warning-bubble,
@@ -7022,15 +6430,6 @@
   .rebuild-trigger,
   .rebuild-trigger__flare,
   .rebuild-confirm__panel,
-  .overclock-trigger,
-  .overclock-trigger__flare,
-  .overclock-trigger--active,
-  .overclock-fan-wrap,
-  .overclock-fan__blades,
-  .overclock-overlay__heat,
-  .overclock-overlay__meter span,
-  .overclock-stream,
-  .overclock-ember,
   .topology-map__pulse,
   .topology-map__spark,
   .topology-node[data-state='ready'] .topology-node__orb,
@@ -7052,7 +6451,6 @@
   .core-trigger--tap .core-surface,
   .core-trigger--auto .core-surface,
   .crisis-meter--active,
-  .singularity-button--active,
   .app-shell--singularity::after,
   .singularity-event__backdrop,
   .singularity-event__noise,
@@ -7513,8 +6911,7 @@
   .radar-panel__backdrop,
   .achievement-panel__scrim,
   .topology-modal,
-  .matrix-ascend-modal,
-  .overclock-overlay {
+  .matrix-ascend-modal {
     background: rgba(2, 7, 12, 0.93) !important;
   }
 

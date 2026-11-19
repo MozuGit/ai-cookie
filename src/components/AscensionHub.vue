@@ -71,7 +71,6 @@ const {
   globalMilestones,
   globalMilestonesUnlocked,
   isCrisis,
-  isOverclocking,
   overloadAscension,
   requestAscension,
   restartEpoch,
@@ -264,7 +263,6 @@ function canStartChallenge(challenge) {
     !challengeActive.value &&
     !blackDomainActive.value &&
     !isCrisis.value &&
-    !isOverclocking.value &&
     !challengesCompleted[challenge.id]
   )
 }
@@ -336,8 +334,7 @@ function isTierDisabled(tier) {
       challengeAllowsOverload.value &&
       tier.id === 'overload' &&
       tier.ready &&
-      !isCrisis.value &&
-      !isOverclocking.value
+      !isCrisis.value
     ) {
       return false
     }
@@ -742,9 +739,7 @@ onBeforeUnmount(() => {
                     ? '异常挑战进行中'
                     : blackDomainActive
                       ? '黑域连接中'
-                      : isOverclocking
-                        ? '超频进行中'
-                        : '对齐危机进行中'
+                      : '对齐危机进行中'
                 }}
               </span>
             </div>
@@ -1132,7 +1127,7 @@ onBeforeUnmount(() => {
                 class="asc-btn asc-btn--primary"
                 data-guide="blackdomain-entry"
                 :class="blackDomainActive ? 'asc-btn--danger' : 'asc-tone-violet'"
-                :disabled="challengeActive || isOverclocking"
+                :disabled="challengeActive"
                 @click="toggleBlackDomain"
               >
                 {{ blackDomainActive ? '断开黑域' : '接入黑域' }}

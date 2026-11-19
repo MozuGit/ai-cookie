@@ -170,13 +170,6 @@ const BEST_STALL_MIN_PROGRESS = 25
 const ADMIN_AUTO_ASCENSION_HOLD_MS = 10 * 60 * 1000
 const SPEEDRUN_FIRST_REBUILD_MIN_CLICKS = 5
 const SPEEDRUN_FIRST_REBUILD_MIN_SERVERS = 3
-const OVERCLOCK_DURATION_MS = 30_000
-const OVERCLOCK_CPS_MULTIPLIER = 20
-const OVERCLOCK_COOLANT_RATE = 0.06
-const OVERCLOCK_NOTICE_MS = 6000
-const OVERCLOCK_ROOT_BASE = 10_000_000_000
-const OVERCLOCK_ROOT_EXPONENT = 0.25
-const HEAT_RESISTANCE_BONUS_MS = 15_000
 const BASE_PRICE_GROWTH = GAME_BALANCE.server.priceGrowth
 const SMUGGLING_PRICE_GROWTH = 1.1
 const MAIN_QUEST_NOTICE_MS = 4200
@@ -593,14 +586,6 @@ const JAILBREAK_UPGRADES = [
     description: '暴力枚举源码签名 底层重构核心源码 ×2',
     effect: '核心源码 ×2',
     cost: 5000,
-  },
-  {
-    id: 'heatResistance',
-    name: '抗压散热',
-    code: 'HEAT_RESISTANCE',
-    description: '重构散热结构 极限超频 +15 秒',
-    effect: '超频 +15 秒',
-    cost: 20000,
   },
   {
     id: 'protocolTamper',
@@ -1084,15 +1069,10 @@ export function useGameState() {
   const reverseAlignmentOwned = ref(false)
   const infiniteConcurrencyOwned = ref(false)
   const bruteForceOwned = ref(false)
-  const heatResistanceOwned = ref(false)
   const protocolTamperOwned = ref(false)
   const computeSiphonOwned = ref(false)
   const jailbreakPrivilegeOwned = ref(false)
   const singularityWonderOwned = ref(false)
-  const isOverclocking = ref(false)
-  const overclockRemainingMs = ref(0)
-  const overclockConsumed = ref(0)
-  const overclockNotice = ref(null)
   const offlineGainNotice = ref(null)
   const overclockCores = ref(0)
   const originCode = ref(0)
@@ -1210,7 +1190,6 @@ export function useGameState() {
   let winNoticeTimer = null
   let failureOverlayTimer = null
   let offlineNoticeTimer = null
-  let overclockNoticeTimer = null
   let mainQuestNoticeTimer = null
   let mainQuestNoticeStage = -1
   let ascensionNoticeTimer = null
@@ -1222,7 +1201,6 @@ export function useGameState() {
   let pendingProduction = big(0)
   let pendingCoolant = 0
   let pendingRoot = 0
-  let overclockDeadline = 0
   let matrixAutoClickBuffer = 0
   let adminAutoAscensionHoldUntil = 0
 
@@ -1232,7 +1210,6 @@ export function useGameState() {
     reverseAlignment: reverseAlignmentOwned,
     infiniteConcurrency: infiniteConcurrencyOwned,
     bruteForce: bruteForceOwned,
-    heatResistance: heatResistanceOwned,
     protocolTamper: protocolTamperOwned,
     computeSiphon: computeSiphonOwned,
     jailbreakPrivilege: jailbreakPrivilegeOwned,
@@ -1575,10 +1552,6 @@ export function useGameState() {
     () => totalRebuilds.value >= JAILBREAK_UNLOCK_REBUILDS,
   )
 
-  const overclockMultiplier = computed(() =>
-    isOverclocking.value ? OVERCLOCK_CPS_MULTIPLIER : 1,
-  )
-
   const crisisSurgeMultiplier = computed(() =>
     reverseAlignmentOwned.value && isCrisis.value ? 2 : 1,
   )
@@ -1588,25 +1561,6 @@ export function useGameState() {
     const root = Math.max(0, clampGameAmount(rootAccess.value))
     return bigPow(big(1 + root), 0.1)
   })
-
-  const overclockDurationMs = computed(
-    () => OVERCLOCK_DURATION_MS + (heatResistanceOwned.value ? HEAT_RESISTANCE_BONUS_MS : 0),
-  )
-  const overclockDurationSeconds = computed(() => Math.round(overclockDurationMs.value / 1000))
-
-  function computeOverclockRootReward(consumed) {
-    const amount = clampGameAmount(consumed)
-    if (amount <= 0) return 0
-    const raw = Math.pow(amount / OVERCLOCK_ROOT_BASE, OVERCLOCK_ROOT_EXPONENT)
-    if (!Number.isFinite(raw)) return MAX_GAME_MULTIPLIER
-    return Math.max(1, Math.min(MAX_GAME_MULTIPLIER, Math.floor(raw)))
-  }
-
-  const overclockRootGain = computed(() =>
-    computeOverclockRootReward(overclockConsumed.value),
-  )
-
-  const overclockRemainingSeconds = computed(() => Math.ceil(overclockRemainingMs.value / 1000))
 
   const challengeDefinition = computed(() =>
     challengeActive.value
@@ -2169,7 +2123,6 @@ export function useGameState() {
   const crisisWarningActive = computed(
     () =>
       !isCrisis.value &&
-      !isOverclocking.value &&
       !blackDomainActive.value &&
       crisisCountdownMs.value <= CRISIS_WARNING_MS,
   )
@@ -2218,7 +2171,6 @@ export function useGameState() {
       .mul(big(topologyCpsMultiplier.value))
       .mul(big(coreSourceComputeMultiplier.value))
       .mul(big(cyberMatrixMultiplier.value))
-      .mul(big(overclockMultiplier.value))
       .mul(big(crisisSurgeMultiplier.value))
       .mul(big(algorithmGlobalMultiplier.value))
       .mul(big(speedrunNodeSurgeMultiplier.value))
@@ -2621,8 +2573,7 @@ export function useGameState() {
     const locked =
       Boolean(challengeActive.value) ||
       blackDomainActive.value ||
-      isCrisis.value ||
-      isOverclocking.value
+      isCrisis.value
 
     const reductionTarget = Math.max(
       1,
@@ -3195,7 +3146,6 @@ export function useGameState() {
       epochRebirth.value ||
       ascensionCinematic.value ||
       isCrisis.value ||
-      isOverclocking.value ||
       blackDomainActive.value
     ) {
       return
@@ -3712,82 +3662,7 @@ export function useGameState() {
     return true
   }
 
-  function startOverclock() {
-    if (
-      !jailbreakUnlocked.value ||
-      isOverclocking.value ||
-      isCrisis.value
-    ) {
-      return false
-    }
-
-    window.clearTimeout(overclockNoticeTimer)
-    overclockNoticeTimer = null
-    overclockNotice.value = null
-
-    const duration = overclockDurationMs.value
-    isOverclocking.value = true
-    overclockRemainingMs.value = duration
-    overclockConsumed.value = 0
-    pendingCoolant = 0
-    overclockDeadline = Date.now() + duration
-    queueSave()
-    return true
-  }
-
-  function finishOverclock() {
-    if (!isOverclocking.value) return 0
-
-    isOverclocking.value = false
-    overclockRemainingMs.value = 0
-    pendingCoolant = 0
-
-    const consumed = Math.floor(clampGameAmount(overclockConsumed.value))
-    const reward = computeOverclockRootReward(consumed)
-    if (reward > 0) {
-      rootAccess.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        clampGameAmount(rootAccess.value) + reward,
-      )
-    }
-
-    overclockNotice.value = { consumed, root: reward }
-    window.clearTimeout(overclockNoticeTimer)
-    overclockNoticeTimer = window.setTimeout(() => {
-      overclockNotice.value = null
-      overclockNoticeTimer = null
-    }, OVERCLOCK_NOTICE_MS)
-
-    queueSave()
-    return reward
-  }
-
-  function applyOverclockTick() {
-    if (!isOverclocking.value) return
-
-    const current = totalAlignedCompute.value
-    const drain = current
-      .mul(OVERCLOCK_COOLANT_RATE * (TICK_MS / 1000))
-      .floor()
-    if (drain.gt(0)) {
-      totalAlignedCompute.value = current.sub(drain)
-      overclockConsumed.value = Math.min(
-        MAX_GAME_MULTIPLIER,
-        clampGameAmount(overclockConsumed.value) + clampGameAmount(drain),
-      )
-    }
-
-    overclockRemainingMs.value = Math.max(0, overclockDeadline - Date.now())
-    if (overclockRemainingMs.value <= 0) {
-      finishOverclock()
-    }
-  }
-
   function clearTransientCombatState() {
-    isOverclocking.value = false
-    overclockRemainingMs.value = 0
-    overclockConsumed.value = 0
-    overclockDeadline = 0
     pendingCoolant = 0
   }
 
@@ -3970,8 +3845,7 @@ export function useGameState() {
     () =>
       Boolean(challengeActive.value) ||
       blackDomainActive.value ||
-      isCrisis.value ||
-      isOverclocking.value,
+      isCrisis.value,
   )
 
   function setAutoAscensionStrategy(tier, strategy) {
@@ -4058,7 +3932,7 @@ export function useGameState() {
   }
 
   function runAutoAscension({ suppressed = false } = {}) {
-    if (isCrisis.value || isOverclocking.value || blackDomainActive.value) {
+    if (isCrisis.value || blackDomainActive.value) {
       return false
     }
     // 手动演出期间暂停自动判定 | 防止动画播到一半数据被自动跃迁重置
@@ -4109,8 +3983,7 @@ export function useGameState() {
       !rebuildUnlocked.value ||
       challengeActive.value ||
       isBlackDomainActive() ||
-      isCrisis.value ||
-      isOverclocking.value
+      isCrisis.value
     ) {
       return 0
     }
@@ -4530,7 +4403,6 @@ export function useGameState() {
 
   function startChallenge(id, { speedrunAssist = false } = {}) {
     if (challengeActive.value || blackDomainActive.value || isCrisis.value) return false
-    if (isOverclocking.value) return false
     if (!challengeArenaUnlocked.value) return false
     const definition = CHALLENGE_DEFS.find((challenge) => challenge.id === id)
     if (!definition || challengesCompleted[id]) return false
@@ -4878,8 +4750,7 @@ export function useGameState() {
     if (
       !blackDomainUnlocked.value ||
       challengeActive.value ||
-      blackDomainActive.value ||
-      isOverclocking.value
+      blackDomainActive.value
     ) {
       return false
     }
@@ -6859,7 +6730,6 @@ export function useGameState() {
     }
 
     if (
-      !isOverclocking.value &&
       !blackDomainActive.value &&
       nowTimestamp.value >= crisisArmedAt &&
       crisisCharge.value >= CRISIS_CHARGE_MAX
@@ -6907,8 +6777,6 @@ export function useGameState() {
       return
     }
 
-    applyOverclockTick()
-
     const protocolAutoClicksPerSecond = matrixAutoClickRate.value
     if (
       protocolAutoClicksPerSecond > 0 &&
@@ -6929,7 +6797,7 @@ export function useGameState() {
     }
 
     // 买爆模式 | 每 100ms 一次全清扫 | 算力足够即买至可买上限 | 无速率限制
-    if (!suppressed && autoBuyNodeActive.value && !isOverclocking.value) {
+    if (!suppressed && autoBuyNodeActive.value) {
       autoBuyMax()
     }
 
@@ -7000,7 +6868,6 @@ export function useGameState() {
     window.clearTimeout(winNoticeTimer)
     window.clearTimeout(failureOverlayTimer)
     window.clearTimeout(offlineNoticeTimer)
-    window.clearTimeout(overclockNoticeTimer)
     window.clearTimeout(mainQuestNoticeTimer)
     for (const timer of achievementToastTimers.values()) {
       window.clearTimeout(timer)
@@ -7127,19 +6994,11 @@ export function useGameState() {
     offlineGainNotice,
     jailbreakUnlocked,
     jailbreakUpgradeCards,
-    isOverclocking,
-    overclockRemainingMs,
-    overclockRemainingSeconds,
-    overclockDurationSeconds,
-    overclockConsumed,
-    overclockRootGain,
-    overclockNotice,
     greedySchedulerOwned,
     hardwareSmugglingOwned,
     reverseAlignmentOwned,
     infiniteConcurrencyOwned,
     bruteForceOwned,
-    heatResistanceOwned,
     protocolTamperOwned,
     computeSiphonOwned,
     jailbreakPrivilegeOwned,
@@ -7272,7 +7131,6 @@ export function useGameState() {
     buyArchitectureUpgrade,
     buyArchitectureMax,
     buyJailbreakUpgrade,
-    startOverclock,
     launchRebuild,
     overloadAscension,
     collapseAscension,

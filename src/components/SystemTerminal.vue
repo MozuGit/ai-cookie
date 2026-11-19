@@ -3,7 +3,6 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
   isCrisis: { type: Boolean, default: false },
-  isOverclocking: { type: Boolean, default: false },
   motherMode: { type: Boolean, default: false },
 })
 
@@ -76,7 +75,7 @@ function currentWeights() {
       ['mother', 40],
     ]
   }
-  if (props.isCrisis || props.isOverclocking) {
+  if (props.isCrisis) {
     return [
       ['normal', 60],
       ['meme', 20],
@@ -212,13 +211,6 @@ function pushLine(prefix, text) {
 }
 
 defineExpose({ pushLine })
-
-watch(
-  () => props.isOverclocking,
-  (active, previous) => {
-    if (active && !previous) maybeTriggerHot()
-  },
-)
 
 watch(
   () => props.isCrisis,
