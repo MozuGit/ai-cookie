@@ -463,6 +463,101 @@ export const CHALLENGE_DEFS = [
   },
 ]
 
+export const SPEEDRUN_CHALLENGE_OVERRIDES = {
+  'compute-vacuum': {
+    targetLabel: '1e8 CU',
+    objective: {
+      type: 'peakCompute',
+      target: 8,
+      label: '积攒 1e8 算力',
+      trackLabel: '本局峰值',
+    },
+  },
+  'load-penalty': {
+    targetLabel: '30 台',
+    objective: {
+      type: 'purchases',
+      target: 30,
+      label: '购买 30 台服务器',
+      trackLabel: '本局采购',
+    },
+    restrictionTags: ['急速曲线接管定价 | 采购惩罚失效'],
+  },
+  'compute-sterile': {
+    targetLabel: '1e9 CU',
+    objective: {
+      type: 'produced',
+      target: 9,
+      label: '挂机产出 1e9 算力',
+      trackLabel: '本局累计产出',
+    },
+  },
+  'jailbreak-offline': {
+    targetLabel: '1 次',
+    objective: {
+      type: 'takeovers',
+      target: 1,
+      label: '手动完成 1 次危机接管',
+      trackLabel: '手动接管',
+    },
+  },
+  'compute-trap': {
+    targetLabel: '1e10 CU',
+    objective: {
+      type: 'peakCompute',
+      target: 10,
+      label: '达到 1e10 算力',
+      trackLabel: '本局峰值',
+    },
+    restrictions: { purchaseComputeTax: 0.05 },
+    restrictionTags: ['每次采购扣除 5% 当前算力'],
+  },
+  'click-overload': {
+    targetLabel: '50 次',
+    objective: {
+      type: 'clicks',
+      target: 50,
+      label: '点击核心 50 次',
+      trackLabel: '本局手动点击',
+    },
+    restrictions: { clickFatiguePerClick: 0.5, clickFatigueMax: 25 },
+    restrictionTags: ['每次点击 CPS -0.5%', '最高压制至 25%', '停手 10 秒后恢复'],
+  },
+  'algorithm-distortion': {
+    targetLabel: '1e9 CU',
+    objective: {
+      type: 'peakCompute',
+      target: 9,
+      label: '达到 1e9 算力',
+      trackLabel: '本局峰值',
+    },
+  },
+  'time-stasis': {
+    restrictions: { timerRate: 0.75 },
+    restrictionTags: ['自动化频率 -25%', '危机倒计时 -25%'],
+  },
+  'server-blackhole': {
+    targetLabel: '50 台',
+    objective: {
+      type: 'servers',
+      target: 50,
+      label: '拥有 50 台服务器',
+      trackLabel: '当前服务器',
+    },
+    restrictions: { serverDrainPerTenPerSecond: 0.5 },
+    restrictionTags: ['每 10 台服务器每秒流失 0.5 台'],
+  },
+  'absolute-lockdown': {
+    targetLabel: '1e9 CU',
+    objective: {
+      type: 'peakCompute',
+      target: 9,
+      label: '达到 1e9 算力',
+      trackLabel: '本局峰值',
+    },
+  },
+}
+
 export const MATRIX_CATEGORIES = {
   logic: { name: '逻辑层', color: 'cyan' },
   tensor: { name: '张量层', color: 'teal' },

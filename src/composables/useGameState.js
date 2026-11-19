@@ -13,6 +13,7 @@ import {
   AUTO_ASCENSION_TIER_BY_AUTOMATION,
   AUTO_ASCENSION_TIER_LABELS,
   CHALLENGE_DEFS,
+  SPEEDRUN_CHALLENGE_OVERRIDES,
   GLOBAL_MILESTONES,
   MATRIX_NODES,
   ORIGIN_NODES,
@@ -1566,10 +1567,31 @@ export function useGameState() {
     return bigPow(big(1 + root), 0.1)
   })
 
+  function resolveChallengeDefinition(id) {
+    const definition = CHALLENGE_DEFS.find((challenge) => challenge.id === id)
+    if (!definition) return null
+    const override = isSpeedrunMode.value
+      ? SPEEDRUN_CHALLENGE_OVERRIDES[id]
+      : null
+    if (!override) return definition
+    return {
+      ...definition,
+      targetLabel: override.targetLabel ?? definition.targetLabel,
+      objective: override.objective ?? definition.objective,
+      restrictions: override.restrictions
+        ? { ...definition.restrictions, ...override.restrictions }
+        : definition.restrictions,
+      restrictionTags: override.restrictionTags ?? definition.restrictionTags,
+    }
+  }
+
+  const challengeDefinitions = computed(() =>
+    CHALLENGE_DEFS.map((definition) => resolveChallengeDefinition(definition.id)),
+  )
+
   const challengeDefinition = computed(() =>
     challengeActive.value
-      ? CHALLENGE_DEFS.find((challenge) => challenge.id === challengeActive.value) ??
-        null
+      ? resolveChallengeDefinition(challengeActive.value) ?? null
       : null,
   )
 
@@ -1581,6 +1603,12 @@ export function useGameState() {
     isSpeedrunMode.value && speedrunPhase.value >= 2
       ? highestCompute.value.gte(big('1e25'))
       : highestCompute.value.gte(tierThresholds.value.overload),
+  )
+
+  const challengeArenaThresholdLabel = computed(() =>
+    isSpeedrunMode.value && speedrunPhase.value >= 2
+      ? formatNumber(big('1e25')).text
+      : formatNumber(tierThresholds.value.overload).text,
   )
 
   const challengeObjective = computed(() => {
@@ -1726,8 +1754,11 @@ export function useGameState() {
   })
 
   const challengeServerDrainRate = computed(() => {
-    if (!challengeRestrictions.value?.serverDrainPerTenPerSecond) return 0
-    return totalNodes.value / 10
+    const drain = Number(
+      challengeRestrictions.value?.serverDrainPerTenPerSecond,
+    )
+    if (!drain || drain <= 0) return 0
+    return (totalNodes.value / 10) * drain
   })
 
   const challengeServerFlattenBaseCps = Math.max(
@@ -4451,7 +4482,7 @@ export function useGameState() {
   function startChallenge(id, { speedrunAssist = false } = {}) {
     if (challengeActive.value || blackDomainActive.value || isCrisis.value) return false
     if (!challengeArenaUnlocked.value) return false
-    const definition = CHALLENGE_DEFS.find((challenge) => challenge.id === id)
+    const definition = resolveChallengeDefinition(id)
     if (!definition || challengesCompleted[id]) return false
 
     challengeActive.value = id
@@ -4492,9 +4523,7 @@ export function useGameState() {
   function exitChallenge({ completed = false } = {}) {
     if (!challengeActive.value) return false
 
-    const definition = CHALLENGE_DEFS.find(
-      (challenge) => challenge.id === challengeActive.value,
-    )
+    const definition = resolveChallengeDefinition(challengeActive.value)
     if (completed && definition) {
       challengesCompleted[definition.id] = Date.now()
       pushAutomationLog(
@@ -7143,6 +7172,8 @@ export function useGameState() {
     challengeTarget,
     challengeRestrictions,
     challengeArenaUnlocked,
+    challengeArenaThresholdLabel,
+    challengeDefinitions,
     challengeCompleted,
     challengePermanentBonuses,
     challengeCoreUpgradesDisabled,

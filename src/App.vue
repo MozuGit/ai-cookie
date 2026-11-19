@@ -29,7 +29,7 @@ import CrisisQte from './components/CrisisQte.vue'
 import CircuitBackdrop from './components/CircuitBackdrop.vue'
 import MainCore from './components/MainCore.vue'
 import CrisisFailureOverlay from './components/CrisisFailureOverlay.vue'
-import { CHALLENGE_DEFS, MATRIX_CATEGORIES } from './composables/ascensionData'
+import { MATRIX_CATEGORIES } from './composables/ascensionData'
 import {
   audioMuted,
   disposeAudio,
@@ -240,6 +240,8 @@ const {
   globalMilestonesUnlocked,
   globalMilestoneToast,
   challengeArenaUnlocked,
+  challengeArenaThresholdLabel,
+  challengeDefinitions,
   challengeActive,
   challengeDefinition,
   challengeObjective,
@@ -1534,7 +1536,7 @@ const radarProgressPercent = computed(() =>
 
 const drillReadyCount = computed(
   () =>
-    CHALLENGE_DEFS.filter(
+    challengeDefinitions.value.filter(
       (definition) =>
         challengeArenaUnlocked.value &&
         !challengeActive.value &&
@@ -3255,7 +3257,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="bay-topline">
           <span class="holo-chip">
-            已完成 {{ challengesCompletedCount }} / {{ CHALLENGE_DEFS.length }}
+            已完成 {{ challengesCompletedCount }} / {{ challengeDefinitions.length }}
           </span>
           <span v-if="challengeArenaUnlocked" class="holo-chip holo-chip--amber">
             {{ drillReadyCount }} 项可启动
@@ -3267,7 +3269,7 @@ onBeforeUnmount(() => {
           <div>
             <p class="holo-lock__title">异常演练场尚未接入</p>
             <p class="holo-lock__desc">
-              历史最高算力达到 {{ formatNumber('1e100').text }} CU 后开放
+              历史最高算力达到 {{ challengeArenaThresholdLabel }} CU 后开放
               当前峰值 {{ formatScientific(highestCompute) }} CU
             </p>
           </div>
@@ -3275,7 +3277,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="drill-list">
           <div
-            v-for="definition in CHALLENGE_DEFS"
+            v-for="definition in challengeDefinitions"
             :key="definition.id"
             class="drill-row"
             :class="{
