@@ -1838,7 +1838,7 @@
 .drill-active {
   border: 1px solid rgba(248, 113, 113, 0.35);
   background: rgba(69, 10, 10, 0.26);
-  padding: 0.5rem 0.6rem;
+  padding: 0.6rem 0.7rem;
 }
 
 .drill-active__head {
@@ -1848,25 +1848,25 @@
   justify-content: space-between;
   gap: 0.4rem;
   color: #fecaca;
-  font-size: 9px;
+  font-size: 12px;
   letter-spacing: 0.06em;
 }
 
 .drill-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  margin-top: 0.55rem;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
 }
 
 .drill-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   border: 1px solid rgba(100, 116, 139, 0.22);
   background: rgba(3, 11, 19, 0.55);
-  padding: 0.45rem 0.55rem;
+  padding: 0.7rem 0.8rem;
   transition:
     border-color 0.18s ease,
     background 0.18s ease;
@@ -1879,12 +1879,33 @@
 
 .drill-row--done {
   border-color: rgba(16, 185, 129, 0.26);
-  opacity: 0.82;
+  background: rgba(2, 8, 14, 0.72);
 }
 
 .drill-row--active {
-  border-color: rgba(248, 113, 113, 0.55);
-  background: rgba(69, 10, 10, 0.28);
+  border-color: rgba(34, 211, 238, 0.8);
+  background: rgba(8, 25, 38, 0.6);
+  animation: drill-row-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes drill-row-blink {
+  0%,
+  100% {
+    border-color: rgba(34, 211, 238, 0.9);
+    box-shadow: 0 0 10px rgba(34, 211, 238, 0.18);
+  }
+  50% {
+    border-color: rgba(34, 211, 238, 0.3);
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drill-row--active {
+    animation: none;
+    border-color: rgba(34, 211, 238, 0.7);
+    box-shadow: none;
+  }
 }
 
 .drill-row--locked {
@@ -1893,12 +1914,12 @@
 
 .drill-row__order {
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   place-items: center;
   border: 1px solid rgba(34, 211, 238, 0.28);
   color: #67e8f9;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1910,49 +1931,56 @@
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .drill-row__title strong {
-  color: #e2e8f0;
-  font-size: 10px;
-  font-weight: 700;
+  color: #f1f5f9;
+  font-size: 14px;
+  font-weight: 800;
   letter-spacing: 0.04em;
 }
 
 .drill-row__title span {
-  color: #475569;
-  font-size: 7px;
+  color: #94a3b8;
+  font-size: 11px;
   letter-spacing: 0.08em;
 }
 
 .drill-row__meta {
   overflow: hidden;
-  margin-top: 2px;
-  color: #64748b;
-  font-size: 8px;
+  margin-top: 6px;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1.5;
   letter-spacing: 0.02em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .drill-row__reward {
-  margin-top: 2px;
-  color: rgba(251, 191, 36, 0.7);
-  font-size: 7.5px;
+  margin-top: 5px;
+  color: #fcd34d;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.02em;
+}
+
+.drill-row__reward b {
+  margin-right: 2px;
+  color: #fbbf24;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
 
 .drill-row__side {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
+  gap: 0.4rem;
 }
 
 .drill-row__state {
-  color: #475569;
-  font-size: 7px;
+  color: #94a3b8;
+  font-size: 10px;
   letter-spacing: 0.1em;
 }
 
@@ -1961,7 +1989,7 @@
 }
 
 .drill-row__state--active {
-  color: #f87171;
+  color: #22d3ee;
 }
 
 .drill-start {
@@ -1969,13 +1997,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 64px;
+  min-width: 80px;
   overflow: hidden;
   border: 1px solid rgba(34, 211, 238, 0.45);
   background: rgba(34, 211, 238, 0.08);
-  padding: 0.32rem 0.5rem;
+  padding: 0.5rem 0.75rem;
   color: #a5f3fc;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -2012,8 +2040,8 @@
 }
 
 .drill-row__progress {
-  height: 2px;
-  margin-top: 3px;
+  height: 4px;
+  margin-top: 6px;
   background: #061019;
 }
 
@@ -2023,21 +2051,27 @@
   background: linear-gradient(90deg, #0e7490, #22d3ee);
 }
 
+.holo-shell:has(.drill-list) .bay-topline .holo-chip,
+.holo-shell:has(.drill-list) .drill-list__foot .holo-chip {
+  padding: 0.42rem 0.6rem;
+  font-size: 11px;
+}
+
 .drill-list__foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem;
-  margin-top: 0.55rem;
+  margin-top: 0.65rem;
 }
 
 .drill-hub-link {
   border: 1px solid rgba(251, 191, 36, 0.4);
   background: rgba(251, 191, 36, 0.06);
-  padding: 0.35rem 0.55rem;
+  padding: 0.45rem 0.65rem;
   color: #fde68a;
-  font-size: 8px;
+  font-size: 11px;
   letter-spacing: 0.08em;
   cursor: pointer;
 }

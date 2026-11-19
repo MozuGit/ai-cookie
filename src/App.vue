@@ -3295,7 +3295,7 @@ onBeforeUnmount(() => {
                 <span>{{ definition.tag }} // {{ formatTextNumbers(definition.targetLabel) }}</span>
               </div>
               <p class="drill-row__meta">{{ formatTextNumbers(definition.objective.label) }}</p>
-              <p class="drill-row__reward">奖励 // {{ definition.reward.label }}</p>
+              <p class="drill-row__reward"><b>奖励</b> // {{ definition.reward.label }}</p>
               <p v-if="!challengesCompleted[definition.id]" class="drill-row__meta">
                 {{ definition.restrictionTags.join(' · ') }}
               </p>
@@ -3317,9 +3317,9 @@ onBeforeUnmount(() => {
               >
                 {{
                   challengesCompleted[definition.id]
-                    ? '已完成'
+                    ? '✓ 已完成'
                     : challengeActive && challengeDefinition?.id === definition.id
-                      ? '进行中'
+                      ? '[ 挑战中 ]'
                       : challengeActive
                         ? '待命'
                         : '可启动'
