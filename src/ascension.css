@@ -1739,6 +1739,11 @@
   text-shadow: 0 0 14px rgba(253, 230, 138, 0.55);
 }
 
+.matrix-detail__effect {
+  color: #67e8f9;
+  text-shadow: 0 0 14px rgba(103, 232, 249, 0.5);
+}
+
 .matrix-category-legend {
   display: flex;
   flex-wrap: wrap;

@@ -969,7 +969,7 @@ onBeforeUnmount(() => {
                 <span>PROTOCOL MATRIX</span>
               </p>
               <p class="ascension-section-note">
-                消耗超频核心点亮矩阵节点 每级总等级让全局产出 ×2
+                消耗超频核心升级矩阵节点 13 节点各持专属机制 全局产出仅由卷积核与超级对齐供能
               </p>
             </div>
             <div class="matrix-kpis">
@@ -1054,11 +1054,8 @@ onBeforeUnmount(() => {
                   下一级
                   <strong class="matrix-detail__cost">{{ hoveredMatrix.isMax ? 'MAX' : `${formatNumber(hoveredMatrix.nextCost).text} OC` }}</strong>
                 </span>
-                <span v-if="hoveredMatrix.level > 0">
-                  节点贡献 <strong>×{{ formatMultiplier(Math.pow(2, hoveredMatrix.level)) }}</strong>
-                </span>
-                <span v-if="hoveredMatrix.id === 'autoClick'">
-                  自动点击 <strong>{{ hoveredMatrix.level }} 次/秒</strong>
+                <span v-if="hoveredMatrix.effectLabel">
+                  当前提供 <strong class="matrix-detail__effect">{{ hoveredMatrix.effectLabel }}</strong>
                 </span>
               </div>
             </div>

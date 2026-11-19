@@ -3072,6 +3072,12 @@ onBeforeUnmount(() => {
             <span class="holo-matrix-card__symbol">{{ card.symbol }}</span>
             <span class="holo-matrix-card__name">{{ card.name }}</span>
             <span
+              v-if="card.effectLabel"
+              class="holo-matrix-card__effect"
+            >
+              {{ card.effectLabel }}
+            </span>
+            <span
               class="holo-matrix-card__cost"
               :class="{ 'is-ready': card.canAfford }"
             >
@@ -3089,8 +3095,8 @@ onBeforeUnmount(() => {
         />
 
         <p v-if="matrixUnlocked" class="holo-note mt-3">
-          矩阵节点提供永久全局乘区 跨所有重置生效
-          <strong>超频核心来自算力超载</strong> 优先点亮可负担低阶节点
+          矩阵节点提供永久专属机制 跨所有重置生效
+          <strong>全局产出仅由卷积核与超级对齐供能</strong> 超频核心来自算力超载
         </p>
       </div>
 

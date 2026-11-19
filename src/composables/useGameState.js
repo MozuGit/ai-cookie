@@ -142,6 +142,18 @@ const ARCHITECTURE_OUTPUT_FACTOR = 2
 const ARCHITECTURE_CLICK_FACTOR = 3
 const ARCHITECTURE_TIME_FACTOR = 1.5
 const OFFLINE_RATE_CAP = 1_000_000
+const OFFLINE_WM_CAP_SECONDS_PER_LEVEL = 2 * 60 * 60
+const MATRIX_PERCEPTRON_CLICK_PER_LEVEL = 0.5
+const MATRIX_LG_DISCOUNT_PER_LEVEL = 0.02
+const MATRIX_LG_DISCOUNT_CAP = 0.2
+const MATRIX_TENSOR_SPEED_PER_LEVEL = 0.1
+const MATRIX_TRANSFORMER_SOURCE_PER_LEVEL = 0.1
+const MATRIX_MULTIMODAL_CORES_PER_LEVEL = 0.1
+const MATRIX_OMEGA_ROOT_PER_LEVEL = 0.2
+const MATRIX_WM_OFFLINE_RATE_PER_LEVEL = 0.2
+const MATRIX_RL_REWARD_PER_LEVEL = 0.2
+const MATRIX_AGI_REDUCTION_PER_LEVEL = 5
+const MATRIX_AGI_REDUCTION_CAP = 50
 const MAX_GAME_MULTIPLIER = Number.MAX_VALUE
 const MAX_BUILDING_COUNT = 1e15
 const BLACK_DOMAIN_DRAIN_RATIO = 0.8
@@ -1207,6 +1219,7 @@ export function useGameState() {
   let pendingRoot = 0
   let matrixAutoClickBuffer = 0
   let baseAutoClickBuffer = 0
+  let autoBuySweepBuffer = 0
   let adminAutoAscensionHoldUntil = 0
 
   const jailbreakFlags = {
@@ -1469,7 +1482,10 @@ export function useGameState() {
   const algorithmMilestoneMultiplier = computed(() =>
     hasAlgorithm('classLeap')
       ? 1 +
-        Math.floor(totalNodes.value / topologyMilestoneDivisor.value) *
+        Math.floor(
+          (totalNodes.value + serverMilestoneReduction.value) /
+            topologyMilestoneDivisor.value,
+        ) *
           classLeapStep.value
       : 1,
   )
@@ -1488,8 +1504,10 @@ export function useGameState() {
       if (hasAlgorithm('routing')) bonus += totalNodes.value * 0.02
       if (hasAlgorithm('classLeap')) {
         bonus +=
-          Math.floor(totalNodes.value / topologyMilestoneDivisor.value) *
-          classLeapStep.value
+          Math.floor(
+            (totalNodes.value + serverMilestoneReduction.value) /
+              topologyMilestoneDivisor.value,
+          ) * classLeapStep.value
       }
       if (hasAlgorithm('logSingularity') && totalAlignedCompute.value.gt(1)) {
         bonus += totalAlignedCompute.value.log10()
@@ -1537,7 +1555,10 @@ export function useGameState() {
   })
 
   const effectivePriceMultiplier = computed(
-    () => priceMultiplier.value * speedrunPriceFactor.value,
+    () =>
+      priceMultiplier.value *
+      speedrunPriceFactor.value *
+      (1 - Math.min(MATRIX_LG_DISCOUNT_CAP, MATRIX_LG_DISCOUNT_PER_LEVEL * readMatrixLevel('logicGate'))),
   )
 
   const architecturePriceReductionPercent = computed(() =>
@@ -1716,30 +1737,45 @@ export function useGameState() {
   )
 
   const challengeServerBaseMultiplier = computed(() =>
-    challengesCompleted['compute-vacuum'] ? 3 : 1,
+    challengesCompleted['compute-vacuum']
+      ? 3 * challengeRewardMultiplier.value
+      : 1,
   )
   const challengeAscensionGainMultiplier = computed(() =>
-    challengesCompleted['algorithm-distortion'] ? 2 : 1,
+    challengesCompleted['algorithm-distortion']
+      ? 2 * challengeRewardMultiplier.value
+      : 1,
   )
   const challengeSourceGainMultiplier = computed(
     () =>
-      (challengesCompleted['load-penalty'] ? 1.5 : 1) *
-      challengeAscensionGainMultiplier.value,
+      (challengesCompleted['load-penalty']
+        ? 1.5 * challengeRewardMultiplier.value
+        : 1) * challengeAscensionGainMultiplier.value,
   )
   const challengeOfflineCapSeconds = computed(() =>
-    challengesCompleted['compute-sterile'] ? OFFLINE_CHALLENGE_CAP_SECONDS : 0,
+    challengesCompleted['compute-sterile']
+      ? OFFLINE_CHALLENGE_CAP_SECONDS * challengeRewardMultiplier.value
+      : 0,
   )
   const challengeCrisisRecoveryMultiplier = computed(() =>
-    challengesCompleted['jailbreak-offline'] ? 2 : 1,
+    challengesCompleted['jailbreak-offline']
+      ? 2 * challengeRewardMultiplier.value
+      : 1,
   )
   const challengeIndependentMultiplier = computed(() =>
-    challengesCompleted['compute-trap'] ? 1.1 : 1,
+    challengesCompleted['compute-trap']
+      ? 1.1 * challengeRewardMultiplier.value
+      : 1,
   )
   const challengeClickCpsRatio = computed(() =>
-    challengesCompleted['click-overload'] ? 0.05 : 0,
+    challengesCompleted['click-overload']
+      ? 0.05 * challengeRewardMultiplier.value
+      : 0,
   )
   const challengeGlobalTimeMultiplier = computed(() =>
-    challengesCompleted['time-stasis'] ? 1.2 : 1,
+    challengesCompleted['time-stasis']
+      ? 1.2 * challengeRewardMultiplier.value
+      : 1,
   )
   const challengeServerMilestoneScale = computed(() =>
     challengesCompleted['server-blackhole'] ? 0.8 : 1,
@@ -1781,7 +1817,18 @@ export function useGameState() {
     Math.max(0, Math.floor(matrixLevels.autoClick || 0)),
   )
 
-  const matrixAutoClickRate = computed(() => matrixAutoClickLevel.value)
+  function readMatrixLevel(id) {
+    return Math.max(0, Math.floor(Number(matrixLevels[id]) || 0))
+  }
+
+  const matrixTensorSpeed = computed(() => {
+    const speed = 1 + MATRIX_TENSOR_SPEED_PER_LEVEL * readMatrixLevel('tensorCore')
+    return Math.round(speed * 10) / 10
+  })
+
+  const matrixAutoClickRate = computed(
+    () => matrixAutoClickLevel.value * matrixTensorSpeed.value,
+  )
 
   const effectiveAutoClickRate = computed(() =>
     Math.max(BASE_AUTO_CLICK_RATE, matrixAutoClickRate.value),
@@ -1795,12 +1842,26 @@ export function useGameState() {
     () => TAMPER_NODES.filter((node) => (tamperLevels[node.id] || 0) > 0).length,
   )
 
+  // 协议矩阵全局乘区 | 仅由 C 卷积核 与 SA 超级对齐 提供
   const matrixMultiplier = computed(() =>
-    bigPow(2, matrixTotalLevels.value),
+    bigPow(1.5, readMatrixLevel('convolution')).mul(
+      bigPow(2, readMatrixLevel('superAlignment')),
+    ),
   )
 
   const matrixMultiplierLabel = computed(() =>
     formatMultiplier(matrixMultiplier.value),
+  )
+
+  const challengeRewardMultiplier = computed(
+    () => 1 + MATRIX_RL_REWARD_PER_LEVEL * readMatrixLevel('reinforcement'),
+  )
+
+  const serverMilestoneReduction = computed(() =>
+    Math.min(
+      MATRIX_AGI_REDUCTION_CAP,
+      MATRIX_AGI_REDUCTION_PER_LEVEL * readMatrixLevel('agi'),
+    ),
   )
 
   const overclockCoresGainMultiplier = computed(() =>
@@ -1809,7 +1870,8 @@ export function useGameState() {
       : globalMilestones['gm-1e110']
         ? 2
         : 1) *
-    (1 + 0.25 * (originLevels.coreRefining || 0)),
+    (1 + 0.25 * (originLevels.coreRefining || 0)) *
+    (1 + MATRIX_MULTIMODAL_CORES_PER_LEVEL * readMatrixLevel('multimodal')),
   )
 
   const sourceGainMultiplier = computed(
@@ -1818,13 +1880,15 @@ export function useGameState() {
       (1 + 0.25 * (originLevels.sourceAnalysis || 0)) *
       (bruteForceOwned.value ? 2 : 1) *
       challengeSourceGainMultiplier.value *
-      topologySourceMultiplier.value,
+      topologySourceMultiplier.value *
+      (1 + MATRIX_TRANSFORMER_SOURCE_PER_LEVEL * readMatrixLevel('transformer')),
   )
 
   const rootGainMultiplier = computed(
     () =>
       (globalMilestones['gm-1e270'] ? 1.5 : 1) *
-      (1 + 0.2 * (originLevels.rootResonance || 0)),
+      (1 + 0.2 * (originLevels.rootResonance || 0)) *
+      (1 + MATRIX_OMEGA_ROOT_PER_LEVEL * readMatrixLevel('omega')),
   )
 
   const originGainMultiplier = computed(
@@ -2015,15 +2079,18 @@ export function useGameState() {
   const offlineRate = computed(() =>
     Math.min(
       OFFLINE_RATE_CAP,
-      OFFLINE_BASE_RATE * Math.pow(2, architectureLevels.distributedRecovery),
+      OFFLINE_BASE_RATE *
+        Math.pow(2, architectureLevels.distributedRecovery) *
+        (1 + MATRIX_WM_OFFLINE_RATE_PER_LEVEL * readMatrixLevel('worldModel')),
     ),
   )
 
   const offlineCapSeconds = computed(() =>
     Math.max(
-      architectureLevels.distributedRecovery > 0
+      (architectureLevels.distributedRecovery > 0
         ? OFFLINE_BOOSTED_CAP_SECONDS
-        : OFFLINE_BASE_CAP_SECONDS,
+        : OFFLINE_BASE_CAP_SECONDS) +
+        OFFLINE_WM_CAP_SECONDS_PER_LEVEL * readMatrixLevel('worldModel'),
       challengeOfflineCapSeconds.value,
     ),
   )
@@ -2173,7 +2240,8 @@ export function useGameState() {
       CRISIS_QTE_CHARGE_PER_SECOND *
       algorithmCrisisRecoveryMultiplier.value *
       challengeCrisisRecoveryMultiplier.value *
-      (matrixNodeLit('compute-5') ? 2 : 1)
+      (matrixNodeLit('compute-5') ? 2 : 1) *
+      Math.pow(2, readMatrixLevel('attention'))
     return Math.round(base * 10) / 10
   })
 
@@ -2237,6 +2305,7 @@ export function useGameState() {
       base = big(cps.value).mul(challengeClickCpsRatio.value).max(base)
     }
     let gain = base
+      .mul(big(1 + MATRIX_PERCEPTRON_CLICK_PER_LEVEL * readMatrixLevel('perceptron')))
       .mul(big(topologyClickMultiplier.value))
       .mul(big(algorithmClickMultiplier.value))
       .mul(big(architectureClickMultiplier.value))
@@ -4576,6 +4645,39 @@ export function useGameState() {
     )
   }
 
+  function matrixNodeEffectLabel(node, level) {
+    switch (node.id) {
+      case 'perceptron':
+        return `点击收益 +${level * 50}%`
+      case 'logicGate':
+        return `服务器价格 -${Math.min(20, level * 2)}%`
+      case 'tensorCore':
+        return `自动化速度 ×${(1 + MATRIX_TENSOR_SPEED_PER_LEVEL * level).toFixed(1)}`
+      case 'attention':
+        return `危机充能 ×${formatMultiplier(Math.pow(2, level))}`
+      case 'transformer':
+        return `架构降维源码 +${level * 10}%`
+      case 'multimodal':
+        return `超频核心获取 +${level * 10}%`
+      case 'convolution':
+        return `全局产出 ×${formatMultiplier(Math.pow(1.5, level))}`
+      case 'reinforcement':
+        return `演练奖励 +${level * 20}%`
+      case 'worldModel':
+        return `离线上限 +${level * 2}小时 · 离线效率 +${level * 20}%`
+      case 'superAlignment':
+        return `全局产出 ×${formatMultiplier(Math.pow(2, level))}`
+      case 'agi':
+        return `里程碑需求 -${Math.min(50, level * 5)}台`
+      case 'omega':
+        return `越狱权限获取 +${level * 20}%`
+      case 'autoClick':
+        return `自动点击 ${level} 次/秒`
+      default:
+        return ''
+    }
+  }
+
   const matrixCards = computed(() =>
     MATRIX_NODES.map((node) => {
       const level = Math.max(0, Math.floor(matrixLevels[node.id] || 0))
@@ -4586,6 +4688,7 @@ export function useGameState() {
         level,
         isMax,
         nextCost: cost,
+        effectLabel: matrixNodeEffectLabel(node, level),
         canAfford:
           !isMax && matrixUnlocked.value && overclockCores.value >= cost,
       }
@@ -5906,7 +6009,11 @@ export function useGameState() {
       automationOptions.value.length > 0 &&
       automationUnlockedCount.value >= automationOptions.value.length
     const nodeScale = challengeServerMilestoneScale.value
-    const nodeTarget = (target) => Math.max(1, Math.ceil(target * nodeScale))
+    const nodeTarget = (target) =>
+      Math.max(
+        1,
+        Math.ceil(target * nodeScale) - serverMilestoneReduction.value,
+      )
 
     const reachedConditions = {
       'first-click': totalClicks.value >= 1,
@@ -6872,9 +6979,18 @@ export function useGameState() {
       matrixAutoClickBuffer = 0
     }
 
-    // 买爆模式 | 每 100ms 一次全清扫 | 算力足够即买至可买上限 | 无速率限制
+    // 买爆模式 | 每 100ms 一次全清扫 | 算力足够即买至可买上限 | 张量核加速清扫频率
     if (!suppressed && autoBuyNodeActive.value) {
-      autoBuyMax()
+      autoBuySweepBuffer = Math.min(
+        autoBuySweepBuffer + matrixTensorSpeed.value,
+        matrixTensorSpeed.value,
+      )
+      while (autoBuySweepBuffer >= 1) {
+        autoBuySweepBuffer -= 1
+        if (!autoBuyMax()) break
+      }
+    } else {
+      autoBuySweepBuffer = 0
     }
 
     if (
@@ -6904,6 +7020,7 @@ export function useGameState() {
     pendingRoot = 0
     matrixAutoClickBuffer = 0
     baseAutoClickBuffer = 0
+    autoBuySweepBuffer = 0
     totalAlignedCompute.value = toBigNumber(totalAlignedCompute.value)
     lifetimeAlignedCompute.value = toBigNumber(lifetimeAlignedCompute.value)
     peakAlignedCompute.value = toBigNumber(peakAlignedCompute.value)

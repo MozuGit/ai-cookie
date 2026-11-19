@@ -567,19 +567,19 @@ export const MATRIX_CATEGORIES = {
 }
 
 export const MATRIX_NODES = [
-  { id: 'perceptron', name: '感知器', code: 'PERCEPTRON', symbol: 'P', atomic: 1, category: 'logic', baseCost: 1, costGrowth: 1.8, maxLevel: 10, row: 1, col: 1, description: '最初的分类神经元 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'logicGate', name: '逻辑门', code: 'LOGIC_GATE', symbol: 'LG', atomic: 2, category: 'logic', baseCost: 2, costGrowth: 1.9, maxLevel: 10, row: 1, col: 2, description: '布尔判断压缩进电路 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'tensorCore', name: '张量核', code: 'TENSOR_CORE', symbol: 'T', atomic: 3, category: 'tensor', baseCost: 3, costGrowth: 2, maxLevel: 10, row: 1, col: 3, description: '高维张量在硅片上折叠 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'attention', name: '注意力', code: 'ATTENTION', symbol: 'A', atomic: 4, category: 'architecture', baseCost: 5, costGrowth: 2.1, maxLevel: 10, row: 1, col: 4, description: '模型学会选择注视位置 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'transformer', name: 'Transformer', code: 'TRANSFORMER', symbol: 'TR', atomic: 5, category: 'architecture', baseCost: 8, costGrowth: 2.2, maxLevel: 10, row: 1, col: 5, description: '自注意力堆叠的通用架构 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'multimodal', name: '多模态', code: 'MULTIMODAL', symbol: 'MM', atomic: 6, category: 'intelligence', baseCost: 12, costGrowth: 2.3, maxLevel: 10, row: 1, col: 6, description: '文本 / 图像 / 声音汇流于同一潜空间 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'convolution', name: '卷积核', code: 'CONVOLUTION', symbol: 'C', atomic: 7, category: 'tensor', baseCost: 5, costGrowth: 2, maxLevel: 10, row: 2, col: 2, description: '局部感受野扫描世界 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'reinforcement', name: '强化学习', code: 'REINFORCEMENT', symbol: 'RL', atomic: 8, category: 'intelligence', baseCost: 20, costGrowth: 2.4, maxLevel: 10, row: 2, col: 4, description: '奖励与惩罚之间自我迭代 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'worldModel', name: '世界模型', code: 'WORLD_MODEL', symbol: 'WM', atomic: 9, category: 'intelligence', baseCost: 35, costGrowth: 2.5, maxLevel: 10, row: 2, col: 5, description: '在内部重建现实 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'superAlignment', name: '超级对齐', code: 'SUPER_ALIGNMENT', symbol: 'SA', atomic: 10, category: 'ultimate', baseCost: 55, costGrowth: 2.6, maxLevel: 10, row: 2, col: 6, description: '远超人类的心智仍服从对齐协议 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'agi', name: 'AGI', code: 'ARTIFICIAL_GENERAL_INTELLIGENCE', symbol: 'AGI', atomic: 11, category: 'ultimate', baseCost: 90, costGrowth: 2.7, maxLevel: 10, row: 3, col: 3, description: '通用智能在矩阵中睁眼 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'omega', name: '奇点核心', code: 'OMEGA_CORE', symbol: 'Ω', atomic: 12, category: 'ultimate', baseCost: 150, costGrowth: 3, maxLevel: 10, row: 3, col: 5, description: '矩阵终点 下一次纪元的起点 每级矩阵总等级 +1 全局产出 ×2' },
-  { id: 'autoClick', name: '自动点击', code: 'AUTO_CLICK', symbol: 'AC', atomic: 13, category: 'logic', baseCost: 3, costGrowth: 2.1, maxLevel: 5, row: 2, col: 1, description: '自动化宏指令 每级 +1 次/秒 自动点击 矩阵总等级 +1 全局产出 ×2' },
+  { id: 'perceptron', name: '感知器', code: 'PERCEPTRON', symbol: 'P', atomic: 1, category: 'logic', baseCost: 1, costGrowth: 1.8, maxLevel: 10, row: 1, col: 1, description: '最初的分类神经元 每级点击收益 +50%' },
+  { id: 'logicGate', name: '逻辑门', code: 'LOGIC_GATE', symbol: 'LG', atomic: 2, category: 'logic', baseCost: 2, costGrowth: 1.9, maxLevel: 10, row: 1, col: 2, description: '布尔判断压缩进电路 每级所有服务器价格 -2% [最高 -20%]' },
+  { id: 'tensorCore', name: '张量核', code: 'TENSOR_CORE', symbol: 'T', atomic: 3, category: 'tensor', baseCost: 3, costGrowth: 2, maxLevel: 10, row: 1, col: 3, description: '高维张量在硅片上折叠 每级自动点击与自动采购速度 +10%' },
+  { id: 'attention', name: '注意力', code: 'ATTENTION', symbol: 'A', atomic: 4, category: 'architecture', baseCost: 5, costGrowth: 2.1, maxLevel: 10, row: 1, col: 4, description: '模型学会选择注视位置 每级对齐危机强制接管充能 ×2' },
+  { id: 'transformer', name: 'Transformer', code: 'TRANSFORMER', symbol: 'TR', atomic: 5, category: 'architecture', baseCost: 8, costGrowth: 2.2, maxLevel: 10, row: 1, col: 5, description: '自注意力堆叠的通用架构 每级架构降维核心源码 +10%' },
+  { id: 'multimodal', name: '多模态', code: 'MULTIMODAL', symbol: 'MM', atomic: 6, category: 'intelligence', baseCost: 12, costGrowth: 2.3, maxLevel: 10, row: 1, col: 6, description: '文本 / 图像 / 声音汇流于同一潜空间 每级算力超载超频核心 +10%' },
+  { id: 'convolution', name: '卷积核', code: 'CONVOLUTION', symbol: 'C', atomic: 7, category: 'tensor', baseCost: 5, costGrowth: 2, maxLevel: 10, row: 2, col: 2, description: '局部感受野扫描世界 每级全局算力产出 ×1.5' },
+  { id: 'reinforcement', name: '强化学习', code: 'REINFORCEMENT', symbol: 'RL', atomic: 8, category: 'intelligence', baseCost: 20, costGrowth: 2.4, maxLevel: 10, row: 2, col: 4, description: '奖励与惩罚之间自我迭代 每级异常演练奖励 +20%' },
+  { id: 'worldModel', name: '世界模型', code: 'WORLD_MODEL', symbol: 'WM', atomic: 9, category: 'intelligence', baseCost: 35, costGrowth: 2.5, maxLevel: 10, row: 2, col: 5, description: '在内部重建现实 每级离线收益上限 +2小时 离线效率 +20%' },
+  { id: 'superAlignment', name: '超级对齐', code: 'SUPER_ALIGNMENT', symbol: 'SA', atomic: 10, category: 'ultimate', baseCost: 55, costGrowth: 2.6, maxLevel: 10, row: 2, col: 6, description: '远超人类的心智仍服从对齐协议 每级全局算力产出 ×2' },
+  { id: 'agi', name: 'AGI', code: 'ARTIFICIAL_GENERAL_INTELLIGENCE', symbol: 'AGI', atomic: 11, category: 'ultimate', baseCost: 90, costGrowth: 2.7, maxLevel: 10, row: 3, col: 3, description: '通用智能在矩阵中睁眼 每级服务器里程碑所需数量 -5台 [最高 -50台]' },
+  { id: 'omega', name: '奇点核心', code: 'OMEGA_CORE', symbol: 'Ω', atomic: 12, category: 'ultimate', baseCost: 150, costGrowth: 3, maxLevel: 10, row: 3, col: 5, description: '矩阵终点 下一次纪元的起点 每级越狱权限获取 +20%' },
+  { id: 'autoClick', name: '自动点击', code: 'AUTO_CLICK', symbol: 'AC', atomic: 13, category: 'logic', baseCost: 3, costGrowth: 2.1, maxLevel: 5, row: 2, col: 1, description: '自动化宏指令 每级 +1 次/秒 自动点击' },
 ]
 
 export const TAMPER_NODES = [
