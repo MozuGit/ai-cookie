@@ -18,7 +18,7 @@ const deployLabel = computed(() =>
 const unlockTitle = computed(
   () =>
     props.card.unlockHint ||
-    `需先部署 1 台 [ ${props.card.unlockRequirement || '上一级服务器'} ] 以解锁该节点`,
+    `需先部署 [ ${props.card.unlockRequirement || '上一级服务器'} ] 解锁`,
 )
 const buyTitle = computed(() => {
   if (props.card.locked) return unlockTitle.value
@@ -74,7 +74,11 @@ onBeforeUnmount(() => {
   <article
     class="building-card group relative flex flex-none overflow-hidden border bg-[#0a1626]/55 transition-colors duration-200"
     :class="[
-      card.count > 0 ? 'border-cyan-500/55' : 'border-cyan-800/45',
+      card.locked
+        ? 'border-slate-800/70'
+        : card.count > 0
+          ? 'border-cyan-500/55'
+          : 'border-cyan-800/45',
       card.canAfford ? 'hover:border-cyan-300/75' : '',
       card.locked ? 'building-card--locked cursor-not-allowed' : '',
       flash ? 'building-card--flash' : '',
@@ -86,52 +90,72 @@ onBeforeUnmount(() => {
   >
     <span
       class="absolute inset-y-0 left-0 w-px transition-colors"
-      :class="card.count > 0 ? 'bg-cyan-300/90 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-cyan-700/60'"
+      :class="
+        card.locked
+          ? 'bg-slate-700/50'
+          : card.count > 0
+            ? 'bg-cyan-300/90 shadow-[0_0_8px_rgba(34,211,238,0.8)]'
+            : 'bg-cyan-700/60'
+      "
       aria-hidden="true"
     ></span>
 
-    <div
-      class="building-card__body flex w-full items-stretch"
-      :class="card.locked ? 'building-card__body--locked' : ''"
-    >
+    <div class="building-card__body flex w-full items-stretch">
       <div class="flex min-w-0 flex-1 flex-col justify-center px-3.5 py-3">
         <div class="flex items-center gap-2.5">
-          <span class="building-card__icon cyber-icon-frame cyber-icon-frame--sm" aria-hidden="true">
-            <GameIcon :name="card.id" :size="17" />
-          </span>
-          <span class="text-[10px] tracking-[0.1em]" :class="card.count > 0 ? 'text-cyan-400' : 'text-cyan-700'">
-            {{ indexLabel }}
-          </span>
-          <h3
-            class="truncate text-[16px] font-bold tracking-[0.06em]"
-            :class="card.count > 0 ? 'text-cyan-50' : 'text-slate-200'"
+          <div
+            class="flex min-w-0 flex-1 items-center gap-2.5"
+            :class="card.locked ? 'building-card__dim' : ''"
           >
-            {{ card.name }}
-          </h3>
+            <span class="building-card__icon cyber-icon-frame cyber-icon-frame--sm" aria-hidden="true">
+              <GameIcon :name="card.id" :size="17" />
+            </span>
+            <span class="text-[10px] tracking-[0.1em]" :class="card.count > 0 ? 'text-cyan-400' : 'text-cyan-700'">
+              {{ indexLabel }}
+            </span>
+            <h3
+              class="truncate text-[16px] font-bold tracking-[0.06em]"
+              :class="card.count > 0 ? 'text-cyan-50' : 'text-slate-200'"
+            >
+              {{ card.name }}
+            </h3>
+            <span
+              v-if="card.challengeLocked"
+              class="ml-auto shrink-0 border border-rose-500/50 bg-rose-500/[0.08] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-rose-300"
+            >
+              LOCK
+            </span>
+          </div>
           <span
-            v-if="card.challengeLocked"
-            class="ml-auto shrink-0 border border-rose-500/50 bg-rose-500/[0.08] px-2 py-0.5 text-[10px] font-semibold tracking-[0.08em] text-rose-300"
+            v-if="card.locked"
+            class="building-card__lock-chip shrink-0 border border-slate-600/60 bg-slate-800/40 px-2 py-0.5 text-[10px] font-semibold tracking-[0.05em] text-slate-400"
           >
-            LOCK
+            [ 🔒 锁定 ]
           </span>
           <span
+            v-else
             class="shrink-0 border px-2 py-0.5 text-[11px] font-semibold tabular-nums tracking-[0.04em]"
-            :class="[
-              card.challengeLocked ? 'ml-1.5' : 'ml-auto',
+            :class="
               card.count > 0
                 ? 'border-cyan-500/50 bg-cyan-500/[0.08] text-cyan-300 neon-text-cyan'
-                : 'border-cyan-900/70 text-slate-500',
-            ]"
+                : 'border-cyan-900/70 text-slate-500'
+            "
           >
             ×{{ card.count }}
           </span>
         </div>
 
-        <p class="mt-1.5 truncate text-[11px] leading-relaxed tracking-[0.03em] text-slate-400">
-          {{ card.description }}
+        <p
+          class="mt-1.5 truncate text-[11px] leading-relaxed tracking-[0.03em]"
+          :class="card.locked ? 'text-slate-500' : 'text-slate-400'"
+        >
+          {{ card.locked ? unlockTitle : card.description }}
         </p>
 
-        <div class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] tracking-[0.04em]">
+        <div
+          class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] tracking-[0.04em]"
+          :class="card.locked ? 'building-card__dim' : ''"
+        >
           <span class="flex items-center gap-1.5">
             <span class="text-slate-500">单台</span>
             <span class="font-semibold text-cyan-400 neon-text-cyan">+{{ formatNumber(card.baseCps).text }}/秒</span>
@@ -159,7 +183,7 @@ onBeforeUnmount(() => {
           card.canAfford
             ? 'border-cyan-200/90 bg-cyan-400 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,0.45)] hover:bg-cyan-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.65)] active:bg-cyan-200'
             : 'cursor-not-allowed border-slate-700/80 bg-[#0a1018]/85 text-slate-600',
-          card.locked ? 'building-card__buy--locked' : '',
+          card.locked ? 'building-card__buy--locked building-card__dim' : '',
           autoBuying && card.canAfford ? 'building-buy--auto' : '',
         ]"
         :disabled="card.locked"
@@ -190,13 +214,7 @@ onBeforeUnmount(() => {
           <span class="truncate">{{ formatNumber(card.displayPrice).text }}</span>
         </span>
         <span
-          v-if="card.locked"
-          class="text-[9px] tracking-[0.08em] text-amber-500/80"
-        >
-          {{ card.lockTag || '节点锁定' }}
-        </span>
-        <span
-          v-else-if="card.challengeLocked"
+          v-if="card.challengeLocked"
           class="text-[9px] tracking-[0.08em] text-rose-400"
         >
           协议封锁
@@ -209,7 +227,7 @@ onBeforeUnmount(() => {
           可购买 {{ card.maxQuantity }} 台
         </span>
         <span
-          v-else
+          v-else-if="!card.locked"
           class="text-[9px] tracking-[0.08em]"
           :class="card.canAfford ? 'text-slate-800' : 'text-slate-700'"
         >
@@ -228,12 +246,5 @@ onBeforeUnmount(() => {
         </Transition>
       </button>
     </div>
-
-    <span v-if="card.locked" class="building-card__lock-flag" aria-hidden="true">
-      [ 🔒 锁定 ]
-    </span>
-    <p v-if="card.locked" class="building-card__lock-hint" aria-hidden="true">
-      {{ unlockTitle }}
-    </p>
   </article>
 </template>

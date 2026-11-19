@@ -2833,16 +2833,13 @@ export function useGameState() {
       const bulkPrice = challengeLocked ? 0 : plan.bulkPrice
       const displayPrice = challengeLocked ? 0 : plan.displayPrice
       const unitBaseCps = buildingBaseCps(building)
-      let lockTag = '节点锁定'
       let unlockHint = ''
       if (milestoneLocked) {
-        lockTag = '里程碑锁定'
-        unlockHint = '需达成全局里程碑 [ 1e78 集群残响 ] 解锁'
+        unlockHint = '需达成里程碑 [1e78] 解锁'
       } else if (gateLocked) {
-        lockTag = '矩阵锁定'
-        unlockHint = `需点亮神经矩阵 [ ${gate.label} ] 节点`
+        unlockHint = `需点亮矩阵 [ ${gate.label} ] 解锁`
       } else if (!unlocked && index > 0) {
-        unlockHint = `需先部署 1 台 [ ${buildings[index - 1]?.name || '上一级服务器'} ] 以解锁该节点`
+        unlockHint = `需先部署 [ ${buildings[index - 1]?.name || '上一级服务器'} ] 解锁`
       }
       return {
         ...building,
@@ -2868,7 +2865,6 @@ export function useGameState() {
         isMaxMode: plan.isMaxMode,
         challengeLocked,
         locked: !unlocked,
-        lockTag,
         unlockHint,
         unlockRequirement: index > 0 ? buildings[index - 1]?.name ?? '' : '',
         canAfford:
@@ -4495,10 +4491,6 @@ export function useGameState() {
     challengeServerDrainBuffer = 0
   }
 
-  function stopAutomation() {
-    for (const key of Object.keys(automation)) automation[key] = false
-  }
-
   function startChallenge(id, { speedrunAssist = false } = {}) {
     if (challengeActive.value || blackDomainActive.value || isCrisis.value) return false
     if (isOverclocking.value) return false
@@ -4514,7 +4506,7 @@ export function useGameState() {
     resetArchitectureLevels()
     productionMultiplier.value = 1
     buyMode.value = 'x1'
-    stopAutomation()
+    // 自动化开关不随演练重置 | 开关只听玩家操作 | 演练封锁由 challengeRestrictions 按 tick 门控
 
     if (speedrunAssist && definition.objective?.type === 'peakCompute') {
       const assistCompute = bigPow(10, definition.objective.target).mul(1.1)
@@ -4562,7 +4554,6 @@ export function useGameState() {
     resetArchitectureLevels()
     productionMultiplier.value = 1
     buyMode.value = 'x1'
-    stopAutomation()
 
     showAscensionNotice({
       tier: 'challenge-exit',
@@ -6648,11 +6639,7 @@ export function useGameState() {
           (definition.id === 'autoBuy' && topologyAutoBuyHydrated)
         automation[definition.id] = unlocked && readAutomationFlag(definition.id, true)
       }
-      if (challengeActive.value) {
-        for (const definition of CYBER_MATRIX_AUTOMATION_DEFS) {
-          automation[definition.id] = false
-        }
-      }
+      // 演练中刷新页面同样不重置自动化开关 | 断网封锁只在越狱断网演练期间按 tick 生效
 
       if (Array.isArray(saveData.algorithms)) {
         const validAlgorithms = new Set(ALGORITHM_UPGRADES.map((item) => item.id))

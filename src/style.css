@@ -859,57 +859,13 @@
   z-index: 1;
 }
 
-.building-card__body--locked {
-  opacity: 0.3;
-  filter: saturate(0.55);
+.building-card__dim {
+  opacity: 0.42;
+  filter: saturate(0.45);
 }
 
 .building-card__buy--locked {
   pointer-events: none;
-}
-
-.building-card__lock-flag {
-  position: absolute;
-  z-index: 2;
-  top: 9px;
-  left: 10px;
-  padding: 2px 7px;
-  border: 1px solid rgba(250, 204, 21, 0.5);
-  background: rgba(7, 12, 20, 0.58);
-  color: rgba(253, 230, 138, 0.95);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.18);
-  backdrop-filter: blur(2px);
-  pointer-events: none;
-}
-
-.building-card__lock-hint {
-  position: absolute;
-  right: 122px;
-  bottom: 8px;
-  left: 10px;
-  z-index: 2;
-  padding: 3px 7px;
-  border: 1px solid rgba(250, 204, 21, 0.3);
-  background: rgba(7, 12, 20, 0.78);
-  color: rgba(253, 230, 138, 0.9);
-  font-size: 10.5px;
-  line-height: 1.45;
-  letter-spacing: 0.02em;
-  opacity: 0;
-  transform: translateY(3px);
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
-  pointer-events: none;
-}
-
-.building-card--locked:hover .building-card__lock-hint {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 .cluster-scroll {
