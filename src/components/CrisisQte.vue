@@ -158,7 +158,6 @@ function nudge(direction) {
       <div class="qte-gauge">
         <span class="qte-gauge__axis qte-gauge__axis--left" aria-hidden="true">L</span>
         <span class="qte-gauge__axis qte-gauge__axis--right" aria-hidden="true">R</span>
-        <div class="qte-gauge__sweep" aria-hidden="true"></div>
 
         <svg class="qte-gauge__svg" viewBox="0 0 400 212" aria-hidden="true">
           <defs>

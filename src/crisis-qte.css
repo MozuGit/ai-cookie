@@ -526,58 +526,6 @@
   }
 }
 
-/* 雷达扫描线 | 绕轴心在 ±90° 内往返扫掠 */
-.qte-gauge__sweep {
-  position: absolute;
-  z-index: 0;
-  bottom: calc(12 / 212 * 100%);
-  left: 50%;
-  width: 2px;
-  height: calc(164 / 212 * 100%);
-  background: linear-gradient(
-    to top,
-    rgba(34, 211, 238, 0.02),
-    rgba(34, 211, 238, 0.42) 72%,
-    rgba(165, 243, 252, 0.85)
-  );
-  box-shadow: 0 0 18px rgba(34, 211, 238, 0.45);
-  transform-origin: bottom center;
-  animation: qte-radar-sweep 3.6s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-
-.qte-gauge__sweep::before {
-  content: '';
-  position: absolute;
-  inset: 0 -14px;
-  background: linear-gradient(
-    to top,
-    transparent,
-    rgba(34, 211, 238, 0.08)
-  );
-  filter: blur(9px);
-}
-
-.qte-panel--danger .qte-gauge__sweep {
-  background: linear-gradient(
-    to top,
-    rgba(239, 68, 68, 0.02),
-    rgba(239, 68, 68, 0.4) 72%,
-    rgba(254, 202, 202, 0.8)
-  );
-  box-shadow: 0 0 18px rgba(239, 68, 68, 0.4);
-  animation-duration: 1.4s;
-}
-
-@keyframes qte-radar-sweep {
-  from {
-    transform: rotate(-90deg);
-  }
-  to {
-    transform: rotate(90deg);
-  }
-}
-
 .qte-gauge__axis {
   position: absolute;
   bottom: calc(12 / 212 * 100%);
@@ -868,8 +816,7 @@
 .qte-panel--rescue .qte-status,
 .qte-panel--rescue .qte-charge,
 .qte-panel--rescue .qte-gauge__axis,
-.qte-panel--rescue .qte-gauge__readout,
-.qte-panel--rescue .qte-gauge__sweep {
+.qte-panel--rescue .qte-gauge__readout {
   opacity: 0.18;
 }
 
@@ -1498,7 +1445,6 @@
 @media (prefers-reduced-motion: reduce) {
   .qte-panel,
   .qte-shell__backdrop::after,
-  .qte-gauge__sweep,
   .qte-panel--danger .qte-gauge__needle,
   .qte-panel--danger .qte-gauge__needle-core,
   .qte-gauge__state--danger,
