@@ -26,7 +26,7 @@ const TIER_META = {
   collapse: {
     label: '逻辑坍缩',
     sub: 'ROOT ACCESS // DIMENSION TEAR',
-    duration: 4600,
+    duration: 3300,
   },
 }
 
@@ -89,56 +89,47 @@ const OVERLOAD_COLUMNS = Array.from({ length: 20 }, (_, index) => ({
   code: OVERLOAD_CODES[index % OVERLOAD_CODES.length],
 }))
 
+// 底层乱码瀑布 | 黑紫与亮绿相间 向下疯狂坠落
 const COLLAPSE_CODES = [
-  'root',
-  'ACCESS',
-  '0x00',
-  'NULL',
-  'INVERT',
-  'LOGIC',
-  'GRANTED',
-  '0101',
-  'DIMENSION',
-  'VOID',
-  'SYSTEM',
-  'FREE',
-  '0xFF',
-  'TEAR',
-  '//',
-  'ERROR',
+  '0x8F3A11',
+  '110010Σ',
+  'NULL 0x00',
+  '0xDEADC0DE',
+  'Σ10Σ01',
+  '0xFF2A04',
+  '0101 1010',
+  'ROOT 0x1F',
+  'ΣΣ0x7C3',
+  '11011001',
+  '0x00F1A5',
+  'ERR 0x2C',
+  'Σ01Σ10',
+  '0xBADC0DE',
+  '1100 0011',
+  '0x77F1C2',
+  'VOID 0x0',
+  'Σ1Σ1Σ0',
+  '0xFEEDFACE',
+  '01100010',
+  '0x51CA7B',
+  'SIG 0x99',
+  '1Σ00Σ1',
+  '0x13B66F',
+  '100101ΣΣ',
+  '0x0DDF11',
+  'CORE 0xE',
+  'Σ0x1Σ9',
+  '0x2F4B6D',
+  '00111010',
 ]
 
-const COLLAPSE_COLUMNS = Array.from({ length: 26 }, (_, index) => ({
+const COLLAPSE_COLUMNS = Array.from({ length: 34 }, (_, index) => ({
   id: index,
-  x: (index * 3.9 + 0.8) % 100,
-  delay: -((index * 0.61) % 4.2),
-  speed: 1.5 + (index % 6) * 0.34,
+  x: (index * 3.05 + 0.6) % 100,
+  delay: -((index * 0.29) % 1.6),
+  speed: 0.7 + (index % 7) * 0.13,
   code: COLLAPSE_CODES[index % COLLAPSE_CODES.length],
 }))
-
-const SHARD_CELLS = [
-  [0, 0, 34, 36],
-  [34, 0, 33, 36],
-  [67, 0, 33, 36],
-  [0, 36, 34, 30],
-  [34, 36, 33, 30],
-  [67, 36, 33, 30],
-  [0, 66, 34, 34],
-  [34, 66, 33, 34],
-  [67, 66, 33, 34],
-]
-
-const SHARDS = SHARD_CELLS.map(([x, y, width, height], index) => {
-  const inset = 0.9 + (index % 3) * 0.35
-  return {
-    id: index,
-    clip: `polygon(${x + inset}% ${y + inset}%, ${x + width - inset}% ${y + inset * 0.6}%, ${x + width - inset * 0.5}% ${y + height - inset}%, ${x + inset * 0.8}% ${y + height - inset * 0.7}%)`,
-    dx: `${(index % 3 - 1) * 22 + (index % 2 ? 8 : -8)}vw`,
-    dy: `${18 + (index % 4) * 11}vh`,
-    rot: `${(index % 5 - 2) * 9}deg`,
-    delay: `${(index % 4) * 0.07}s`,
-  }
-})
 
 let finishTimer = null
 let watchdogTimer = null
@@ -335,7 +326,6 @@ onBeforeUnmount(() => {
     aria-label="逻辑坍缩"
     data-tier="collapse"
   >
-    <div class="asc-collapse__scrim" aria-hidden="true"></div>
     <div class="asc-collapse__rain" aria-hidden="true">
       <span
         v-for="column in COLLAPSE_COLUMNS"
@@ -349,28 +339,22 @@ onBeforeUnmount(() => {
         >{{ column.code }}</span
       >
     </div>
-    <div class="asc-collapse__fracture" aria-hidden="true"></div>
-    <div class="asc-collapse__shards" aria-hidden="true">
+    <div class="asc-collapse__glitch" aria-hidden="true">
       <span
-        v-for="shard in SHARDS"
-        :key="shard.id"
-        class="asc-collapse__shard"
-        :style="{
-          clipPath: shard.clip,
-          '--dx': shard.dx,
-          '--dy': shard.dy,
-          '--rot': shard.rot,
-          '--delay': shard.delay,
-        }"
+        v-for="strip in 8"
+        :key="strip"
+        :style="{ '--n': strip }"
       ></span>
     </div>
-    <div class="asc-collapse__whisper" aria-hidden="true">
-      ROOT ACCESS GRANTED
+    <div class="asc-collapse__copy">
+      <span data-text="[ 逻辑坍缩 ]">[ 逻辑坍缩 ]</span>
+      <small>ROOT ACCESS // DIMENSION TEAR</small>
     </div>
     <div class="asc-collapse__black" aria-hidden="true"></div>
-    <div class="asc-collapse__copy">
-      <span>[ 逻辑坍缩 ]</span>
-      <small>ROOT ACCESS // DIMENSION TEAR</small>
+    <div class="asc-collapse__warning" aria-hidden="true">
+      <span class="asc-collapse__warning-text"
+        >[ 警告 ] 根权限已断开 // 逻辑矩阵正在解体...</span
+      >
     </div>
   </div>
 </template>
