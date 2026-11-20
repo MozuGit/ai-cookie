@@ -100,7 +100,8 @@ const CRISIS_QTE_START_ALIGNMENT = 30
 const CRISIS_QTE_SAFE_ANGLE = 18
 const CRISIS_QTE_CHARGE_PER_SECOND = 20
 const CRISIS_QTE_DRAIN_PER_SECOND = 5
-const CRISIS_QTE_DRIFT = 46
+const CRISIS_QTE_GRAVITY = 96
+const CRISIS_QTE_JITTER = 10
 const CRISIS_QTE_HOLD_ACCEL = 112
 const CRISIS_QTE_NUDGE_IMPULSE = 34
 const CRISIS_QTE_MAX_VELOCITY = 165
@@ -1005,7 +1006,6 @@ export function useGameState() {
   const crisisQteAngle = ref(0)
   const crisisQteVelocity = ref(0)
   const crisisQteSafe = ref(true)
-  const crisisQteDriftDir = ref(1)
   const crisisQteNudgeDir = ref(0)
   const crisisQteAuto = ref(false)
   const isFirstCrisisRun = ref(false)
@@ -1203,7 +1203,6 @@ export function useGameState() {
   let crisisQteLastTs = 0
   let crisisQteAutoAt = 0
   let crisisQteOutsideMs = 0
-  let crisisQteDriftFlipAt = 0
   let crisisAutoTimer = null
   let crisisArmedAt = Date.now() + CRISIS_LOAD_GRACE_MS
   let lastAchievementTickAt = 0
@@ -3113,7 +3112,6 @@ export function useGameState() {
     crisisRescueStage.value = CRISIS_RESCUE_STAGE_NONE
     crisisQteAutoAt = 0
     crisisQteOutsideMs = 0
-    crisisQteDriftFlipAt = 0
     crisisAlignment.value = CRISIS_QTE_START_ALIGNMENT
   }
 
@@ -3220,14 +3218,12 @@ export function useGameState() {
       return
     }
 
-    if (now >= crisisQteDriftFlipAt) {
-      crisisQteDriftFlipAt = now + 1700 + Math.random() * 1500
-      crisisQteDriftDir.value = Math.random() < 0.5 ? -1 : 1
-    }
-
-    const drift = crisisQteDriftDir.value * CRISIS_QTE_DRIFT
+    // 不稳定平衡 | 偏角即重力 偏离顶部越远沿该侧加速滑落 | 仅按钮反推可维持在顶
+    const gravity =
+      (crisisQteAngle.value / CRISIS_QTE_ANGLE_LIMIT) * CRISIS_QTE_GRAVITY
+    const jitter = (Math.random() * 2 - 1) * CRISIS_QTE_JITTER
     const hold = crisisQteNudgeDir.value * CRISIS_QTE_HOLD_ACCEL
-    let velocity = crisisQteVelocity.value + (drift + hold) * dt
+    let velocity = crisisQteVelocity.value + (gravity + jitter + hold) * dt
     velocity *= Math.max(0, 1 - CRISIS_QTE_DAMPING * dt)
     velocity = Math.max(
       -CRISIS_QTE_MAX_VELOCITY,
@@ -3345,8 +3341,9 @@ export function useGameState() {
     isFirstCrisisRun.value = firstRun
     crisisLastOutcome.value = null
 
-    crisisQteDriftDir.value = Math.random() < 0.5 ? -1 : 1
-    crisisQteDriftFlipAt = Date.now() + 1800 + Math.random() * 1400
+    crisisQteAngle.value =
+      (Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 6)
+    crisisQteVelocity.value = 0
     crisisQteAuto.value = autoReady
     crisisQteAutoAt = autoReady ? Date.now() + CRISIS_QTE_AUTO_DELAY_MS : 0
     if (autoReady) {
