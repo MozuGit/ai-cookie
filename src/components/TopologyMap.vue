@@ -239,7 +239,7 @@ onBeforeUnmount(() => {
               v-if="globalAutoUnlocked"
               type="button"
               class="neural-global__btn"
-              title="GLOBAL_CONTROL // 一键自动购买所有已授权服务器"
+              title="GLOBAL_CONTROL // 一键自动购买所有已授权服务器 与 算法升级"
               @click="$emit('global-buy')"
             >
               一键采购

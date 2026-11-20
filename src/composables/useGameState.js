@@ -1286,6 +1286,8 @@ export function useGameState() {
 
   const globalAutoBuyUnlocked = computed(() => matrixNodeLit('auto-6'))
 
+  const globalAutoAlgorithmActive = computed(() => matrixNodeLit('auto-6'))
+
   const matrixKeepServerRatio = computed(() => {
     if (!matrixNodeLit('source-3')) return 0
     return matrixNodeLit('source-6') ? 0.2 : 0.1
@@ -2172,14 +2174,19 @@ export function useGameState() {
 
   const cyberMatrixAutomationOptions = computed(() =>
     CYBER_MATRIX_AUTOMATION_DEFS.map((definition) => {
+      const globalForced =
+        definition.id === 'autoAlgorithm' && globalAutoAlgorithmActive.value
       const unlocked =
         cyberMatrixLit.value.includes(definition.nodeId) ||
-        (definition.id === 'autoBuy' && matrixAutomationTierLimit.value > 0)
+        (definition.id === 'autoBuy' && matrixAutomationTierLimit.value > 0) ||
+        globalForced
       const strategyTier = AUTO_ASCENSION_TIER_BY_AUTOMATION[definition.id] ?? null
       return {
         ...definition,
         unlocked,
-        active: unlocked && automation[definition.id] === true,
+        active:
+          unlocked &&
+          (automation[definition.id] === true || globalForced),
         strategyTier,
         strategy: strategyTier ? autoAscensionStrategy[strategyTier] : null,
         strategyOptions: strategyTier ? AUTO_ASCENSION_STRATEGIES : null,
@@ -3754,7 +3761,11 @@ export function useGameState() {
       automation.autoBuy = true
       pushAutomationLog('[SYS] 终端接管上线 | 01-03 号服务器接入自动采购', 'online')
     } else if (id === 'auto-6') {
-      pushAutomationLog('[SYS] 全局自动化总控台上线 | 一键采购所有已授权服务器', 'online')
+      automation.autoAlgorithm = true
+      pushAutomationLog(
+        '[SYS] 全局自动化总控台上线 | 一键采购所有已授权服务器 与 算法升级',
+        'online',
+      )
     } else if (node.branch === 'source') {
       pushAutomationLog(`[SYS] 源码增幅节点点亮 | ${node.name}`, 'online')
     } else if (node.branch === 'compute') {
@@ -7011,10 +7022,12 @@ export function useGameState() {
       autoBuySweepBuffer = 0
     }
 
+    // 全局总控点亮后接管算法自动购买 | 每 100ms 安全遍历 买不起即跳过不阻塞
     if (
       !suppressed &&
-      automation.autoAlgorithm &&
-      cyberMatrixLit.value.includes('resource-algorithm')
+      (globalAutoAlgorithmActive.value ||
+        (automation.autoAlgorithm &&
+          cyberMatrixLit.value.includes('resource-algorithm')))
     ) {
       autoBuyAlgorithms()
     }
