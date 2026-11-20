@@ -6,7 +6,8 @@
   --ta-gold-pale: #fef9c3;
   position: fixed;
   inset: 0;
-  z-index: 9700;
+  /* 高于 QTE 危机面板 9800 | 低于管理台 9999 | 引导层自身不拦截点击 */
+  z-index: 9900;
   pointer-events: none;
 }
 

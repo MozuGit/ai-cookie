@@ -512,6 +512,7 @@ const coachingGuideLive = computed(() => {
 
   function strip(id, target, tone, title, text, hint) {
     const guideId = `quest-${id}`
+    // 等待型任务在主界面一律静默 | 仅保留面板进度 | 危机 QTE 例外由 crisis 分支自行控制
     return {
       id: guideId,
       target: `[data-guide="${target}"]`,
@@ -521,7 +522,10 @@ const coachingGuideLive = computed(() => {
       text,
       hint,
       variant: 'strip',
-      passive: PASSIVE_GUIDE_IDS.has(guideId) || isLongIdleGuide(title, text),
+      passive:
+        PASSIVE_GUIDE_IDS.has(guideId) ||
+        isLongIdleGuide(title, text) ||
+        (quest?.kind === 'wait' && target === 'core'),
     }
   }
 
@@ -549,12 +553,22 @@ const coachingGuideLive = computed(() => {
         '左右微调指针 · 保持在绿色安全区',
       )
     }
+    // QTE 引导 | 仅在危机爆发时出现 | 指向微调按钮
+    if (crisisRescueForced.value) return null
+    if (crisisQteAuto.value) return null
+    const nudgeTarget = crisisRescueActive.value
+      ? crisisRescueTarget.value === 'right'
+        ? 'qte-nudge-right'
+        : 'qte-nudge-left'
+      : crisisQteAngle.value > 0
+        ? 'qte-nudge-left'
+        : 'qte-nudge-right'
     return strip(
       'crisis-balance',
-      'core',
+      nudgeTarget,
       'red',
       '负载失衡',
-      '左右微调稳定指针 对齐度充满解除危机',
+      '点击高亮微调按钮 稳定指针充满对齐度解除危机',
       '指针滑出绿色安全区会流失对齐度',
     )
   }
@@ -872,17 +886,6 @@ const coachingGuideLive = computed(() => {
       `突破 ${formatNumber(10000).text} 算力`,
       `点击核心并扩充服务器 历史最高算力推过 ${formatNumber(10000).text} CU`,
       `当前峰值 ${formatScientific(highestCompute.value)} / ${formatNumber('10000').text} CU`,
-    )
-  }
-
-  if (questId === 'takeover') {
-    return strip(
-      'takeover',
-      'core',
-      'amber',
-      '接管负载失衡 // 对齐核心',
-      '危机爆发后点击高亮对齐核心 左右微调稳定指针',
-      '对齐度充满 100% 即可收回调度权',
     )
   }
 
@@ -1218,6 +1221,8 @@ const smartGuide = computed(() => {
   const quest = mainQuestCard.value
   if (!quest) return null
   if (quest.id === 'bulk') return null
+  // 等待型任务 | 字典兜底也不出引导 | 面板进度已足够
+  if (quest.kind === 'wait') return null
   if (quest.id === 'homepc' && activeDrawer.value === 'servers' && homePcWaiting.value) {
     return null
   }

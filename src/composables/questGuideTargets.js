@@ -27,16 +27,6 @@ export const QUEST_GUIDE_TARGETS = {
     title: '部署至 10 台服务器',
     hint: '在 [ 服务器阵列 ] 悬浮舱继续部署 扩充节点',
   },
-  compute10k: {
-    target: 'core',
-    title: '突破 10,000 算力',
-    hint: '点击核心并扩充服务器',
-  },
-  takeover: {
-    target: 'core',
-    title: '接管一次对齐危机',
-    hint: '危机爆发时点击对齐核心',
-  },
   rebuild1: {
     target: 'open-reduction',
     title: '执行第 1 次架构降维',
@@ -47,30 +37,15 @@ export const QUEST_GUIDE_TARGETS = {
     title: '点亮 1 个神经矩阵节点',
     hint: '打开 [ 自动化终端 ] 点击节点查看详情 再次点击点亮',
   },
-  compute1m: {
-    target: 'core',
-    title: '突破百万算力',
-    hint: '扩张服务器与算法',
-  },
   architecture3: {
     target: 'architecture-upgrade',
     title: '购买 3 级永久升级',
     hint: '打开 [ 协议与升级 ] 架构升级站 购买永久升级',
   },
-  compute1e10: {
-    target: 'core',
-    title: '突破 1e10 算力',
-    hint: '继续扩张集群',
-  },
   rebuild3: {
     target: 'open-reduction',
     title: '完成第 3 次架构降维',
     hint: '点击右侧 [ 四阶跃迁 ] 面板的 [ 架构降维 ]',
-  },
-  compute1e50: {
-    target: 'core',
-    title: '突破 1e50 算力',
-    hint: '利用永久增益继续扩张',
   },
   challenge1: {
     target: 'challenge-start',
@@ -87,11 +62,6 @@ export const QUEST_GUIDE_TARGETS = {
     title: '合成 1 个矩阵节点',
     hint: '打开 [ 协议与升级 ] 数据协议矩阵 完成合成',
   },
-  compute1e100: {
-    target: 'core',
-    title: '突破 1e100 算力',
-    hint: '继续扩张算力阵列',
-  },
   blackdomain: {
     target: 'open-ascension',
     title: '撕开底层黑域',
@@ -101,11 +71,6 @@ export const QUEST_GUIDE_TARGETS = {
     target: 'open-ascension',
     title: '解锁 1 个篡改节点',
     hint: '进入重构终端 · 底层黑域',
-  },
-  compute1e350: {
-    target: 'core',
-    title: '突破 1e350 算力',
-    hint: '继续扩张算力阵列',
   },
   collapse1: {
     target: 'open-ascension',

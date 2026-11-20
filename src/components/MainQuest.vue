@@ -43,6 +43,7 @@ const fillPercent = computed(() => {
 const progressLabel = computed(() => {
   const quest = props.quest
   if (!quest) return ''
+  if (quest.progressText) return quest.progressText
   if (quest.waiting) return `${quest.activateLabel} / ${quest.activateTargetLabel}`
   return `${quest.currentLabel} / ${quest.targetLabel}`
 })
@@ -158,7 +159,7 @@ function phaseTitle(phase) {
               <div class="main-quest__meta">
                 <span class="main-quest__progress-label">{{ progressLabel }}</span>
                 <span class="main-quest__reward">
-                  {{ quest.waiting ? '[ 等待算力 ]' : '[ 完成引导 ]' }}
+                  {{ quest.tagLabel ?? (quest.waiting ? '[ 等待算力 ]' : '[ 完成引导 ]') }}
                 </span>
               </div>
             </div>

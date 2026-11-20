@@ -282,6 +282,7 @@ function nudge(direction) {
         <button
           type="button"
           class="qte-nudge"
+          data-guide="qte-nudge-left"
           :class="{ 'qte-nudge--target': rescueTargetLeft }"
           :disabled="leftDisabled"
           aria-label="向左微调"
@@ -305,6 +306,7 @@ function nudge(direction) {
         <button
           type="button"
           class="qte-nudge"
+          data-guide="qte-nudge-right"
           :class="{ 'qte-nudge--target': rescueTargetRight }"
           :disabled="rightDisabled"
           aria-label="向右微调"

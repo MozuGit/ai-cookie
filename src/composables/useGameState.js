@@ -263,6 +263,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '10000',
     targetLabel: '10,000 CU',
+    kind: 'wait',
   },
   {
     id: 'takeover',
@@ -273,6 +274,7 @@ const MAIN_QUEST_DEFINITIONS = [
     target: 1,
     targetLabel: '1 次',
     unit: ' 次',
+    kind: 'wait',
   },
   {
     id: 'rebuild1',
@@ -302,6 +304,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '1e6',
     targetLabel: '1e6 CU',
+    kind: 'wait',
   },
   {
     id: 'architecture3',
@@ -321,6 +324,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '1e10',
     targetLabel: '1e10 CU',
+    kind: 'wait',
   },
   {
     id: 'rebuild3',
@@ -340,6 +344,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '1e50',
     targetLabel: '1e50 CU',
+    kind: 'wait',
   },
   {
     id: 'challenge1',
@@ -379,6 +384,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '1e100',
     targetLabel: '1e100 CU',
+    kind: 'wait',
   },
   {
     id: 'blackdomain',
@@ -407,6 +413,7 @@ const MAIN_QUEST_DEFINITIONS = [
     metric: 'peak',
     target: '1e350',
     targetLabel: '1e350 CU',
+    kind: 'wait',
   },
   {
     id: 'collapse1',
@@ -2465,17 +2472,22 @@ export function useGameState() {
     const value = getMainQuestProgress(stage)
     const target = big(definition.target)
     const isPeakQuest = definition.metric === 'peak'
+    const takeoverWaiting = definition.id === 'takeover' && !isCrisis.value
     const targetText = formatNumber(definition.target).text
-    const objective = isPeakQuest
-      ? `达到 ${targetText} 算力`
-      : definition.id === 'restart1'
-        ? `达到 ${formatNumber('1e1000').text} 算力 执行第 1 次重启纪元`
-        : definition.objective
+    const objective = takeoverWaiting
+      ? `等待算力集群失控...（倒计时 ${crisisCountdownSeconds.value} 秒）`
+      : isPeakQuest
+        ? `达到 ${targetText} 算力`
+        : definition.id === 'restart1'
+          ? `达到 ${formatNumber('1e1000').text} 算力 执行第 1 次重启纪元`
+          : definition.objective
     const targetLabel = isPeakQuest
       ? `${targetText} CU`
       : definition.targetLabel
     let currentLabel
-    if (definition.metric === 'blackDomain') {
+    if (takeoverWaiting) {
+      currentLabel = `${crisisCountdownSeconds.value} 秒`
+    } else if (definition.metric === 'blackDomain') {
       currentLabel = value.gte(target) ? '已解锁' : '未解锁'
     } else if (definition.metric === 'bulkHint') {
       currentLabel = value.gte(target) ? '已了解' : '待了解'
@@ -2510,7 +2522,13 @@ export function useGameState() {
       currentLabel,
       targetLabel,
       progress: currentLabel,
-      percent: getMainQuestPercent(definition, value, target),
+      percent: takeoverWaiting
+        ? crisisProgress.value
+        : getMainQuestPercent(definition, value, target),
+      progressText: takeoverWaiting
+        ? `${crisisCountdownSeconds.value} 秒后失控`
+        : null,
+      tagLabel: takeoverWaiting ? '[ 危机待发 ]' : null,
       waiting,
       activatePercent,
       activateLabel,
