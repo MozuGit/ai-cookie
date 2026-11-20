@@ -40,6 +40,7 @@ import {
   writeSpeedrunState,
 } from './speedrunData'
 import { numberFormatMode, reducedMotion } from './useSettings'
+import { markEpochClockReset } from './useEpochClock'
 import { GAME_BALANCE, calculatePrice } from './gameBalance'
 import {
   CYBER_MATRIX_AUTOMATION_DEFS,
@@ -4338,6 +4339,13 @@ export function useGameState() {
     return gain
   }
 
+  const epochMemoirStats = computed(() => ({
+    peakText: formatNumber(highestCompute.value).text,
+    peakAbove1e6: highestCompute.value.gt(big('1e6')),
+    rebuilds: Math.max(0, Math.floor(Number(milestonesState.rebuilds) || 0)),
+    crises: Math.max(0, Math.floor(Number(milestonesState.crisesStarted) || 0)),
+  }))
+
   function restartEpoch() {
     if (
       epochRebirth.value ||
@@ -4386,6 +4394,7 @@ export function useGameState() {
     )
     epochRestarts.value += 1
     registerAscension()
+    markEpochClockReset()
 
     blackDomainActive.value = false
     blackDomainUnlockedFlag.value = keepBlackDomain
@@ -7235,6 +7244,7 @@ export function useGameState() {
     totalCollapses,
     epochRestarts,
     epochRebirth,
+    epochMemoirStats,
     lifetimeAscensions,
     lifetimeRootEarned,
     lifetimeOriginEarned,

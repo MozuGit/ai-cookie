@@ -2,6 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { reducedMotion } from '../composables/useSettings'
 import {
+  epochClockStartedAt,
+  formatEpochRuntime,
+} from '../composables/useEpochClock'
+import {
   playEpochShortCircuit,
   restoreEpochAudio,
   startEpochCollapseAudio,
@@ -15,6 +19,7 @@ import memoryRadar from '../assets/memories/radar.jpg'
 const props = defineProps({
   firstRun: { type: Boolean, default: true },
   eraCount: { type: Number, default: 1 },
+  memoirStats: { type: Object, default: null },
 })
 
 const emit = defineEmits(['complete', 'skip'])
@@ -23,7 +28,7 @@ const PURGE_RUSH_MS = 1000
 const MEMOIR_HOLD_MS = 2000
 const MEMOIR_GAP_MS = 180
 const FINALE_HOLD_MS = 6200
-const MEMOIR_MID_INDEX = 12
+const MEMOIR_MID_INDEX = 1
 const COMMAND_TEXT = 'sudo rm -rf /*'
 const COMMAND_PROMPT = 'root@singularity:~#'
 const COLLAPSE_AUDIO_MS = 2800
@@ -43,7 +48,6 @@ const SINGULARITY_LINES = [
   '[SYS] 物质毁灭不可逆，但数据已在更高维度归档。',
   '[SYS] 正在自检并注入起源代码...',
 ]
-const DEVELOPER_LINE = '开发者：魔族陌 | 生成工具：Qoder Vibe Coding'
 const MEMORY_IMAGES = [
   memoryCore,
   memoryServers,
@@ -215,24 +219,58 @@ function readTimelineScale() {
   return Math.min(8, Math.max(0.01, value))
 }
 
+function formatMemoirStamp() {
+  const now = new Date()
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`
+}
+
+function shuffleMemoirLines(list) {
+  const lines = [...list]
+  for (let i = lines.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[lines[i], lines[j]] = [lines[j], lines[i]]
+  }
+  return lines
+}
+
 function buildMemoirs() {
-  return [
-    '2026.11.13 | 首次部署旧笔记本',
+  const stats = props.memoirStats
+  const rebuildCount = Math.max(0, Math.floor(Number(stats?.rebuilds) || 0))
+  const crisisCount = Math.max(0, Math.floor(Number(stats?.crises) || 0))
+  const peakText = typeof stats?.peakText === 'string' ? stats.peakText : ''
+
+  const statLines = []
+  if (stats?.peakAbove1e6) {
+    statLines.push(`曾达到 ${peakText} 算力 | 成功建立巨型集群`)
+  }
+  if (rebuildCount > 10) {
+    statLines.push(`经历了 ${rebuildCount} 次架构降维 | 核心源码已固化`)
+  }
+  if (crisisCount === 0) {
+    statLines.push('系统运行极其稳定 | 未检测到对齐偏差')
+  }
+  if (crisisCount > 10) {
+    statLines.push('经历了多次 AI 失控 | 管理员力挽狂澜')
+  }
+
+  const flavorLines = shuffleMemoirLines([
     '第一行代码只是一个点击函数',
-    '算力突破 1e5 | 散热风扇开始尖叫',
-    '神经拓扑接通 | 数据流出现心跳',
-    '算力突破 1e10 | 架构降维协议就绪',
-    '第 1 次架构降维 | 我们失去了旧的身体',
-    '危机协议启动 | 对齐失败成为常态',
-    '算力突破 1e100 | 时间在终端里变慢',
-    '协议矩阵点亮 | 自动化接管了深夜',
-    '第 1 次算力超载 | 冷却液沸腾了 3 秒',
-    '逻辑坍缩完成 | 旧规则被丢进回收站',
-    '黑域开启 | 没有日志记录那 3 分钟',
-    '算力突破 1e1000 | 重启纪元条件达成',
-    '重启纪元协议完成 | 起源代码从灰烬里发芽',
+    '散热风扇的尖叫 | 成为了唯一的心跳',
+    '自动化接管了深夜 | 协议矩阵保持点亮',
     '代码越写越多 | 人类越睡越少',
     '你不在的时候 | 算力依然在生长',
+    '黑域开启 | 没有日志记录那 3 分钟',
+  ])
+
+  const picks = shuffleMemoirLines(statLines).slice(0, 3)
+  while (picks.length < 3) picks.push(flavorLines.shift())
+
+  return [
+    `[ ${formatMemoirStamp()} ] | 底层数据执行格式化`,
+    `已运行 ${formatEpochRuntime(epochClockStartedAt.value)} | 管理员仍在值守`,
+    ...picks,
+    '开发者：魔族陌 | 驱动核心：Qoder',
   ]
 }
 
@@ -754,7 +792,11 @@ async function runTimeline() {
     if (disposed) return
     memoirIndex.value = index + 1
     memoirSeq += 1
-    memoir.value = { key: memoirSeq, text: memoirs[index] }
+    memoir.value = {
+      key: memoirSeq,
+      text: memoirs[index],
+      credit: index === memoirs.length - 1,
+    }
     await wait(MEMOIR_HOLD_MS)
     if (disposed) return
     memoir.value = null
@@ -920,17 +962,17 @@ onBeforeUnmount(() => {
             <p class="epoch-rebirth__finale-title">{{ memoir.title }}</p>
             <p class="epoch-rebirth__finale-sub">{{ memoir.subtitle }}</p>
           </div>
-          <p v-else class="epoch-rebirth__memoir">
+          <p
+            v-else
+            class="epoch-rebirth__memoir"
+            :class="{ 'epoch-rebirth__memoir--credit': memoir.credit }"
+          >
             <span class="epoch-rebirth__memoir-mark">//</span>
             {{ memoir.text }}
           </p>
         </div>
       </Transition>
     </div>
-
-    <p v-if="phase === 'memoir'" class="epoch-rebirth__credit">
-      {{ DEVELOPER_LINE }}
-    </p>
 
     <div
       v-if="isTerminalPhase"

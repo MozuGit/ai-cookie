@@ -203,6 +203,7 @@ const {
   totalOverloads,
   totalCollapses,
   epochRestarts,
+  epochMemoirStats,
   epochRebirth,
   completeEpochRebirth,
   lifetimeRootEarned,
@@ -3698,6 +3699,7 @@ onBeforeUnmount(() => {
           v-if="epochRebirth"
           :first-run="epochRebirth.firstRun"
           :era-count="epochRebirth.eraCount"
+          :memoir-stats="epochMemoirStats"
           @complete="completeEpochRebirth"
           @skip="completeEpochRebirth"
         />

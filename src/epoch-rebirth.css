@@ -133,12 +133,12 @@
 }
 
 .epoch-rebirth__memoir {
-  max-width: min(900px, 90vw);
+  max-width: min(1100px, 92vw);
   margin: 0;
   text-align: center;
-  font-size: clamp(18px, 2.4vw, 34px);
+  font-size: clamp(22px, 3.6vw, 56px);
   font-weight: 600;
-  line-height: 1.55;
+  line-height: 1.5;
   letter-spacing: 0.07em;
   color: #d1fae5;
   text-shadow: 0 0 16px rgba(52, 211, 153, 0.8),
@@ -151,7 +151,7 @@
 }
 
 .epoch-rebirth__memoir--credit {
-  font-size: clamp(17px, 2vw, 28px);
+  font-size: clamp(18px, 2.6vw, 40px);
   letter-spacing: 0.12em;
   color: #f0fdf4;
   text-shadow: 0 0 18px rgba(125, 211, 252, 0.65),
@@ -504,13 +504,13 @@
   }
 
   .epoch-rebirth__memoir {
-    font-size: 18px;
+    font-size: 22px;
     line-height: 1.62;
     letter-spacing: 0.04em;
   }
 
   .epoch-rebirth__memoir--credit {
-    font-size: 16px;
+    font-size: 19px;
   }
 
   .epoch-rebirth__terminal {
@@ -726,21 +726,6 @@
   animation: epoch-quake-late 0.18s steps(2, end) infinite;
 }
 
-.epoch-rebirth__credit {
-  position: absolute;
-  left: 50%;
-  bottom: max(24px, env(safe-area-inset-bottom));
-  z-index: 6;
-  margin: 0;
-  transform: translateX(-50%);
-  color: rgba(52, 211, 153, 0.4);
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  white-space: nowrap;
-  text-align: center;
-  text-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
-}
-
 @keyframes epoch-alarm-breathe {
   0%,
   100% {
@@ -831,14 +816,6 @@
   .epoch-rebirth__finale-sub {
     font-size: 12px;
     letter-spacing: 0.12em;
-  }
-
-  .epoch-rebirth__credit {
-    max-width: 86vw;
-    overflow: hidden;
-    font-size: 8px;
-    letter-spacing: 0.08em;
-    text-overflow: ellipsis;
   }
 }
 
