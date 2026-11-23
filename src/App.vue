@@ -174,7 +174,6 @@ const {
   speedrunEverUsed,
   speedrunPhase,
   speedrunPhaseInfo,
-  speedrunRemainingLabel,
   speedrunNotice,
   speedrunStallHint,
   startSpeedrunMode,
@@ -2156,34 +2155,6 @@ onBeforeUnmount(() => {
       aria-hidden="true"
     >
       <span :style="{ height: `${crisisProgress}%` }"></span>
-    </div>
-
-    <div
-      v-if="isSpeedrunMode"
-      class="speedrun-topbar"
-      role="status"
-    >
-      <span class="speedrun-topbar__dot" aria-hidden="true"></span>
-      <span class="speedrun-topbar__label">
-        [ 急速体验模式已激活 // 预计耗时 30 分钟 ]
-      </span>
-      <span class="speedrun-topbar__phase">
-        P{{ speedrunPhase }}/4 · {{ speedrunPhaseInfo?.name }} · {{ speedrunRemainingLabel }}
-      </span>
-      <span
-        class="speedrun-topbar__effects"
-        :title="speedrunPhaseInfo?.effects?.join(' · ')"
-      >
-        {{ speedrunPhaseInfo?.effects?.join(' · ') }}
-      </span>
-      <button
-        type="button"
-        class="speedrun-topbar__exit"
-        data-guide="speedrun-exit"
-        @click="exitSpeedrunMode"
-      >
-        退出急速模式
-      </button>
     </div>
 
     <Transition name="speedrun-notice">

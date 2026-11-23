@@ -31,7 +31,6 @@ import {
   SPEEDRUN_TOTAL_MS,
   SPEEDRUN_TUNING,
   SPEEDRUN_PHASES,
-  formatSpeedrunClock,
   getSpeedrunPhaseId,
   getSpeedrunPhaseInfo,
   markSpeedrunEverUsed,
@@ -1050,14 +1049,6 @@ export function useGameState() {
     isSpeedrunMode.value
       ? getSpeedrunPhaseInfo(speedrunElapsedMs.value)
       : null,
-  )
-  const speedrunRemainingMs = computed(() =>
-    isSpeedrunMode.value
-      ? Math.max(0, SPEEDRUN_TOTAL_MS - speedrunElapsedMs.value)
-      : 0,
-  )
-  const speedrunRemainingLabel = computed(() =>
-    formatSpeedrunClock(speedrunRemainingMs.value),
   )
   const speedrunComplete = computed(
     () => isSpeedrunMode.value && speedrunElapsedMs.value >= SPEEDRUN_TOTAL_MS,
@@ -7178,8 +7169,6 @@ export function useGameState() {
     speedrunElapsedMs,
     speedrunPhase,
     speedrunPhaseInfo,
-    speedrunRemainingMs,
-    speedrunRemainingLabel,
     speedrunComplete,
     speedrunNotice,
     speedrunStallHint,
