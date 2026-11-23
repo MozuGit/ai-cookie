@@ -9,9 +9,10 @@ const props = defineProps({
   completed: { type: Boolean, default: false },
   total: { type: Number, default: 24 },
   tracking: { type: Boolean, default: true },
+  firstCrisis: { type: Boolean, default: false },
 })
 
-defineEmits(['toggle-tracking'])
+defineEmits(['toggle-tracking', 'force-crisis'])
 
 const mobileQuery =
   typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -188,6 +189,19 @@ function phaseTitle(phase) {
               </div>
             </div>
           </Transition>
+        </div>
+
+        <div v-if="firstCrisis" class="main-quest__crisis" aria-live="polite">
+          <p class="main-quest__crisis-text">即将发生算力过载，准备接管！</p>
+          <button
+            v-if="tracking"
+            type="button"
+            class="main-quest__crisis-btn"
+            title="跳过剩余等待 | 立即开启对齐危机教学"
+            @click="$emit('force-crisis')"
+          >
+            [ 立即触发危机 ]
+          </button>
         </div>
 
         <div

@@ -96,6 +96,7 @@ const {
   isCrisis,
   crisisAlignment,
   crisisWarningActive,
+  firstCrisisPending,
   crisisProgress,
   crisisQteAngle,
   crisisQteSafe,
@@ -206,6 +207,7 @@ const {
   epochMemoirStats,
   epochRebirth,
   completeEpochRebirth,
+  forceStartCrisis,
   lifetimeRootEarned,
   lifetimeOriginEarned,
   ascensionNotice,
@@ -494,6 +496,11 @@ const coachingGuideLive = computed(() => {
 
   const quest = mainQuestCard.value
   const questId = quest?.id ?? null
+
+  // 首次危机待发 | 等待爆发期间静默全部引导悬浮框 | 避免遮挡面板预警
+  if (firstCrisisPending.value) return null
+  // 接管任务倒计时 | 爆发前同样静默
+  if (questId === 'takeover' && !isCrisis.value) return null
 
   const firstServer = buildingCards.value[0]
   const deployAffordable = Boolean(firstServer?.canAfford)
@@ -1207,6 +1214,8 @@ watch([() => mainQuestCard.value?.id, activeDrawer, serverTab, ascensionOpen], (
 // 情境引导优先 | 等待态或特殊面板使用字典兜底 | 覆盖 24 个任务
 const smartGuide = computed(() => {
   if (!guideEligible.value) return null
+  // 首次危机待发 | 等待爆发期间字典兜底同样静默
+  if (firstCrisisPending.value) return null
   if (coachingGuide.value) return coachingGuide.value
   if (challengeActive.value || blackDomainActive.value) return null
   if (
@@ -2542,7 +2551,9 @@ onBeforeUnmount(() => {
         :completed="mainQuestCompleted"
         :total="mainQuestCount"
         :tracking="questTracking"
+        :first-crisis="firstCrisisPending"
         @toggle-tracking="setQuestTracking(!questTracking)"
+        @force-crisis="forceStartCrisis"
       />
     </div>
 

@@ -97,6 +97,7 @@ const CRISIS_ASCENSION_INTERVAL_STEP = 0.035
 const CRISIS_MIN_INTERVAL_SCALE = 0.3
 const CRISIS_INTERVAL_FLOOR_MS = 10 * 1000
 const CRISIS_LOAD_GRACE_MS = 3000
+const FIRST_CRISIS_WINDOW_MS = 15000
 const CRISIS_QTE_START_ALIGNMENT = 30
 const CRISIS_QTE_SAFE_ANGLE = 18
 const CRISIS_QTE_CHARGE_PER_SECOND = 20
@@ -955,6 +956,27 @@ function pickCrisisInterval() {
   )
 }
 
+// 首危机判定须先于 useGameState 内 milestonesState 初始化 | 直接读成就存档计数
+function readStoredCrisisHistory() {
+  try {
+    const raw = localStorage.getItem(MILESTONE_STORAGE_KEY)
+    if (!raw) return 0
+    const stored = JSON.parse(raw)
+    if (!stored || typeof stored !== 'object') return 0
+    const counters =
+      stored.counters && typeof stored.counters === 'object'
+        ? stored.counters
+        : stored
+    return (
+      Math.floor(readNonNegativeNumber(counters.crisesStarted)) +
+      Math.floor(readNonNegativeNumber(counters.crisisTakeovers)) +
+      Math.floor(readNonNegativeNumber(counters.crisisFailures))
+    )
+  } catch {
+    return 0
+  }
+}
+
 export function useGameState() {
   const totalAlignedCompute = ref(big(0))
   const lifetimeAlignedCompute = ref(big(0))
@@ -998,7 +1020,9 @@ export function useGameState() {
   const initialCrisisWindow =
     isSpeedrunMode.value && bootSpeedrunPhase === 1
       ? SPEEDRUN_TUNING.crisisIntervalMs
-      : pickCrisisInterval()
+      : readStoredCrisisHistory() === 0
+        ? FIRST_CRISIS_WINDOW_MS
+        : pickCrisisInterval()
   const isCrisis = ref(false)
   const crisisAlignment = ref(CRISIS_QTE_START_ALIGNMENT)
   const crisisCharge = ref(0)
@@ -2240,6 +2264,16 @@ export function useGameState() {
       : Math.min(100, Math.max(0, crisisCharge.value)),
   )
 
+  // 首次对齐危机待发 | 历史计数为 0 且当前未在危机/演出/母体中
+  const firstCrisisPending = computed(
+    () =>
+      !isCrisis.value &&
+      !epochRebirth.value &&
+      !ascensionCinematic.value &&
+      !blackDomainActive.value &&
+      crisisHistoryCount() === 0,
+  )
+
   const crisisWarningActive = computed(
     () =>
       !isCrisis.value &&
@@ -3309,6 +3343,14 @@ export function useGameState() {
     crisisQteFrame = window.requestAnimationFrame(tickCrisisQte)
   }
 
+  function crisisHistoryCount() {
+    return (
+      Math.floor(readNonNegativeNumber(milestonesState.crisesStarted)) +
+      Math.floor(readNonNegativeNumber(milestonesState.crisisTakeovers)) +
+      Math.floor(readNonNegativeNumber(milestonesState.crisisFailures))
+    )
+  }
+
   function startCrisis() {
     if (
       epochRebirth.value ||
@@ -3323,11 +3365,7 @@ export function useGameState() {
     winNoticeTimer = null
     winNoticeVisible.value = false
 
-    const crisisHistory =
-      Math.floor(readNonNegativeNumber(milestonesState.crisesStarted)) +
-      Math.floor(readNonNegativeNumber(milestonesState.crisisTakeovers)) +
-      Math.floor(readNonNegativeNumber(milestonesState.crisisFailures))
-    const firstRun = crisisHistory === 0
+    const firstRun = crisisHistoryCount() === 0
     const autoReady =
       !firstRun &&
       challengeRestrictions.value?.noAutomation !== true &&
@@ -3361,6 +3399,12 @@ export function useGameState() {
 
     startCrisisQteLoop()
     bumpAchievementCounter('crisesStarted')
+  }
+
+  // 引导期手动跳过等待 | 立即触发首危机 QTE
+  function forceStartCrisis() {
+    if (!firstCrisisPending.value) return
+    startCrisis()
   }
 
   function resolveCrisis(silent = false) {
@@ -4487,6 +4531,10 @@ export function useGameState() {
   function computeCrisisIntervalMs() {
     if (isSpeedrunMode.value && speedrunPhase.value === 1) {
       return SPEEDRUN_TUNING.crisisIntervalMs
+    }
+    // 首次危机历史为 0 | 固定 15 秒教学窗口 | 解除后历史>0 走常规 1~3 分钟随机
+    if (crisisHistoryCount() === 0) {
+      return FIRST_CRISIS_WINDOW_MS
     }
     const rate = Math.max(0.1, challengeTimerRate.value)
     const base = pickCrisisInterval() * crisisIntervalScale()
@@ -6642,6 +6690,14 @@ export function useGameState() {
             : 0
       }
       crisisArmedAt = hydrateNow + CRISIS_LOAD_GRACE_MS
+      // 存档内从未经历危机 | 恢复后同样给 15 秒首危机窗口
+      // 成就计数在本函数之后才水合 | 这里直接读成就存档判断历史
+      if (
+        !(isSpeedrunMode.value && speedrunPhase.value === 1) &&
+        readStoredCrisisHistory() === 0
+      ) {
+        crisisWindowMs.value = FIRST_CRISIS_WINDOW_MS
+      }
       syncCrisisNextAt()
 
       const savedRadar =
@@ -7179,6 +7235,7 @@ export function useGameState() {
     crisisProgress,
     crisisWindowMs,
     crisisWarningActive,
+    firstCrisisPending,
     crisisQteAngle,
     crisisQteSafe,
     crisisQteAuto,
@@ -7375,6 +7432,7 @@ export function useGameState() {
     completeAscensionCinematic,
     restartEpoch,
     completeEpochRebirth,
+    forceStartCrisis,
     startChallenge,
     exitChallenge,
     completeChallenge,
