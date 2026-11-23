@@ -2255,9 +2255,18 @@ export function useGameState() {
       : Math.min(100, Math.max(0, crisisCharge.value)),
   )
 
+  // 急速模式危机武装 | 首台服务器落地或经历过危机前不充能不点火 | 正常模式恒武装
+  const speedrunCrisisArmed = computed(
+    () =>
+      !isSpeedrunMode.value ||
+      totalNodes.value >= 1 ||
+      totalCrises.value >= 1,
+  )
+
   // 首次对齐危机待发 | 历史计数为 0 且当前未在危机/演出/母体中
   const firstCrisisPending = computed(
     () =>
+      speedrunCrisisArmed.value &&
       !isCrisis.value &&
       !epochRebirth.value &&
       !ascensionCinematic.value &&
@@ -6988,7 +6997,7 @@ export function useGameState() {
       return
     }
 
-    if (!blackDomainActive.value) {
+    if (!blackDomainActive.value && speedrunCrisisArmed.value) {
       addCrisisCharge(
         (TICK_MS * CRISIS_CHARGE_MAX) / Math.max(1000, crisisWindowMs.value),
       )
@@ -6996,6 +7005,7 @@ export function useGameState() {
 
     if (
       !blackDomainActive.value &&
+      speedrunCrisisArmed.value &&
       nowTimestamp.value >= crisisArmedAt &&
       crisisCharge.value >= CRISIS_CHARGE_MAX
     ) {
